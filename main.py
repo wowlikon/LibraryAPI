@@ -5,9 +5,11 @@ from sqlalchemy import or_
 import datetime
 
 from utils import get_db
+from models import create_tables
 from models import AuthorDB, BookDB, Book, NewBook
 
 # Создание экземпляра приложения
+create_tables()
 app = FastAPI()
 app.lst_idx = 0
 app.books = {}

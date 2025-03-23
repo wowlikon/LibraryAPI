@@ -28,6 +28,10 @@ book_author = Table(
     Column('author_id', Integer, ForeignKey('authors.id'))
 )
 
+# Создание всех таблиц
+def create_tables():
+    Base.metadata.create_all(bind=engine)
+
 class AuthorDB(Base):
     __tablename__ = "authors"
     id = Column(Integer, primary_key=True, index=True)
