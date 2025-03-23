@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Query, Path, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Depends
 from fastapi_pagination import Page, paginate, Params
-from typing import List
-import datetime, psutil
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+import datetime
 
-from utils import get_book_or_404, create_book_obj, fuzzy_search
-from models import Book, NewBook
+from utils import get_db
+from models import AuthorDB, BookDB, Book, NewBook
 
 # Создание экземпляра приложения
 app = FastAPI()
@@ -15,9 +16,6 @@ app.books = {}
 @app.get("/")
 def home():
     now = datetime.datetime.now()
-    cpu_count = psutil.cpu_count()
-    cpu_usage = psutil.cpu_percent()
-    memory_usage = psutil.virtual_memory().percent
     return {
              "time":
               {
@@ -29,54 +27,83 @@ def home():
            }
 
 # Эндпоинт получения всех книг
-@app.get("/books")
+@app.get("/books", response_model=Page[Book])
 def get_books(
-      limit: int = Query(10, ge=1, le=100, description="Количество книг на странице"),
-      page: int = Query(1, ge=1, description="Номер страницы")
-    ):
-    if not app.books: raise HTTPException(status_code=404, detail="No books found")
-    if not isinstance(limit, int) or not isinstance(page, int): raise HTTPException(status_code=400, detail="Invalid parameters")
-    if limit < 1 or page < 1: raise HTTPException(status_code=400, detail="Invalid parameters")
-    if not app.books: raise HTTPException(status_code=404, detail="No books found")
-    return paginate(list(app.books.values()), Params(page=page, limit=limit))
+    db: Session = Depends(get_db),
+    limit: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1)
+):
+    books = db.query(BookDB).offset((page - 1) * limit).limit(limit).all()
+    return paginate(books, Params(page=page, size=limit))
 
 # Эндпоинт поиска книги по названию
 @app.get("/books/search")
-def search_books(query: str):
-    if not query: raise HTTPException(status_code=400, detail="Query parameter is required")
-    return fuzzy_search(query, app.books)
+def search_books(query: str, db: Session = Depends(get_db)):
+    return db.query(BookDB).filter(
+        or_(
+            BookDB.title.ilike(f"%{query}%"),
+            AuthorDB.first_name.ilike(f"%{query}%"),
+            AuthorDB.last_name.ilike(f"%{query}%")
+        )
+    ).join(BookDB.authors).all()
 
 # Эндпоинт получения книги по id
-@app.get("/books/{id}")
-def get_book(id: int):
-    return get_book_or_404(app.books, id)
+@app.get("/books/{id}", response_model=Book)
+def get_book(id: int, db: Session = Depends(get_db)):
+    book = db.query(BookDB).filter(BookDB.id == id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    return book
 
 # Эндпоинт создания книги
-@app.post("/books")
-def create_book(book: NewBook):
-    app.lst_idx += 1
-    inserted_book = create_book_obj(app.lst_idx, book)
-    app.books[app.lst_idx] = inserted_book
-    return {"id": app.lst_idx}
+@app.post("/books", response_model=Book)
+def create_book(book: NewBook, db: Session = Depends(get_db)):
+    # Создаем книгу
+    db_book = BookDB(title=book.title, pages=book.pages)
+    
+    # Создаем или находим авторов
+    for author_data in book.authors:
+        author = db.query(AuthorDB).filter(
+            AuthorDB.first_name == author_data.first_name,
+            AuthorDB.last_name == author_data.last_name
+        ).first()
+        if not author:
+            author = AuthorDB(**author_data.model_dump())
+            db.add(author)
+        db_book.authors.append(author)
+    
+    db.add(db_book)
+    db.commit()
+    db.refresh(db_book)
+    return db_book
 
 # Эндпоинт обновления книги
-@app.put("/books/{id}")
-def update_book(id: int, book: NewBook):
-    get_book_or_404(app.books, id)
-    app.books[id] = create_book_obj(app.lst_idx, book)
-    return {"id": id}
+def update_book(id: int, book: Book, db: Session = Depends(get_db)):
+    db_book = db.query(BookDB).filter(BookDB.id == id).first()
+    if not db_book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    for key, value in book.model_dump().items():
+        setattr(db_book, key, value)
+    
+    db.commit()
+    db.refresh(db_book)
+    return db_book
 
 # Эндпоинт удаления книги
 @app.delete("/books/{id}")
-def delete_book(id: int):
-    book = get_book_or_404(app.books, id)
-    del app.books[id]
-    return {"message": "Book deleted successfully", "book": book}
+def delete_book(id: int, db: Session = Depends(get_db)):
+    book = db.query(BookDB).filter(BookDB.id == id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    db.delete(book)
+    db.commit()
+    return {"message": "Book deleted successfully"}
 
 # Эндпоинт очистки списка книг
 @app.delete("/books")
-def delete_books():
-    app.books.clear()
-    app.lst_idx = 0
+def delete_all_books(db: Session = Depends(get_db)):
+    db.query(BookDB).delete()
+    db.commit()
     return {"message": "All books deleted successfully"}
 

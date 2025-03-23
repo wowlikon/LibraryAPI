@@ -11,7 +11,25 @@ RESTful API для управления библиотекой книг, реа�
 ## Установка
 1. Клонировать репозиторий
 2. Установить зависимости: `pip install -r requirements.txt`
-3. Запустить приложение: `uvicorn main:app --reload`
+3. Установите PostgreSQL:
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+sudo -u postgres psql
+```
+4. Создайте базу данных:
+```sql
+CREATE DATABASE bookdb;
+CREATE USER myuser WITH PASSWORD 'mypassword';
+GRANT ALL PRIVILEGES ON DATABASE bookdb TO myuser;
+\q
+```
+5. Создайте файл `.env` и добавьте переменные окружения:
+```bash
+DATABASE_URL=postgresql://myuser:,ypassword@localhost:5432/bookdb
+```
+6. Запустить приложение: `uvicorn main:app --reload`
 
 ## Эндпоинты
 - `/`: Получить текущую дату и время

@@ -1,1 +1,31 @@
+# Python 
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Project specific
+fastapi.db
