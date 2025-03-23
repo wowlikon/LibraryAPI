@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query, HTTPException, Depends
-from fastapi_pagination import Page, paginate, Params
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from typing import List
 import datetime
 
 from utils import get_db
@@ -29,25 +29,31 @@ def home():
            }
 
 # Эндпоинт получения всех книг
-@app.get("/books", response_model=Page[Book])
+@app.get("/books", response_model=List[Book])
 def get_books(
     db: Session = Depends(get_db),
     limit: int = Query(10, ge=1, le=100),
     page: int = Query(1, ge=1)
 ):
-    books = db.query(BookDB).offset((page - 1) * limit).limit(limit).all()
-    return paginate(books, Params(page=page, size=limit))
+    return db.query(BookDB).offset((page - 1) * limit).limit(limit).all()
 
 # Эндпоинт поиска книги по названию
-@app.get("/books/search")
-def search_books(query: str, db: Session = Depends(get_db)):
-    return db.query(BookDB).filter(
+@app.get("/books/search", response_model=List[Book])
+def search_books(
+    query: str, 
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100)
+):
+    books = db.query(BookDB).filter(
         or_(
             BookDB.title.ilike(f"%{query}%"),
             AuthorDB.first_name.ilike(f"%{query}%"),
             AuthorDB.last_name.ilike(f"%{query}%")
         )
-    ).join(BookDB.authors).all()
+    ).join(BookDB.authors).offset((page - 1) * limit).limit(limit).all()
+    
+    return books
 
 # Эндпоинт получения книги по id
 @app.get("/books/{id}", response_model=Book)
