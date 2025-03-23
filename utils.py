@@ -1,6 +1,5 @@
-from sqlalchemy.orm import SessionLocal
-
 from models import Book, NewBook
+from models import SessionLocal
 
 def create_book_obj(id: int, book: NewBook):
     return Book(id=id, title=book.title, authors=book.authors, pages=book.pages)
