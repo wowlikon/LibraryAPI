@@ -14,9 +14,11 @@ This project is a test web application built using FastAPI, a modern web framewo
 
 ### **Installation Instructions**
 
+For development:
+
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/bookapi.git
+   git clone https://github.com/wowlikon/bookapi.git
    ```
 
 2. Navigate to the project directory:
@@ -31,12 +33,34 @@ This project is a test web application built using FastAPI, a modern web framewo
 
 4. Build the Docker containers:
    ```bash
-   docker-compose build
+   docker-compose build --no-cache
    ```
 
 5. Run the application:
    ```bash
    docker-compose up
+   ```
+
+For make new migrations:
+   ```bash
+   docker-compose run --rm api alembic revision --autogenerate -m "Migration name"
+   ```
+
+For apply migrations:
+
+  1. Build the Docker containers:
+     ```bash
+     docker-compose build --no-cache
+     ```
+
+  2. Run database container:
+     ```bash
+     docker-compose up -d db
+     ```
+
+  3. Run this command:
+   ```bash
+   docker-compose run --rm api alembic upgrade head
    ```
 
 
@@ -58,6 +82,7 @@ This project is a test web application built using FastAPI, a modern web framewo
 | PUT    | `/books/{id}`     | Update a specific book by ID         |
 | DELETE | `/books/{id}`     | Delete a specific book by ID         |
 
+
 ### **Technologies Used**
 
 - **FastAPI**: A modern web framework for building APIs with Python, known for its speed and ease of use.
@@ -67,6 +92,7 @@ This project is a test web application built using FastAPI, a modern web framewo
 - **PostgreSQL**: A powerful, open-source relational database management system.
 - **Docker**: A platform for developing, shipping, and running applications in containers.
 - **Docker Compose**: A tool for defining and running multi-container Docker applications.
+
 
 ### **TODO List**
 
