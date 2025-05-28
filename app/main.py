@@ -1,3 +1,5 @@
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI, HTTPException
 from sqlmodel import SQLModel, Session, select
 from typing import List
@@ -5,11 +7,15 @@ from .database import engine
 from .models import Author, Book
 
 app = FastAPI()
+alembic_cfg = Config("alembic.ini")
 
 # Initialize the database
 @app.on_event("startup")
 def on_startup():
-    SQLModel.metadata.create_all(engine)
+    # Apply database migrations
+    with engine.begin() as connection:
+            alembic_cfg.attributes['connection'] = connection
+            command.upgrade(alembic_cfg, "head")
 
 # Root endpoint
 @app.get("/")

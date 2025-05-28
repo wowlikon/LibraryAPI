@@ -1,15 +1,11 @@
 from sqlmodel import create_engine, SQLModel, Session
-from dotenv import load_dotenv
-import os
+from decouple import config
 
 # Get database configuration
-load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+DATABASE_URL = config('DATABASE_URL', cast=str, default='sqlite:///./bookapi.db')
 
 # Create database engine
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(str(DATABASE_URL), echo=True)
 SQLModel.metadata.create_all(engine)
 
 # Get database session
