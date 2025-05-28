@@ -43,7 +43,7 @@ For development:
 
 For make new migrations:
    ```bash
-   docker-compose run --rm api alembic revision --autogenerate -m "Migration name"
+   docker-compose run api alembic revision --autogenerate -m "Migration name"
    ```
 
 For apply migrations:
