@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlmodel import SQLModel, Session, select
 from typing import List
 from .database import engine, get_session
-from .models import Author, AuthorBase, Book, BookBase
+from .models import Author, AuthorBase, Book, BookBase, AuthorBookLink
 
 alembic_cfg = Config("alembic.ini")
 app = FastAPI(
@@ -69,16 +69,24 @@ def delete_author(author_id: int, session: Session = Depends(get_session)):
     if not db_author:
         raise HTTPException(status_code=404, detail="Author not found")
     session.delete(db_author)
+    author = AuthorBase(name=db_author.name)
     session.commit()
-    return {"message": "Author deleted"}
+    return author
 
-# Create a book
+# Create a book with authors
 @app.post("/books/", response_model=Book, tags=["books"])
-def create_book(book: BookBase, session: Session = Depends(get_session)):
-    session.add(book)
+def create_book(book: BookBase, author_ids: List[int] | None = None, session: Session = Depends(get_session)):
+    db_book = Book(title=book.title, description=book.description)
+    session.add(db_book)
     session.commit()
-    session.refresh(book)
-    return book
+    session.refresh(db_book)
+    # Create relationships if author_ids are provided
+    if author_ids:
+        for author_id in author_ids:
+            link = AuthorBookLink(author_id=author_id, book_id=db_book.id)
+            session.add(link)
+        session.commit()
+    return db_book
 
 # Read books
 @app.get("/books/", response_model=List[Book], tags=["books"])
@@ -86,24 +94,37 @@ def read_books(session: Session = Depends(get_session)):
     books = session.exec(select(Book)).all()
     return books
 
-# Update a book
+# Update a book with authors
 @app.put("/books/{book_id}", response_model=Book, tags=["books"])
-def update_book(book_id: int, book: Book, session: Session = Depends(get_session)):
+def update_book(book_id: int, book: BookBase, author_ids: List[int] | None = None, session: Session = Depends(get_session)):
     db_book = session.get(Book, book_id)
     if not db_book:
         raise HTTPException(status_code=404, detail="Book not found")
+
     db_book.title = book.title
-    db_book.authors = book.authors
+    db_book.description = book.description
     session.commit()
     session.refresh(db_book)
+    # Update relationships if author_ids are provided
+    if author_ids is not None:
+        # Clear existing relationships
+        existing_links = session.exec(select(AuthorBookLink).where(AuthorBookLink.book_id == book_id)).all()
+        for link in existing_links:
+            session.delete(link)
+        # Create new relationships
+        for author_id in author_ids:
+            link = AuthorBookLink(author_id=author_id, book_id=db_book.id)
+            session.add(link)
+        session.commit()
     return db_book
 
 # Delete a book
-@app.delete("/books/{book_id}", tags=["books"])
+@app.delete("/books/{book_id}", response_model=BookBase, tags=["books"])
 def delete_book(book_id: int, session: Session = Depends(get_session)):
     db_book = session.get(Book, book_id)
     if not db_book:
         raise HTTPException(status_code=404, detail="Book not found")
+    book = Book(title=db_book.title, description=db_book.description)
     session.delete(db_book)
     session.commit()
-    return {"message": "Book deleted"}
+    return book
