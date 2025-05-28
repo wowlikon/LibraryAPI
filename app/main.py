@@ -6,24 +6,38 @@ from typing import List
 from .database import engine
 from .models import Author, Book
 
-app = FastAPI()
 alembic_cfg = Config("alembic.ini")
+app = FastAPI(
+    title="My API",
+    description="This is a sample API for managing authors and books.",
+    version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "authors",
+            "description": "Operations with authors.",
+        },
+        {
+            "name": "books",
+            "description": "Operations with books.",
+        },
+    ]
+)
 
 # Initialize the database
 @app.on_event("startup")
 def on_startup():
     # Apply database migrations
     with engine.begin() as connection:
-            alembic_cfg.attributes['connection'] = connection
-            command.upgrade(alembic_cfg, "head")
+        alembic_cfg.attributes['connection'] = connection
+        command.upgrade(alembic_cfg, "head")
 
 # Root endpoint
-@app.get("/")
+@app.get("/", tags=["authors", "books"])
 async def hello_world():
     return {"message": "Hello world!"}
 
 # Create an author
-@app.post("/authors/", response_model=Author)
+@app.post("/authors/", response_model=Author, tags=["authors"])
 def create_author(author: Author):
     with Session(engine) as session:
         session.add(author)
@@ -32,14 +46,14 @@ def create_author(author: Author):
         return author
 
 # Read authors
-@app.get("/authors/", response_model=List[Author])
+@app.get("/authors/", response_model=List[Author], tags=["authors"])
 def read_authors():
     with Session(engine) as session:
         authors = session.exec(select(Author)).all()
         return authors
 
 # Update an author
-@app.put("/authors/{author_id}", response_model=Author)
+@app.put("/authors/{author_id}", response_model=Author, tags=["authors"])
 def update_author(author_id: int, author: Author):
     with Session(engine) as session:
         db_author = session.get(Author, author_id)
@@ -52,7 +66,7 @@ def update_author(author_id: int, author: Author):
         return db_author
 
 # Delete an author
-@app.delete("/authors/{author_id}")
+@app.delete("/authors/{author_id}", tags=["authors"])
 def delete_author(author_id: int):
     with Session(engine) as session:
         db_author = session.get(Author, author_id)
@@ -63,7 +77,7 @@ def delete_author(author_id: int):
         return {"message": "Author deleted"}
 
 # Create a book
-@app.post("/books/", response_model=Book)
+@app.post("/books/", response_model=Book, tags=["books"])
 def create_book(book: Book):
     with Session(engine) as session:
         session.add(book)
@@ -72,14 +86,14 @@ def create_book(book: Book):
         return book
 
 # Read books
-@app.get("/books/", response_model=List[Book])
+@app.get("/books/", response_model=List[Book], tags=["books"])
 def read_books():
     with Session(engine) as session:
         books = session.exec(select(Book)).all()
         return books
 
 # Update a book
-@app.put("/books/{book_id}", response_model=Book)
+@app.put("/books/{book_id}", response_model=Book, tags=["books"])
 def update_book(book_id: int, book: Book):
     with Session(engine) as session:
         db_book = session.get(Book, book_id)
@@ -93,7 +107,7 @@ def update_book(book_id: int, book: Book):
         return db_book
 
 # Delete a book
-@app.delete("/books/{book_id}")
+@app.delete("/books/{book_id}", tags=["books"])
 def delete_book(book_id: int):
     with Session(engine) as session:
         db_book = session.get(Book, book_id)
