@@ -58,6 +58,15 @@ This project is a test web application built using FastAPI, a modern web framewo
 | PUT    | `/books/{id}`     | Update a specific book by ID         |
 | DELETE | `/books/{id}`     | Delete a specific book by ID         |
 
+### **Technologies Used**
+
+- **FastAPI**: A modern web framework for building APIs with Python, known for its speed and ease of use.
+- **Pydantic**: A data validation and settings management library that uses Python type annotations.
+- **SQLModel**: A library for interacting with databases using Python classes, combining the features of SQLAlchemy and Pydantic.
+- **Alembic**: A lightweight database migration tool for use with SQLAlchemy.
+- **PostgreSQL**: A powerful, open-source relational database management system.
+- **Docker**: A platform for developing, shipping, and running applications in containers.
+- **Docker Compose**: A tool for defining and running multi-container Docker applications.
 
 ### **TODO List**
 
