@@ -4,3 +4,5 @@ sqlmodel
 psycopg2-binary
 python-decouple
 alembic
+pytest
+httpx

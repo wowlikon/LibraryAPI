@@ -6,7 +6,7 @@ DATABASE_URL = config('DATABASE_URL', cast=str, default='sqlite:///./bookapi.db'
 
 # Create database engine
 engine = create_engine(str(DATABASE_URL), echo=True)
-SQLModel.metadata.create_all(engine)
+# SQLModel.metadata.create_all(engine)
 
 # Get database session
 def get_session():
