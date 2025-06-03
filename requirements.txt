@@ -6,3 +6,4 @@ python-decouple
 alembic
 pytest
 httpx
+jinja2

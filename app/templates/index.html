@@ -1,7 +1,9 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
-        <title>Добро пожаловать в API</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ data.title }}</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -41,14 +43,14 @@
         </style>
     </head>
     <body>
-        <h1>Добро пожаловать в API!</h1>
+        <h1>Welcome to {{ data.title }}!</h1>
+        <p>Description: {{ data.description }}</p>
+        <p>Version: {{ data.version }}</p>
+        <p>Current Time: {{ data.time }}</p>
+        <p>Status: {{ data.status }}</p>
         <ul>
-            <li>
-                <p>Попробуйте <a href="/docs">Swagger UI</a></p>
-            </li>
-            <li>
-                <p>Попробуйте <a href="/redoc">ReDoc</a></p>
-            </li>
+            <li><a href="/docs">Swagger UI</a></li>
+            <li><a href="/redoc">ReDoc</a></li>
         </ul>
     </body>
 </html>

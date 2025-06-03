@@ -1,21 +1,23 @@
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel, Session, select
 
 from .database import engine, get_session
 from .models import Author, AuthorBase, Book, BookBase, AuthorBookLink
 
 alembic_cfg = Config("alembic.ini")
+templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 app = FastAPI(
-    title="My API",
+    title="LibraryAPI",
     description="This is a sample API for managing authors and books.",
-    version="1.0.0",
+    version="1.0.1",
     openapi_tags=[
         {
             "name": "authors",
@@ -36,6 +38,17 @@ app = FastAPI(
     ]
 )
 
+def get_info() -> Dict:
+    return {
+            "status": "ok",
+            "app_info": {
+                "title": app.title,
+                "version": app.version,
+                "description": app.description,
+            },
+            "server_time": datetime.now().isoformat(),
+        }
+
 # Initialize the database
 @app.on_event("startup")
 def on_startup():
@@ -45,21 +58,14 @@ def on_startup():
         command.upgrade(alembic_cfg, "head")
 
 # Root endpoint
-@app.get("/", tags=["misc"])
-async def root(request: Request, html: str = ""):
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "data": get_info()})
 
-    if html != "": # API response
-        data = {
-            "title": app.title,
-            "version": app.version,
-            "description": app.description,
-            "status": "ok"
-        }
-        return JSONResponse({"message": "Hello world!", "data": data, "time": datetime.now(), })
-    else: # Browser response
-        with open(Path(__file__).parent / "index.html", 'r', encoding='utf-8') as file:
-            html_content = file.read()
-        return HTMLResponse(html_content)
+# API Information endpoint
+@app.get("/api/info", tags=["misc"])
+async def api_info():
+    return JSONResponse(content=get_info())
 
 # Create an author
 @app.post("/authors/", response_model=Author, tags=["authors"])

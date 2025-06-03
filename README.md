@@ -96,5 +96,8 @@ For apply migrations:
 
 ### **TODO List**
 
-- Split models for API and database
+- Split models files for API and database
+- new structure (src/app, src/migrations?)
+- Geners table
+- Poetry
 - Implement tests
