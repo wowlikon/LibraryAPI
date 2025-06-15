@@ -17,7 +17,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./app/migrations/versions:/code/app/migrations/versions
+      - ./src/app/migrations/versions:/code/app/migrations/versions
     depends_on:
       - db
 

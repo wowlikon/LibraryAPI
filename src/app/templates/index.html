@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ data.title }}</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                line-height: 1.6;
+                color: #333;
+            }
+            h1 {
+                color: #2c3e50;
+                border-bottom: 2px solid #3498db;
+                padding-bottom: 10px;
+            }
+            ul {
+                list-style: none;
+                padding: 0;
+            }
+            li {
+                margin: 15px 0;
+            }
+            a {
+                display: inline-block;
+                padding: 8px 15px;
+                background-color: #3498db;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+                transition: background-color 0.3s;
+            }
+            a:hover {
+                background-color: #2980b9;
+            }
+            p {
+                margin: 5px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Welcome to {{ data.title }}!</h1>
+        <p>Description: {{ data.description }}</p>
+        <p>Version: {{ data.version }}</p>
+        <p>Current Time: {{ data.time }}</p>
+        <p>Status: {{ data.status }}</p>
+        <ul>
+            <li><a href="/docs">Swagger UI</a></li>
+            <li><a href="/redoc">ReDoc</a></li>
+        </ul>
+    </body>
+</html>
