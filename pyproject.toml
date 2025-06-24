@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "library-service"
+version = "0.1.1"
+description = "This is a sample API for managing authors and books."
+authors = ["wowlikon"]
+readme = "README.md"
+packages = [{ include = "library_service" }]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+fastapi = { extras = ["all"], version = "^0.115.12" }
+psycopg2-binary = "^2.9.10"
+alembic = "^1.16.1"
+python-dotenv = "^0.21.0"
+sqlmodel = "^0.0.24"
+uvicorn = "^0.34.3"
+jinja2 = "^3.1.6"
+toml = "^0.10.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.1.0"
+pytest = "^8.4.1"
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

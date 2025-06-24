@@ -1,4 +1,6 @@
-# Book API
+# LibraryAPI
+
+## WARNING: The documentation is now out of date.
 
 This project is a test web application built using FastAPI, a modern web framework for creating APIs in Python. It showcases the use of Pydantic for data validation, SQLModel for database interactions, Alembic for migration management, PostgreSQL as the database system, and Docker Compose for easy deployment.
 
@@ -18,7 +20,7 @@ For development:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/wowlikon/bookapi.git
+   git clone https://github.com/wowlikon/libraryapi.git
    ```
 
 2. Navigate to the project directory:

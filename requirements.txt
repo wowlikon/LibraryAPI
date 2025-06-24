@@ -1,9 +1,0 @@
-fastapi
-uvicorn[standard]
-sqlmodel
-psycopg2-binary
-python-decouple
-alembic
-pytest
-httpx
-jinja2
