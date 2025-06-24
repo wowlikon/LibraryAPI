@@ -23,7 +23,7 @@ services:
   tests:
     container_name: tests
     build: .
-    command: bash -c "pytest tests/test_authors.py"
+    command: bash -c "pytest tests"
     volumes:
       - .:/code
     depends_on:

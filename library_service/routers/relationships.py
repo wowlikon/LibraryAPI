@@ -6,10 +6,10 @@ from library_service.settings import get_session
 from library_service.models.db import Book, Author, AuthorBookLink
 from library_service.models.dto import AuthorRead, BookRead
 
-router = APIRouter(prefix="/relationships", tags=["relations"])
+router = APIRouter(tags=["relations"])
 
 # Add author to book
-@router.post("/", response_model=AuthorBookLink)
+@router.post("/relationships", response_model=AuthorBookLink)
 def add_author_to_book(author_id: int, book_id: int, session: Session = Depends(get_session)):
     author = session.get(Author, author_id)
     if not author:
@@ -35,7 +35,7 @@ def add_author_to_book(author_id: int, book_id: int, session: Session = Depends(
     return link
 
 # Remove author from book
-@router.delete("/", response_model=Dict[str, str])
+@router.delete("/relationships", response_model=Dict[str, str])
 def remove_author_from_book(author_id: int, book_id: int, session: Session = Depends(get_session)):
     link = session.exec(
         select(AuthorBookLink)
@@ -49,6 +49,12 @@ def remove_author_from_book(author_id: int, book_id: int, session: Session = Dep
     session.delete(link)
     session.commit()
     return {"message": "Relationship removed successfully"}
+
+# Get relationships
+@router.get("/relationships", response_model=List[AuthorBookLink])
+def get_relationships(session: Session = Depends(get_session)):
+    relationships = session.exec(select(AuthorBookLink)).all()
+    return relationships
 
 # Get author's books
 @router.get("/authors/{author_id}/books/", response_model=List[BookRead])

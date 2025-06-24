@@ -33,7 +33,7 @@ def test_get_existing_author(setup_database):
     response = client.get("/authors/1")
     print(response.json())
     assert response.status_code == 200, "Invalid response status"
-    assert response.json() == {"id": 1, "name": "Test Author"}, "Invalid response data"
+    assert response.json() == {"id": 1, "name": "Test Author", "books": []}, "Invalid response data"
 
 def test_get_not_existing_author(setup_database):
     response = client.get("/authors/2")

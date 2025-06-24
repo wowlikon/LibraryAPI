@@ -78,6 +78,7 @@ For run tests:
 **Relationships**
 | Method | Endpoint              | Description                                    |
 |--------|-----------------------|------------------------------------------------|
+| GET    | `/relationships`      | Retrieve a list of all relationships           |
 | POST   | `/relationships`      | Add author-book relationship                   |
 | DELETE | `/relationships`      | Remove author-book relationship                |
 
