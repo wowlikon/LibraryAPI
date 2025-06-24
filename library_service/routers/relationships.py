@@ -4,6 +4,7 @@ from typing import List, Dict
 
 from library_service.settings import get_session
 from library_service.models.db import Book, Author, AuthorBookLink
+from library_service.models.dto import AuthorRead, BookRead
 
 router = APIRouter(prefix="/relationships", tags=["relations"])
 
@@ -48,3 +49,33 @@ def remove_author_from_book(author_id: int, book_id: int, session: Session = Dep
     session.delete(link)
     session.commit()
     return {"message": "Relationship removed successfully"}
+
+# Get author's books
+@router.get("/authors/{author_id}/books/", response_model=List[BookRead])
+def get_books_for_author(author_id: int, session: Session = Depends(get_session)):
+    author = session.get(Author, author_id)
+    if not author:
+        raise HTTPException(status_code=404, detail="Author not found")
+
+    books = session.exec(
+        select(Book)
+        .join(AuthorBookLink)
+        .where(AuthorBookLink.author_id == author_id)
+    ).all()
+
+    return [BookRead(**book.model_dump()) for book in books]
+
+# Get book's authors
+@router.get("/books/{book_id}/authors/", response_model=List[AuthorRead])
+def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
+    book = session.get(Book, book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    authors = session.exec(
+        select(Author)
+        .join(AuthorBookLink)
+        .where(AuthorBookLink.book_id == book_id)
+    ).all()
+
+    return [AuthorRead(**author.model_dump()) for author in authors]

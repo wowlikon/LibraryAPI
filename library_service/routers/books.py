@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from typing import List
 
 from library_service.settings import get_session
-from library_service.models.db import Book, Author, AuthorBookLink, BookWithAuthors
+from library_service.models.db import Author, Book, BookWithAuthors, AuthorBookLink
 from library_service.models.dto import (
-    BookCreate, BookUpdate, BookRead,
-    BookList, AuthorRead
+    AuthorRead, BookList, BookRead,
+    BookCreate, BookUpdate
 )
 
 router = APIRouter(prefix="/books", tags=["books"])
@@ -29,13 +28,25 @@ def read_books(session: Session = Depends(get_session)):
         total=len(books)
     )
 
-# Read a book
+# Read a book with their authors
 @router.get("/{book_id}", response_model=BookWithAuthors)
 def get_book(book_id: int, session: Session = Depends(get_session)):
     book = session.get(Book, book_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
-    return BookWithAuthors(**book.model_dump())
+
+    authors = session.exec(
+        select(Author)
+        .join(AuthorBookLink)
+        .where(AuthorBookLink.book_id == book_id)
+    ).all()
+
+    author_reads = [AuthorRead(**author.model_dump()) for author in authors]
+
+    book_data = book.model_dump()
+    book_data['authors'] = author_reads
+
+    return BookWithAuthors(**book_data)
 
 # Update a book
 @router.put("/{book_id}", response_model=Book)
@@ -60,18 +71,3 @@ def delete_book(book_id: int, session: Session = Depends(get_session)):
     session.delete(book)
     session.commit()
     return book_read
-
-# Get all authors for a book
-@router.get("/{book_id}/authors/", response_model=List[AuthorRead])
-def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
-    book = session.get(Book, book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-
-    authors = session.exec(
-        select(Author)
-        .join(AuthorBookLink)
-        .where(AuthorBookLink.book_id == book_id)
-    ).all()
-
-    return [AuthorRead(**author.model_dump()) for author in authors]

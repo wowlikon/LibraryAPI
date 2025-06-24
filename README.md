@@ -60,7 +60,7 @@ For run tests:
 |--------|-----------------------|------------------------------------------------|
 | POST   | `/authors`            | Create a new author                            |
 | GET    | `/authors`            | Retrieve a list of all authors                 |
-| GET    | `/authors/{id}`       | Retrieve a specific author by ID               |
+| GET    | `/authors/{id}`       | Retrieve a specific author by ID with books    |
 | PUT    | `/authors/{id}`       | Update a specific author by ID                 |
 | DELETE | `/authors/{id}`       | Delete a specific author by ID                 |
 | GET    | `/authors/{id}/books` | Retrieve a list of books for a specific author |
@@ -70,7 +70,7 @@ For run tests:
 |--------|-----------------------|------------------------------------------------|
 | POST   | `/books`              | Create a new book                              |
 | GET    | `/books`              | Retrieve a list of all books                   |
-| GET    | `/book/{id}`          | Retrieve a specific book by ID                 |
+| GET    | `/book/{id}`          | Retrieve a specific book by ID with authors    |
 | PUT    | `/books/{id}`         | Update a specific book by ID                   |
 | DELETE | `/books/{id}`         | Delete a specific book by ID                   |
 | GET    | `/books/{id}/authors` | Retrieve a list of authors for a specific book |
