@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
+from typing import List
 
 from library_service.settings import get_session
 from library_service.models.db import Author, AuthorBookLink, Book, AuthorWithBooks
@@ -78,3 +79,18 @@ def delete_author(author_id: int, session: Session = Depends(get_session)):
     session.delete(author)
     session.commit()
     return author_read
+
+# Get all books for an author
+@router.get("/{author_id}/books/", response_model=List[BookRead])
+def get_books_for_author(author_id: int, session: Session = Depends(get_session)):
+    author = session.get(Author, author_id)
+    if not author:
+        raise HTTPException(status_code=404, detail="Author not found")
+
+    books = session.exec(
+        select(Book)
+        .join(AuthorBookLink)
+        .where(AuthorBookLink.author_id == author_id)
+    ).all()
+
+    return [BookRead(**book.model_dump()) for book in books]

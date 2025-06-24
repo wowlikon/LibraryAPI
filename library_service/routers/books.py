@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from typing import Deque, List
+from typing import List
 
 from library_service.settings import get_session
 from library_service.models.db import Book, Author, AuthorBookLink, BookWithAuthors
