@@ -1,7 +1,5 @@
 # LibraryAPI
 
-## WARNING: Documentation may be partially out of date at this time.
-
 This project is a test web application built using FastAPI, a modern web framework for creating APIs in Python. It showcases the use of Pydantic for data validation, SQLModel for database interactions, Alembic for migration management, PostgreSQL as the database system, and Docker Compose for easy deployment.
 
 ### **Key Components:**
@@ -96,6 +94,4 @@ For run tests:
 
 ### **TODO List**
 
-- Implement tests
-- Geners table
-- Check and update documentation
+- Geners table and endpoints
