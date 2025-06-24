@@ -1,6 +1,6 @@
 # LibraryAPI
 
-## WARNING: The documentation is now out of date.
+## WARNING: Documentation may be partially out of date at this time.
 
 This project is a test web application built using FastAPI, a modern web framework for creating APIs in Python. It showcases the use of Pydantic for data validation, SQLModel for database interactions, Alembic for migration management, PostgreSQL as the database system, and Docker Compose for easy deployment.
 
@@ -25,64 +25,61 @@ For development:
 
 2. Navigate to the project directory:
    ```bash
-   cd bookapi
+   cd libraryapi
    ```
 
-3. Copy and configure environment variables:
+3. Configure environment variables:
    ```bash
-   cp .env.example .env
+   edit .env
    ```
 
 4. Build the Docker containers:
    ```bash
-   docker-compose build --no-cache
+   docker compose build
    ```
 
 5. Run the application:
    ```bash
-   docker-compose up
+   docker compose up api
    ```
 
 For make new migrations:
    ```bash
-   docker-compose run api alembic revision --autogenerate -m "Migration name"
+   docker compose run --rm -T api alembic revision --autogenerate -m "Migration name"
    ```
 
-For apply migrations:
-
-  1. Build the Docker containers:
-     ```bash
-     docker-compose build --no-cache
-     ```
-
-  2. Run database container:
-     ```bash
-     docker-compose up -d db
-     ```
-
-  3. Run this command:
+For run tests:
    ```bash
-   docker-compose run --rm api alembic upgrade head
+   docker compose up test
    ```
-
 
 ### **API Endpoints**
 
 **Authors**
-| Method | Endpoint          | Description                          |
-|--------|-------------------|--------------------------------------|
-| POST   | `/author`         | Create a new author                  |
-| GET    | `/author`         | Retrieve a list of all authors       |
-| PUT    | `/author/{id}`    | Update a specific author by ID       |
-| DELETE | `/author/{id}`    | Delete a specific author by ID       |
+| Method | Endpoint              | Description                                    |
+|--------|-----------------------|------------------------------------------------|
+| POST   | `/authors`            | Create a new author                            |
+| GET    | `/authors`            | Retrieve a list of all authors                 |
+| GET    | `/authors/{id}`       | Retrieve a specific author by ID               |
+| PUT    | `/authors/{id}`       | Update a specific author by ID                 |
+| DELETE | `/authors/{id}`       | Delete a specific author by ID                 |
+| GET    | `/authors/{id}/books` | Retrieve a list of books for a specific author |
 
 **Books**
-| Method | Endpoint          | Description                          |
-|--------|-------------------|--------------------------------------|
-| POST   | `/books`          | Create a new book                    |
-| GET    | `/books`          | Retrieve a list of all books         |
-| PUT    | `/books/{id}`     | Update a specific book by ID         |
-| DELETE | `/books/{id}`     | Delete a specific book by ID         |
+| Method | Endpoint              | Description                                    |
+|--------|-----------------------|------------------------------------------------|
+| POST   | `/books`              | Create a new book                              |
+| GET    | `/books`              | Retrieve a list of all books                   |
+| GET    | `/book/{id}`          | Retrieve a specific book by ID                 |
+| PUT    | `/books/{id}`         | Update a specific book by ID                   |
+| DELETE | `/books/{id}`         | Delete a specific book by ID                   |
+| GET    | `/books/{id}/authors` | Retrieve a list of authors for a specific book |
+
+**Relationships**
+| Method | Endpoint              | Description                                    |
+|--------|-----------------------|------------------------------------------------|
+| POST   | `/relationships`      | Add author-book relationship                   |
+| DELETE | `/relationships`      | Remove author-book relationship                |
 
 
 ### **Technologies Used**
@@ -98,8 +95,6 @@ For apply migrations:
 
 ### **TODO List**
 
-- Split models files for API and database
-- new structure (src/app, src/migrations?)
-- Geners table
-- Poetry
 - Implement tests
+- Geners table
+- Check and update documentation
