@@ -9,6 +9,6 @@ if TYPE_CHECKING:
 class Genre(GenreBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, index=True)
     books: List["Book"] = Relationship(
-        back_populates="authors",
+        back_populates="genres",
         link_model=GenreBookLink
     )

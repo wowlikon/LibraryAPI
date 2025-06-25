@@ -1,14 +1,17 @@
 from .author import Author
 from .book import Book
+from .genre import Genre
 from .links import (
     AuthorBookLink, GenreBookLink,
     AuthorWithBooks, BookWithAuthors,
-    GenreWithBooks, BookWithAuthorsAndGenres
+    GenreWithBooks, BookWithGenres,
+    BookWithAuthorsAndGenres
 )
 
 __all__ = [
-    'Author', 'Book',
+    'Author', 'Book', 'Genre',
     'AuthorBookLink', 'AuthorWithBooks',
     'BookWithAuthors', 'GenreBookLink',
-    'GenreWithBooks', 'BookWithAuthorsAndGenres'
+    'GenreWithBooks', 'BookWithGenres',
+    'BookWithAuthorsAndGenres'
 ]

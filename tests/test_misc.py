@@ -6,7 +6,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import select, delete, Session
 
 from library_service.main import app, engine
-from library_service.models.db import Author, Book, AuthorBookLink
+from library_service.models.db import Author, Book, Genre
+from library_service.models.db import AuthorBookLink, GenreBookLink
 
 client = TestClient(app)
 
@@ -16,7 +17,9 @@ def setup_database():
     with Session(engine) as session:
         original_authors = session.exec(select(Author)).all()
         original_books = session.exec(select(Book)).all()
-        original_links = session.exec(select(AuthorBookLink)).all()
+        original_genres = session.exec(select(Genre)).all()
+        original_author_book_links = session.exec(select(AuthorBookLink)).all()
+        original_genre_book_links = session.exec(select(GenreBookLink)).all()
     # Reset database
     alembic_cfg = Config("alembic.ini")
     with engine.begin() as connection:
@@ -27,7 +30,9 @@ def setup_database():
     with Session(engine) as session:
         assert len(session.exec(select(Author)).all()) == 0
         assert len(session.exec(select(Book)).all()) == 0
+        assert len(session.exec(select(Genre)).all()) == 0
         assert len(session.exec(select(AuthorBookLink)).all()) == 0
+        assert len(session.exec(select(GenreBookLink)).all()) == 0
     yield # Here pytest will start testing
     # Restore original data from backup
     with Session(engine) as session:
@@ -35,7 +40,9 @@ def setup_database():
             session.add(author)
         for book in original_books:
             session.add(book)
-        for link in original_links:
+        for link in original_author_book_links:
+            session.add(link)
+        for link in original_genre_book_links:
             session.add(link)
         session.commit()
 

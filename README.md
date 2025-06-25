@@ -74,11 +74,11 @@ For run tests:
 | GET    | `/books/{id}/authors` | Retrieve a list of authors for a specific book |
 
 **Relationships**
-| Method | Endpoint              | Description                                    |
-|--------|-----------------------|------------------------------------------------|
-| GET    | `/relationships`      | Retrieve a list of all relationships           |
-| POST   | `/relationships`      | Add author-book relationship                   |
-| DELETE | `/relationships`      | Remove author-book relationship                |
+| Method | Endpoint                     | Description                             |
+|--------|------------------------------|-----------------------------------------|
+| GET    | `/relationships/author-book` | Retrieve a list of all relationships    |
+| POST   | `/relationships/author-book` | Add author-book relationship            |
+| DELETE | `/relationships/author-book` | Remove author-book relationship         |
 
 
 ### **Technologies Used**

@@ -25,6 +25,10 @@ def get_app() -> FastAPI:
                 "description": "Operations with books.",
             },
             {
+                "name": "genres",
+                "description": "Operations with genres.",
+            },
+            {
                 "name": "relations",
                 "description": "Operations with relations.",
             },
