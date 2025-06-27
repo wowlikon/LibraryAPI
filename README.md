@@ -95,3 +95,4 @@ For run tests:
 ### **TODO List**
 
 - Geners table and endpoints
+- Update tests
