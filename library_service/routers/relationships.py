@@ -51,9 +51,57 @@ def remove_author_from_book(author_id: int, book_id: int, session: Session = Dep
     return {"message": "Relationship removed successfully"}
 
 # Get relationships
-@router.get("/relationships/author-book", response_model=List[AuthorBookLink])
+@router.get("/relationships/genre-book", response_model=List[GenreBookLink])
 def get_relationships(session: Session = Depends(get_session)):
-    relationships = session.exec(select(AuthorBookLink)).all()
+    relationships = session.exec(select(GenreBookLink)).all()
+    return relationships
+
+# Add author to book
+@router.post("/relationships/genre-book", response_model=GenreBookLink)
+def add_genre_to_book(genre_id: int, book_id: int, session: Session = Depends(get_session)):
+    genre = session.get(Genre, genre_id)
+    if not genre:
+        raise HTTPException(status_code=404, detail="Genre not found")
+
+    book = session.get(Book, book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    existing_link = session.exec(
+        select(GenreBookLink)
+        .where(GenreBookLink.genre_id == genre_id)
+        .where(GenreBookLink.book_id == book_id)
+    ).first()
+
+    if existing_link:
+        raise HTTPException(status_code=400, detail="Relationship already exists")
+
+    link = GenreBookLink(genre_id=genre_id, book_id=book_id)
+    session.add(link)
+    session.commit()
+    session.refresh(link)
+    return link
+
+# Remove author from book
+@router.delete("/relationships/genre-book", response_model=Dict[str, str])
+def remove_genre_from_book(genre_id: int, book_id: int, session: Session = Depends(get_session)):
+    link = session.exec(
+        select(GenreBookLink)
+        .where(GenreBookLink.genre_id == genre_id)
+        .where(GenreBookLink.book_id == book_id)
+    ).first()
+
+    if not link:
+        raise HTTPException(status_code=404, detail="Relationship not found")
+
+    session.delete(link)
+    session.commit()
+    return {"message": "Relationship removed successfully"}
+
+# Get relationships
+@router.get("/relationships/genre-book", response_model=List[GenreBookLink])
+def get__genre_relationships(session: Session = Depends(get_session)):
+    relationships = session.exec(select(GenreBookLink)).all()
     return relationships
 
 # Get author's books

@@ -11,18 +11,20 @@ from .routers.misc import get_info
 app = get_app()
 alembic_cfg = Config("alembic.ini")
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("[+] Initializing...")
 
-    # Initialize the database
+    # Настройка базы данных
     with engine.begin() as connection:
-        alembic_cfg.attributes['connection'] = connection
+        alembic_cfg.attributes["connection"] = connection
         command.upgrade(alembic_cfg, "head")
 
     print("[+] Starting...")
-    yield  # Here FastAPI will start handling requests;
+    yield  # Обработка запросов
     print("[+] Application shutdown")
 
-# Include routers
+
+# Подключение маршрутов
 app.include_router(api_router)

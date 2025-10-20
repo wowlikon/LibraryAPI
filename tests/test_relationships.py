@@ -9,8 +9,12 @@ from tests.test_misc import setup_database
 
 client = TestClient(app)
 
-def make_relationship(author_id, book_id):
+def make_authorbook_relationship(author_id, book_id):
     response = client.post("/relationships/author-book", params={"author_id": author_id, "book_id": book_id})
+    assert response.status_code == 200, "Invalid response status"
+
+def make_genrebook_relationship(author_id, book_id):
+    response = client.post("/relationships/genre-book", params={"genre_id": author_id, "book_id": book_id})
     assert response.status_code == 200, "Invalid response status"
 
 def test_prepare_data(setup_database):
@@ -22,11 +26,11 @@ def test_prepare_data(setup_database):
     response = client.post("/authors", json={"name": "Test Author 2"})
     response = client.post("/authors", json={"name": "Test Author 3"})
 
-    make_relationship(1, 1)
-    make_relationship(2, 1)
-    make_relationship(1, 2)
-    make_relationship(2, 3)
-    make_relationship(3, 3)
+    make_authorbook_relationship(1, 1)
+    make_authorbook_relationship(2, 1)
+    make_authorbook_relationship(1, 2)
+    make_authorbook_relationship(2, 3)
+    make_authorbook_relationship(3, 3)
 
     response = client.get("/relationships/author-book")
     assert response.status_code == 200, "Invalid response status"

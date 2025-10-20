@@ -1,97 +1,105 @@
 # LibraryAPI
 
-This project is a test web application built using FastAPI, a modern web framework for creating APIs in Python. It showcases the use of Pydantic for data validation, SQLModel for database interactions, Alembic for migration management, PostgreSQL as the database system, and Docker Compose for easy deployment.
+Это проект приложения на FastAPI - современном веб фреймворке для создания API на Python. Я использую Pydantic для валидации данных, SQLModel для взаимодействия с базой данных, Alembic для управления миграциями, PostgreSQL как систему базы данных и Docker Compose для легкого развертывания.
 
-### **Key Components:**
+### **Ключевые элементы:**
 
-1. FastAPI: Provides high performance and simplicity for developing RESTful APIs, supporting asynchronous operations and automatic documentation generation.
-2. Pydantic: Used for data validation and serialization, allowing easy definition of data schemas.
-3. SQLModel: Combines SQLAlchemy and Pydantic, enabling database operations with Python classes.
-4. Alembic: A tool for managing database migrations, making it easy to track and apply changes to the database schema.
-5. PostgreSQL: A reliable relational database used for data storage.
-6. Docker Compose: Simplifies the deployment of the application and its dependencies in containers.
+1. FastAPI: Предоставляет высокопроизводительность и простоту для разработки RESTful API, поддерживает асинхронные операции и автоматическую генерацию документации.
+2. Pydantic: Используется для валидации данных и сериализации, позволяет легко определить схемы данных.
+3. SQLModel: Объединяет SQLAlchemy и Pydantic, включая операции с базой данных с помощью классов Python.
+4. Alembic: Инструмент для управления миграциями базы данных, упрощающий отслеживание и применение изменений в схеме базы данных.
+5. PostgreSQL: Надежная реляционная база данных для хранения данных.
+6. Docker Compose: Упрощает развертывание приложения и его зависимостей в контейнерах.
 
 
-### **Installation Instructions**
+### **Инструкция по установке**
 
-For development:
-
-1. Clone the repository:
+1. Клонируйте репозиторий:
    ```bash
    git clone https://github.com/wowlikon/libraryapi.git
    ```
 
-2. Navigate to the project directory:
+2. Перейдите в каталог проекта:
    ```bash
    cd libraryapi
    ```
 
-3. Configure environment variables:
+3. Настройте переменные окружения:
    ```bash
    edit .env
    ```
 
-4. Build the Docker containers:
+4. Соберите контейнеры Docker:
    ```bash
    docker compose build
    ```
 
-5. Run the application:
+5. Запустите приложение:
    ```bash
    docker compose up api
    ```
 
-For make new migrations:
+Для создания новых миграций:
    ```bash
    docker compose run --rm -T api alembic revision --autogenerate -m "Migration name"
    ```
 
-For run tests:
+Для запуска тестов:
    ```bash
    docker compose up test
    ```
 
-### **API Endpoints**
+### **Эндпоинты API**
 
-**Authors**
-| Method | Endpoint              | Description                                    |
-|--------|-----------------------|------------------------------------------------|
-| POST   | `/authors`            | Create a new author                            |
-| GET    | `/authors`            | Retrieve a list of all authors                 |
-| GET    | `/authors/{id}`       | Retrieve a specific author by ID with books    |
-| PUT    | `/authors/{id}`       | Update a specific author by ID                 |
-| DELETE | `/authors/{id}`       | Delete a specific author by ID                 |
-| GET    | `/authors/{id}/books` | Retrieve a list of books for a specific author |
+**Авторы**
+| Метод | Эндпоинты              | Описание                                    |
+|--------|-----------------------|---------------------------------------------|
+| POST   | `/authors`            | Создать нового автора                       |
+| GET    | `/authors`            | Получить список всех авторов                |
+| GET    | `/authors/{id}`       | Получить конкретного автора по ID с книгами |
+| PUT    | `/authors/{id}`       | Обновить конкретного автора по ID           |
+| DELETE | `/authors/{id}`       | Удалить конкретного автора по ID            |
+| GET    | `/authors/{id}/books` | Получить список книг для конкретного автора |
 
-**Books**
-| Method | Endpoint              | Description                                    |
-|--------|-----------------------|------------------------------------------------|
-| POST   | `/books`              | Create a new book                              |
-| GET    | `/books`              | Retrieve a list of all books                   |
-| GET    | `/book/{id}`          | Retrieve a specific book by ID with authors    |
-| PUT    | `/books/{id}`         | Update a specific book by ID                   |
-| DELETE | `/books/{id}`         | Delete a specific book by ID                   |
-| GET    | `/books/{id}/authors` | Retrieve a list of authors for a specific book |
+**Книги**
+| Метод | Эндпоинты              | Описание                                     |
+|--------|-----------------------|----------------------------------------------|
+| POST   | `/books`              | Создать новую книгу                          |
+| GET    | `/books`              | Получить список всех книг                    |
+| GET    | `/book/{id}`          | Получить конкретную книгу по ID с авторами   |
+| PUT    | `/books/{id}`         | Обновить конкретную книгу по ID              |
+| DELETE | `/books/{id}`         | Удалить конкретную книгу по ID               |
+| GET    | `/books/{id}/authors` | Получить список авторов для конкретной книги |
 
-**Relationships**
-| Method | Endpoint                     | Description                             |
+**Жанры**
+| Метод | Эндпоинты              | Описание                                     |
+|--------|-----------------------|----------------------------------------------|
+| POST   | `/genres`              | Создать новый жанр                          |
+| GET    | `/genres`              | Получить список всех жанров                 |
+| GET    | `/genres/{id}`         | Получить конкретный жанр по ID              |
+| PUT    | `/genres/{id}`         | Обновить конкретный жанр по ID              |
+| DELETE | `/genres/{id}`         | Удалить конкретный жанр по ID               |
+| GET    | `/books/{id}/genres`   | Получить список жанров для конкретной книги |
+
+**Связи**
+| Метод | Эндпоинты                     | Описание                                |
 |--------|------------------------------|-----------------------------------------|
-| GET    | `/relationships/author-book` | Retrieve a list of all relationships    |
-| POST   | `/relationships/author-book` | Add author-book relationship            |
-| DELETE | `/relationships/author-book` | Remove author-book relationship         |
+| GET    | `/relationships/author-book` | Получить список всех связей автор-книга |
+| POST   | `/relationships/author-book` | Добавить связь автор-книга              |
+| DELETE | `/relationships/author-book` | Удалить связь автор-книга               |
 
 
-### **Technologies Used**
+### **Используемые технологии**
 
-- **FastAPI**: A modern web framework for building APIs with Python, known for its speed and ease of use.
-- **Pydantic**: A data validation and settings management library that uses Python type annotations.
-- **SQLModel**: A library for interacting with databases using Python classes, combining the features of SQLAlchemy and Pydantic.
-- **Alembic**: A lightweight database migration tool for use with SQLAlchemy.
-- **PostgreSQL**: A powerful, open-source relational database management system.
-- **Docker**: A platform for developing, shipping, and running applications in containers.
-- **Docker Compose**: A tool for defining and running multi-container Docker applications.
+- **FastAPI**: Современный web фреймворк для построения API с использованием Python, известный своей скоростью и простотой использования.
+- **Pydantic**: Библиотека для валидации данных и управления настройками, использующая аннотации типов Python.
+- **SQLModel**: Библиотека для взаимодействия с базами данных с использованием классов Python, объединяющая функции SQLAlchemy и Pydantic.
+- **Alembic**: Легковесный инструмент для миграции базы данных на основе SQLAlchemy.
+- **PostgreSQL**: Сильная, открытая реляционная система управления базами данных.
+- **Docker**: Платформа для разработки, распространения и запуска приложений в контейнерах.
+- **Docker Compose**: Инструмент для определения и запуска многоконтейнерных приложений Docker.
 
 
 ### **TODO List**
 
-- Geners table and endpoints
+- Добавление жанров
