@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "LibraryAPI"
 version = "0.1.3"
-description = "Это простое API для управления авторами и книгами."
+description = "Это простое API для управления авторами, книгами и их жанрами."
 authors = ["wowlikon"]
 readme = "README.md"
 packages = [{ include = "library_service" }]

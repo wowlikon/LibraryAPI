@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path, Request, FastAPI
+from fastapi import APIRouter, Path, Request
 from fastapi.params import Depends
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
