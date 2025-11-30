@@ -96,6 +96,43 @@
 |--------|-------------|-------------------------------|
 | GET    | `/api/info` | Получить информацию о сервисе |
 
+
+```mermaid
+erDiagram
+    AUTHOR {
+        int id PK "ID автора"
+        string name "Имя автора"
+    }
+    
+    BOOK {
+        int id PK "ID книги"
+        string title "Название книги"
+        string description "Описание книги"
+    }
+
+    GENRE {
+        int id PK "ID жанра"
+        string name "Название жанра"
+    }
+
+    AUTHOR_BOOK {
+        int author_id FK "ID автора"
+        int book_id FK "ID книги"
+    }
+
+    GENRE_BOOK {
+        int genre_id FK "ID жанра"
+        int book_id FK "ID книги"
+    }
+
+    AUTHOR ||--o{ AUTHOR_BOOK : "писал"
+    BOOK   ||--o{ AUTHOR_BOOK : "написан"
+
+    BOOK   ||--o{ GENRE_BOOK : "принадлежит"
+    GENRE  ||--o{ GENRE_BOOK : "содержит"
+```
+
+
 ### **Используемые технологии**
 
 - **FastAPI**: Современный web фреймворк для построения API с использованием Python, известный своей скоростью и простотой использования.
