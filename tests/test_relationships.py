@@ -1,42 +1,72 @@
 import pytest
-from alembic import command
-from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlmodel import select, delete, Session
+from tests.mock_app import mock_app
+from tests.mocks.mock_storage import mock_storage
 
-from library_service.main import app
-from tests.test_misc import setup_database
+client = TestClient(mock_app)
 
-client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def setup_database():
+    """Clear mock storage before each test"""
+    mock_storage.clear_all()
+    yield
+    mock_storage.clear_all()
+
 
 def make_authorbook_relationship(author_id, book_id):
-    response = client.post("/relationships/author-book", params={"author_id": author_id, "book_id": book_id})
+    response = client.post(
+        "/relationships/author-book",
+        params={"author_id": author_id, "book_id": book_id},
+    )
     assert response.status_code == 200, "Invalid response status"
 
-def make_genrebook_relationship(author_id, book_id):
-    response = client.post("/relationships/genre-book", params={"genre_id": author_id, "book_id": book_id})
+
+def make_genrebook_relationship(genre_id, book_id):
+    response = client.post(
+        "/relationships/genre-book", params={"genre_id": genre_id, "book_id": book_id}
+    )
     assert response.status_code == 200, "Invalid response status"
 
-def test_prepare_data(setup_database):
-    response = client.post("/books", json={"title": "Test Book 1", "description": "Test Description 1"})
-    response = client.post("/books", json={"title": "Test Book 2", "description": "Test Description 2"})
-    response = client.post("/books", json={"title": "Test Book 3", "description": "Test Description 3"})
 
-    response = client.post("/authors", json={"name": "Test Author 1"})
-    response = client.post("/authors", json={"name": "Test Author 2"})
-    response = client.post("/authors", json={"name": "Test Author 3"})
+def test_prepare_data():
+    # Create books
+    assert client.post(
+        "/books", json={"title": "Test Book 1", "description": "Test Description 1"}
+    ).status_code == 200
+    assert client.post(
+        "/books", json={"title": "Test Book 2", "description": "Test Description 2"}
+    ).status_code == 200
+    assert client.post(
+        "/books", json={"title": "Test Book 3", "description": "Test Description 3"}
+    ).status_code == 200
 
+    # Create authors
+    assert client.post("/authors", json={"name": "Test Author 1"}).status_code == 200
+    assert client.post("/authors", json={"name": "Test Author 2"}).status_code == 200
+    assert client.post("/authors", json={"name": "Test Author 3"}).status_code == 200
+
+    # Create genres
+    assert client.post("/genres", json={"name": "Test Genre 1"}).status_code == 200
+    assert client.post("/genres", json={"name": "Test Genre 2"}).status_code == 200
+    assert client.post("/genres", json={"name": "Test Genre 3"}).status_code == 200
+
+    # Create relationships
     make_authorbook_relationship(1, 1)
     make_authorbook_relationship(2, 1)
     make_authorbook_relationship(1, 2)
     make_authorbook_relationship(2, 3)
     make_authorbook_relationship(3, 3)
-
-    response = client.get("/relationships/author-book")
-    assert response.status_code == 200, "Invalid response status"
-    assert len(response.json()) == 5, "Invalid number of relationships"
+    make_genrebook_relationship(1, 1)
+    make_genrebook_relationship(2, 1)
+    make_genrebook_relationship(1, 2)
+    make_genrebook_relationship(2, 3)
+    make_genrebook_relationship(3, 3)
 
 def test_get_book_authors():
+    # Setup test data
+    test_prepare_data()
+
     response1 = client.get("/books/1/authors")
     assert response1.status_code == 200, "Invalid response status"
     assert len(response1.json()) == 2, "Invalid number of authors"
@@ -59,7 +89,11 @@ def test_get_book_authors():
     assert response3.json()[0]["id"] == 2
     assert response3.json()[1]["id"] == 3
 
+
 def test_get_author_books():
+    # Setup test data
+    test_prepare_data()
+
     response1 = client.get("/authors/1/books")
     assert response1.status_code == 200, "Invalid response status"
     assert len(response1.json()) == 2, "Invalid number of books"

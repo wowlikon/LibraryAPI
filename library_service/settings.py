@@ -9,6 +9,7 @@ load_dotenv()
 with open("pyproject.toml") as f:
     config = load(f)
 
+
 # Dependency to get the FastAPI application instance
 def get_app() -> FastAPI:
     return FastAPI(
@@ -35,9 +36,10 @@ def get_app() -> FastAPI:
             {
                 "name": "misc",
                 "description": "Miscellaneous operations.",
-            }
-        ]
+            },
+        ],
     )
+
 
 USER = os.getenv("POSTGRES_USER")
 PASSWORD = os.getenv("POSTGRES_PASSWORD")
@@ -49,6 +51,7 @@ if not USER or not PASSWORD or not DATABASE or not HOST:
 
 POSTGRES_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{HOST}:5432/{DATABASE}"
 engine = create_engine(POSTGRES_DATABASE_URL, echo=True, future=True)
+
 
 # Dependency to get a database session
 def get_session():

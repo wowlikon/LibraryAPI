@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from sqlmodel import SQLModel
 
 from library_service.settings import POSTGRES_DATABASE_URL
+
 print(POSTGRES_DATABASE_URL)
 
 # this is the Alembic Config object, which provides
@@ -21,6 +22,7 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from library_service.models.db import *
+
 target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -67,9 +69,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

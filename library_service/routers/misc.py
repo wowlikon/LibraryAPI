@@ -1,12 +1,10 @@
-from fastapi import APIRouter, Request, FastAPI
+from fastapi import APIRouter, Path, Request, FastAPI
 from fastapi.params import Depends
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from datetime import datetime
 from typing import Dict
-
-from httpx import get
 
 from library_service.settings import get_app
 
@@ -30,12 +28,28 @@ def get_info(app) -> Dict:
 
 
 # Эндпоинт главной страницы
-@router.get("/", response_class=HTMLResponse)
+@router.get("/", include_in_schema=False)
 async def root(request: Request, app=Depends(get_app)):
     return templates.TemplateResponse(request, "index.html", get_info(app))
 
 
+# Редирект иконки вкладки
+@router.get("/favicon.ico", include_in_schema=False)
+def redirect_favicon():
+    return RedirectResponse("/favicon.svg")
+
+
+# Эндпоинт иконки вкладки
+@router.get("/favicon.svg", include_in_schema=False)
+async def favicon():
+    return FileResponse("library_service/favicon.svg", media_type="image/svg+xml")
+
+
 # Эндпоинт информации об API
-@router.get("/api/info")
+@router.get(
+    "/api/info",
+    summary="Информация о сервисе",
+    description="Возвращает информацию о системе",
+)
 async def api_info(app=Depends(get_app)):
     return JSONResponse(content=get_info(app))
