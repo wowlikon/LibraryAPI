@@ -1,9 +1,12 @@
-from sqlmodel import SQLModel
+"""Модуль DTO-моделей жанров"""
+from typing import List
+
 from pydantic import ConfigDict
-from typing import Optional, List
+from sqlmodel import SQLModel
 
 
 class GenreBase(SQLModel):
+    """Базовая модель жанра"""
     name: str
 
     model_config = ConfigDict(  # pyright: ignore
@@ -12,17 +15,21 @@ class GenreBase(SQLModel):
 
 
 class GenreCreate(GenreBase):
+    """Модель жанра для создания"""
     pass
 
 
 class GenreUpdate(SQLModel):
-    name: Optional[str] = None
+    """Модель жанра для обновления"""
+    name: str | None = None
 
 
 class GenreRead(GenreBase):
+    """Модель жанра для чтения"""
     id: int
 
 
 class GenreList(SQLModel):
+    """Списко жанров"""
     genres: List[GenreRead]
     total: int

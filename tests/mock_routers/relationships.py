@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+
 from tests.mocks.mock_storage import mock_storage
 
 router = APIRouter(tags=["relations"])
@@ -36,5 +37,4 @@ def get_authors_for_book(book_id: int):
 
 @router.post("/relationships/genre-book")
 def add_genre_to_book(genre_id: int, book_id: int):
-    # For tests that need genre functionality
     return {"genre_id": genre_id, "book_id": book_id}

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+
 from tests.mocks.mock_storage import mock_storage
 
 router = APIRouter(prefix="/genres", tags=["genres"])

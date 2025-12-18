@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+
 from tests.mock_app import mock_app
 from tests.mocks.mock_storage import mock_storage
 
@@ -8,7 +9,6 @@ client = TestClient(mock_app)
 
 @pytest.fixture(autouse=True)
 def setup_database():
-    """Clear mock storage before each test"""
     mock_storage.clear_all()
     yield
     mock_storage.clear_all()
@@ -35,9 +35,7 @@ def test_create_book():
 
 
 def test_list_books():
-    # First create a book
-    client.post(
-        "/books", json={"title": "Test Book", "description": "Test Description"}
+    client.post("/books", json={"title": "Test Book", "description": "Test Description"}
     )
 
     response = client.get("/books")
@@ -50,9 +48,7 @@ def test_list_books():
 
 
 def test_get_existing_book():
-    # First create a book
-    client.post(
-        "/books", json={"title": "Test Book", "description": "Test Description"}
+    client.post("/books", json={"title": "Test Book", "description": "Test Description"}
     )
 
     response = client.get("/books/1")
@@ -74,9 +70,7 @@ def test_get_not_existing_book():
 
 
 def test_update_book():
-    # First create a book
-    client.post(
-        "/books", json={"title": "Test Book", "description": "Test Description"}
+    client.post("/books", json={"title": "Test Book", "description": "Test Description"}
     )
 
     response = client.get("/books/1")
@@ -102,14 +96,8 @@ def test_update_not_existing_book():
 
 
 def test_delete_book():
-    # First create a book
-    client.post(
-        "/books", json={"title": "Test Book", "description": "Test Description"}
-    )
-
-    # Update it first
-    client.put(
-        "/books/1", json={"title": "Updated Book", "description": "Updated Description"}
+    client.post("/books", json={"title": "Test Book", "description": "Test Description"})
+    client.put("/books/1", json={"title": "Updated Book", "description": "Updated Description"}
     )
 
     response = client.get("/books/1")

@@ -1,4 +1,5 @@
-from typing import Optional, List, Any
+from typing import Any, List
+
 from tests.mocks.mock_storage import mock_storage
 
 
@@ -8,20 +9,13 @@ class MockSession:
     def __init__(self):
         self.storage = mock_storage
 
-    def add(self, obj: Any):
-        """Mock add - not needed for our implementation"""
-        pass
+    def add(self, obj: Any): ...
 
-    def commit(self):
-        """Mock commit - not needed for our implementation"""
-        pass
+    def commit(self): ...
 
-    def refresh(self, obj: Any):
-        """Mock refresh - not needed for our implementation"""
-        pass
+    def refresh(self, obj: Any): ...
 
     def get(self, model_class, pk: int):
-        """Mock get method to retrieve object by primary key"""
         if hasattr(model_class, "__name__"):
             model_name = model_class.__name__.lower()
         else:
@@ -35,12 +29,9 @@ class MockSession:
             return self.storage.get_genre(pk)
         return None
 
-    def delete(self, obj: Any):
-        """Mock delete - handled in storage methods"""
-        pass
+    def delete(self, obj: Any): ...
 
     def exec(self, statement):
-        """Mock exec method for queries"""
         return MockResult([])
 
 

@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+
 from tests.mock_app import mock_app
 from tests.mocks.mock_storage import mock_storage
 
@@ -8,7 +9,6 @@ client = TestClient(mock_app)
 
 @pytest.fixture(autouse=True)
 def setup_database():
-    """Clear mock storage before each test"""
     mock_storage.clear_all()
     yield
     mock_storage.clear_all()
@@ -30,28 +30,18 @@ def make_genrebook_relationship(genre_id, book_id):
 
 
 def test_prepare_data():
-    # Create books
-    assert client.post(
-        "/books", json={"title": "Test Book 1", "description": "Test Description 1"}
-    ).status_code == 200
-    assert client.post(
-        "/books", json={"title": "Test Book 2", "description": "Test Description 2"}
-    ).status_code == 200
-    assert client.post(
-        "/books", json={"title": "Test Book 3", "description": "Test Description 3"}
-    ).status_code == 200
+    assert (client.post("/books", json={"title": "Test Book 1", "description": "Test Description 1"}).status_code == 200)
+    assert (client.post("/books", json={"title": "Test Book 2", "description": "Test Description 2"}).status_code == 200)
+    assert (client.post("/books", json={"title": "Test Book 3", "description": "Test Description 3"}).status_code == 200)
 
-    # Create authors
     assert client.post("/authors", json={"name": "Test Author 1"}).status_code == 200
     assert client.post("/authors", json={"name": "Test Author 2"}).status_code == 200
     assert client.post("/authors", json={"name": "Test Author 3"}).status_code == 200
 
-    # Create genres
     assert client.post("/genres", json={"name": "Test Genre 1"}).status_code == 200
     assert client.post("/genres", json={"name": "Test Genre 2"}).status_code == 200
     assert client.post("/genres", json={"name": "Test Genre 3"}).status_code == 200
 
-    # Create relationships
     make_authorbook_relationship(1, 1)
     make_authorbook_relationship(2, 1)
     make_authorbook_relationship(1, 2)
@@ -63,8 +53,8 @@ def test_prepare_data():
     make_genrebook_relationship(2, 3)
     make_genrebook_relationship(3, 3)
 
+
 def test_get_book_authors():
-    # Setup test data
     test_prepare_data()
 
     response1 = client.get("/books/1/authors")
@@ -91,7 +81,6 @@ def test_get_book_authors():
 
 
 def test_get_author_books():
-    # Setup test data
     test_prepare_data()
 
     response1 = client.get("/authors/1/books")

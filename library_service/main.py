@@ -1,12 +1,12 @@
+"""Основной модуль"""
+from contextlib import asynccontextmanager
+
 from alembic import command
 from alembic.config import Config
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from toml import load
 
-from .settings import engine, get_app
 from .routers import api_router
-from .routers.misc import get_info
+from .settings import engine, get_app
 
 app = get_app()
 alembic_cfg = Config("alembic.ini")
@@ -14,6 +14,7 @@ alembic_cfg = Config("alembic.ini")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Жизененый цикл сервиса"""
     print("[+] Initializing...")
 
     # Настройка базы данных

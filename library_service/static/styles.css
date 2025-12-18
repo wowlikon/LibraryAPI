@@ -1,0 +1,77 @@
+@font-face {
+    font-family: "Novem";
+    src: url("novem.regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Dited";
+    src: url("dited.regular.ttf") format("truetype");
+}
+
+h1 {
+    font-family: "Novem", sans-serif;
+    letter-spacing: 10px;
+}
+
+nav ul li a {
+    font-family: "Dited", sans-serif;
+    letter-spacing: 2.5px;
+    font-size: large;
+}
+
+/* Custom checkbox styles */
+.custom-checkbox {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    font-size: 14px;
+    user-select: none;
+}
+
+.custom-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkmark {
+    height: 18px;
+    width: 18px;
+    background-color: #fff;
+    border: 2px solid #d1d5db; /* gray-300 */
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.custom-checkbox:hover input ~ .checkmark {
+    border-color: #6b7280; /* gray-500 */
+}
+
+.custom-checkbox input:checked ~ .checkmark {
+    background-color: #6b7280; /* gray-500 */
+    border-color: #6b7280;
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-checkbox input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.custom-checkbox .checkmark:after {
+    left: 6.5px;
+    top: 6px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}

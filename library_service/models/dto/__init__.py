@@ -1,7 +1,12 @@
-from .author import AuthorBase, AuthorCreate, AuthorUpdate, AuthorRead, AuthorList
-from .book import BookBase, BookCreate, BookUpdate, BookRead, BookList
-
-from .genre import GenreBase, GenreCreate, GenreUpdate, GenreRead, GenreList
+"""Модуль DTO-моделей"""
+from .author import AuthorBase, AuthorCreate, AuthorList, AuthorRead, AuthorUpdate
+from .genre import GenreBase, GenreCreate, GenreList, GenreRead, GenreUpdate
+from .book import BookBase, BookCreate, BookList, BookRead, BookUpdate
+from .role import RoleBase, RoleCreate, RoleList, RoleRead, RoleUpdate
+from .user import UserBase, UserCreate, UserLogin, UserRead, UserUpdate
+from .token import Token, TokenData
+from .combined import (AuthorWithBooks, GenreWithBooks, BookWithAuthors, BookWithGenres,
+    BookWithAuthorsAndGenres, BookFilteredList)
 
 __all__ = [
     "AuthorBase",
@@ -14,9 +19,22 @@ __all__ = [
     "BookUpdate",
     "BookRead",
     "BookList",
+    "BookFilteredList",
     "GenreBase",
     "GenreCreate",
     "GenreUpdate",
     "GenreRead",
     "GenreList",
+    "RoleBase",
+    "RoleCreate",
+    "RoleUpdate",
+    "RoleRead",
+    "RoleList",
+    "Token",
+    "TokenData",
+    "UserBase",
+    "UserCreate",
+    "UserRead",
+    "UserUpdate",
+    "UserLogin",
 ]

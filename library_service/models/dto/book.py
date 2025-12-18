@@ -1,9 +1,15 @@
-from sqlmodel import SQLModel
+"""Модуль DTO-моделей книг"""
+from typing import List, TYPE_CHECKING
+
 from pydantic import ConfigDict
-from typing import Optional, List
+from sqlmodel import SQLModel
+
+if TYPE_CHECKING:
+    from .combined import BookWithAuthorsAndGenres
 
 
 class BookBase(SQLModel):
+    """Базовая модель книги"""
     title: str
     description: str
 
@@ -15,18 +21,22 @@ class BookBase(SQLModel):
 
 
 class BookCreate(BookBase):
+    """Модель книги для создания"""
     pass
 
 
 class BookUpdate(SQLModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    """Модель книги для обновления"""
+    title: str | None = None
+    description: str | None = None
 
 
 class BookRead(BookBase):
+    """Модель книги для чтения"""
     id: int
 
 
 class BookList(SQLModel):
+    """Список книг"""
     books: List[BookRead]
     total: int

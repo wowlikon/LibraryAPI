@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+
 from tests.mock_app import mock_app
 from tests.mocks.mock_storage import mock_storage
 
@@ -8,7 +9,6 @@ client = TestClient(mock_app)
 
 @pytest.fixture(autouse=True)
 def setup_database():
-    """Clear mock storage before each test"""
     mock_storage.clear_all()
     yield
     mock_storage.clear_all()
@@ -29,7 +29,6 @@ def test_create_author():
 
 
 def test_list_authors():
-    # First create an author
     client.post("/authors", json={"name": "Test Author"})
 
     response = client.get("/authors")
@@ -42,7 +41,6 @@ def test_list_authors():
 
 
 def test_get_existing_author():
-    # First create an author
     client.post("/authors", json={"name": "Test Author"})
 
     response = client.get("/authors/1")
@@ -63,7 +61,6 @@ def test_get_not_existing_author():
 
 
 def test_update_author():
-    # First create an author
     client.post("/authors", json={"name": "Test Author"})
 
     response = client.get("/authors/1")
@@ -84,10 +81,7 @@ def test_update_not_existing_author():
 
 
 def test_delete_author():
-    # First create an author
     client.post("/authors", json={"name": "Test Author"})
-
-    # Update it first
     client.put("/authors/1", json={"name": "Updated Author"})
 
     response = client.get("/authors/1")

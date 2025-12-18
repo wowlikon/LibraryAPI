@@ -1,15 +1,82 @@
+"""Модуль работы со связями"""
+from typing import Dict, List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from typing import List, Dict
 
-from library_service.settings import get_session
-from library_service.models.db import Author, Book, Genre, AuthorBookLink, GenreBookLink
+from library_service.auth import RequireAuth
+from library_service.models.db import Author, AuthorBookLink, Book, Genre, GenreBookLink
 from library_service.models.dto import AuthorRead, BookRead, GenreRead
+from library_service.settings import get_session
+
 
 router = APIRouter(tags=["relations"])
 
 
-# Add author to book
+def check_entity_exists(session, model, entity_id, entity_name):
+    """Проверка существования связи между сущностями в БД"""
+    entity = session.get(model, entity_id)
+    if not entity:
+        raise HTTPException(status_code=404, detail=f"{entity_name} not found")
+    return entity
+
+
+def add_relationship(session, link_model, id1, field1, id2, field2, detail):
+    """Создание связи между сущностями в БД"""
+    existing_link = session.exec(
+        select(link_model)
+        .where(getattr(link_model, field1) == id1)
+        .where(getattr(link_model, field2) == id2)
+    ).first()
+
+    if existing_link:
+        raise HTTPException(status_code=400, detail=detail)
+
+    link = link_model(**{field1: id1, field2: id2})
+    session.add(link)
+    session.commit()
+    session.refresh(link)
+    return link
+
+
+def remove_relationship(session, link_model, id1, field1, id2, field2):
+    """Удаление связи между сущностями в БД"""
+    link = session.exec(
+        select(link_model)
+        .where(getattr(link_model, field1) == id1)
+        .where(getattr(link_model, field2) == id2)
+    ).first()
+
+    if not link:
+        raise HTTPException(status_code=404, detail="Relationship not found")
+
+    session.delete(link)
+    session.commit()
+    return {"message": "Relationship removed successfully"}
+
+
+def get_related(
+        session,
+        main_model,
+        main_id,
+        main_name,
+        related_model,
+        link_model,
+        link_main_field,
+        link_related_field,
+        read_model
+    ):
+    """Получение связанных в БД сущностей"""
+    check_entity_exists(session, main_model, main_id, main_name)
+
+    related = session.exec(
+        select(related_model).join(link_model)
+        .where(getattr(link_model, link_main_field) == main_id)
+    ).all()
+
+    return [read_model(**obj.model_dump()) for obj in related]
+
+
 @router.post(
     "/relationships/author-book",
     response_model=AuthorBookLink,
@@ -17,33 +84,19 @@ router = APIRouter(tags=["relations"])
     description="Добавляет связь между автором и книгой в систему",
 )
 def add_author_to_book(
-    author_id: int, book_id: int, session: Session = Depends(get_session)
+    current_user: RequireAuth,
+    author_id: int,
+    book_id: int,
+    session: Session = Depends(get_session),
 ):
-    author = session.get(Author, author_id)
-    if not author:
-        raise HTTPException(status_code=404, detail="Author not found")
+    """Эндпоинт добавления автора к книге"""
+    check_entity_exists(session, Author, author_id, "Author")
+    check_entity_exists(session, Book, book_id, "Book")
 
-    book = session.get(Book, book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-
-    existing_link = session.exec(
-        select(AuthorBookLink)
-        .where(AuthorBookLink.author_id == author_id)
-        .where(AuthorBookLink.book_id == book_id)
-    ).first()
-
-    if existing_link:
-        raise HTTPException(status_code=400, detail="Relationship already exists")
-
-    link = AuthorBookLink(author_id=author_id, book_id=book_id)
-    session.add(link)
-    session.commit()
-    session.refresh(link)
-    return link
+    return add_relationship(session, AuthorBookLink,
+        author_id, "author_id", book_id, "book_id", "Relationship already exists")
 
 
-# Remove author from book
 @router.delete(
     "/relationships/author-book",
     response_model=Dict[str, str],
@@ -51,23 +104,16 @@ def add_author_to_book(
     description="Удаляет связь между автором и книгой в системе",
 )
 def remove_author_from_book(
-    author_id: int, book_id: int, session: Session = Depends(get_session)
+    current_user: RequireAuth,
+    author_id: int,
+    book_id: int,
+    session: Session = Depends(get_session),
 ):
-    link = session.exec(
-        select(AuthorBookLink)
-        .where(AuthorBookLink.author_id == author_id)
-        .where(AuthorBookLink.book_id == book_id)
-    ).first()
-
-    if not link:
-        raise HTTPException(status_code=404, detail="Relationship not found")
-
-    session.delete(link)
-    session.commit()
-    return {"message": "Relationship removed successfully"}
+    """Эндпоинт удаления автора из книги"""
+    return remove_relationship(session, AuthorBookLink,
+        author_id, "author_id", book_id, "book_id")
 
 
-# Get author's books
 @router.get(
     "/authors/{author_id}/books/",
     response_model=List[BookRead],
@@ -75,18 +121,12 @@ def remove_author_from_book(
     description="Возвращает все книги в системе, написанные автором",
 )
 def get_books_for_author(author_id: int, session: Session = Depends(get_session)):
-    author = session.get(Author, author_id)
-    if not author:
-        raise HTTPException(status_code=404, detail="Author not found")
-
-    books = session.exec(
-        select(Book).join(AuthorBookLink).where(AuthorBookLink.author_id == author_id)
-    ).all()
-
-    return [BookRead(**book.model_dump()) for book in books]
+    """Эндпоинт получения книг, написанных автором"""
+    return get_related(session,
+        Author, author_id, "Author", Book,
+        AuthorBookLink, "author_id", "book_id", BookRead)
 
 
-# Get book's authors
 @router.get(
     "/books/{book_id}/authors/",
     response_model=List[AuthorRead],
@@ -94,18 +134,12 @@ def get_books_for_author(author_id: int, session: Session = Depends(get_session)
     description="Возвращает всех авторов книги в системе",
 )
 def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
-    book = session.get(Book, book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-
-    authors = session.exec(
-        select(Author).join(AuthorBookLink).where(AuthorBookLink.book_id == book_id)
-    ).all()
-
-    return [AuthorRead(**author.model_dump()) for author in authors]
+    """Эндпоинт получения авторов книги"""
+    return get_related(session,
+        Book, book_id, "Book", Author,
+        AuthorBookLink, "book_id", "author_id", AuthorRead)
 
 
-# Add genre to book
 @router.post(
     "/relationships/genre-book",
     response_model=GenreBookLink,
@@ -113,33 +147,19 @@ def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
     description="Добавляет связь между книгой и жанром в систему",
 )
 def add_genre_to_book(
-    genre_id: int, book_id: int, session: Session = Depends(get_session)
+    current_user: RequireAuth,
+    genre_id: int,
+    book_id: int,
+    session: Session = Depends(get_session),
 ):
-    genre = session.get(Genre, genre_id)
-    if not genre:
-        raise HTTPException(status_code=404, detail="Genre not found")
+    """Эндпоинт добавления жанра к книге"""
+    check_entity_exists(session, Genre, genre_id, "Genre")
+    check_entity_exists(session, Book, book_id, "Book")
 
-    book = session.get(Book, book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-
-    existing_link = session.exec(
-        select(GenreBookLink)
-        .where(GenreBookLink.genre_id == genre_id)
-        .where(GenreBookLink.book_id == book_id)
-    ).first()
-
-    if existing_link:
-        raise HTTPException(status_code=400, detail="Relationship already exists")
-
-    link = GenreBookLink(genre_id=genre_id, book_id=book_id)
-    session.add(link)
-    session.commit()
-    session.refresh(link)
-    return link
+    return add_relationship(session, GenreBookLink,
+        genre_id, "genre_id", book_id, "book_id", "Relationship already exists")
 
 
-# Remove author from book
 @router.delete(
     "/relationships/genre-book",
     response_model=Dict[str, str],
@@ -147,55 +167,37 @@ def add_genre_to_book(
     description="Удаляет связь между жанром и книгой в системе",
 )
 def remove_genre_from_book(
-    genre_id: int, book_id: int, session: Session = Depends(get_session)
+    current_user: RequireAuth,
+    genre_id: int,
+    book_id: int,
+    session: Session = Depends(get_session),
 ):
-    link = session.exec(
-        select(GenreBookLink)
-        .where(GenreBookLink.genre_id == genre_id)
-        .where(GenreBookLink.book_id == book_id)
-    ).first()
-
-    if not link:
-        raise HTTPException(status_code=404, detail="Relationship not found")
-
-    session.delete(link)
-    session.commit()
-    return {"message": "Relationship removed successfully"}
+    """Эндпоинт удаления жанра из книги"""
+    return remove_relationship(session, GenreBookLink,
+        genre_id, "genre_id", book_id, "book_id")
 
 
-# Get genre's books
 @router.get(
-    "/genres/{author_id}/books/",
+    "/genres/{genre_id}/books/",
     response_model=List[BookRead],
     summary="Получить книги, написанные в жанре",
     description="Возвращает все книги в системе в этом жанре",
 )
 def get_books_for_genre(genre_id: int, session: Session = Depends(get_session)):
-    genre = session.get(Genre, genre_id)
-    if not genre:
-        raise HTTPException(status_code=404, detail="Genre not found")
-
-    books = session.exec(
-        select(Book).join(GenreBookLink).where(GenreBookLink.author_id == genre_id)
-    ).all()
-
-    return [BookRead(**book.model_dump()) for book in books]
+    """Эндпоинт получения книг с жанром"""
+    return get_related(session,
+        Genre, genre_id, "Genre", Book,
+        GenreBookLink, "genre_id", "book_id", BookRead)
 
 
-# Get book's genres
 @router.get(
     "/books/{book_id}/genres/",
     response_model=List[GenreRead],
     summary="Получить жанры книги",
     description="Возвращает все жанры книги в системе",
 )
-def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
-    book = session.get(Book, book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-
-    genres = session.exec(
-        select(Genre).join(GenreBookLink).where(GenreBookLink.book_id == book_id)
-    ).all()
-
-    return [GenreRead(**author.model_dump()) for genre in genres]
+def get_genres_for_book(book_id: int, session: Session = Depends(get_session)):
+    """Эндпоинт получения жанров книги"""
+    return get_related(session,
+        Book, book_id, "Book", Genre,
+        GenreBookLink, "book_id", "genre_id", GenreRead)

@@ -1,29 +1,32 @@
-from fastapi import APIRouter, Path, Depends, HTTPException
-from sqlmodel import Session, select
+"""Модуль работы с книгами"""
+from typing import List
 
-from library_service.models.db.links import BookWithAuthorsAndGenres
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from sqlmodel import Session, select, col, func
+
+from library_service.auth import RequireAuth
 from library_service.settings import get_session
-from library_service.models.db import Author, Book, BookWithAuthors, AuthorBookLink
-from library_service.models.dto import (
-    AuthorRead,
-    BookList,
-    BookRead,
-    BookCreate,
-    BookUpdate,
+from library_service.models.db import Author, AuthorBookLink, Book
+from library_service.models.dto import AuthorRead, BookCreate, BookList, BookRead, BookUpdate
+from library_service.models.dto.combined import (
+    BookWithAuthorsAndGenres,
+    BookFilteredList
 )
 
 
 router = APIRouter(prefix="/books", tags=["books"])
 
 
-# Create a book
 @router.post(
     "/",
     response_model=Book,
     summary="Создать книгу",
     description="Добавляет книгу в систему",
 )
-def create_book(book: BookCreate, session: Session = Depends(get_session)):
+def create_book(
+    current_user: RequireAuth, book: BookCreate, session: Session = Depends(get_session)
+):
+    """Эндпоинт создания книги"""
     db_book = Book(**book.model_dump())
     session.add(db_book)
     session.commit()
@@ -31,7 +34,6 @@ def create_book(book: BookCreate, session: Session = Depends(get_session)):
     return BookRead(**db_book.model_dump())
 
 
-# Read books
 @router.get(
     "/",
     response_model=BookList,
@@ -39,13 +41,13 @@ def create_book(book: BookCreate, session: Session = Depends(get_session)):
     description="Возвращает список всех книг в системе",
 )
 def read_books(session: Session = Depends(get_session)):
+    """Эндпоинт чтения списка книг"""
     books = session.exec(select(Book)).all()
     return BookList(
         books=[BookRead(**book.model_dump()) for book in books], total=len(books)
     )
 
 
-# Read a book with their authors and genres
 @router.get(
     "/{book_id}",
     response_model=BookWithAuthorsAndGenres,
@@ -56,6 +58,7 @@ def get_book(
     book_id: int = Path(..., description="ID книги (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт чтения конкретной книги"""
     book = session.get(Book, book_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -76,10 +79,9 @@ def get_book(
     book_data["authors"] = author_reads
     book_data["genres"] = genre_reads
 
-    return BookWithAuthors(**book_data)
+    return BookWithAuthorsAndGenres(**book_data)
 
 
-# Update a book
 @router.put(
     "/{book_id}",
     response_model=Book,
@@ -87,10 +89,12 @@ def get_book(
     description="Обновляет информацию о книге в системе",
 )
 def update_book(
+    current_user: RequireAuth,
     book: BookUpdate,
     book_id: int = Path(..., description="ID книги (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт обновления книги"""
     db_book = session.get(Book, book_id)
     if not db_book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -102,7 +106,6 @@ def update_book(
     return db_book
 
 
-# Delete a book
 @router.delete(
     "/{book_id}",
     response_model=BookRead,
@@ -110,9 +113,11 @@ def update_book(
     description="Удаляет книгу их системы",
 )
 def delete_book(
+    current_user: RequireAuth,
     book_id: int = Path(..., description="ID книги (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт удаления книги"""
     book = session.get(Book, book_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -122,3 +127,51 @@ def delete_book(
     session.delete(book)
     session.commit()
     return book_read
+
+
+@router.get(
+    "/filter",
+    response_model=BookFilteredList,
+    summary="Фильтрация книг",
+    description="Фильтрация списка книг по названию, авторам и жанрам с пагинацией"
+)
+def filter_books(
+    session: Session = Depends(get_session),
+    q: str | None = Query(None, min_length=3, max_length=50, description="Поиск"),
+    author_ids: List[int] | None = Query(None, description="Список ID авторов"),
+    genre_ids: List[int] | None = Query(None, description="Список ID жанров"),
+    page: int = Query(1, gt=0, description="Номер страницы"),
+    size: int = Query(20, gt=0, lt=101, description="Количество элементов на странице"),
+):
+    """Эндпоинт получения отфильтрованного списка книг"""
+    statement = select(Book).distinct()
+
+    if q:
+        statement = statement.where(
+            (col(Book.title).ilike(f"%{q}%")) | (col(Book.description).ilike(f"%{q}%"))
+        )
+
+    if author_ids:
+        statement = statement.join(AuthorBookLink).where(AuthorBookLink.author_id.in_(author_ids))
+
+    if genre_ids:
+        statement = statement.join(GenreBookLink).where(GenreBookLink.genre_id.in_(genre_ids))
+
+    total_statement = select(func.count()).select_from(statement.subquery())
+    total = session.exec(total_statement).one()
+
+    offset = (page - 1) * size
+    statement = statement.offset(offset).limit(size)
+    results = session.exec(statement).all()
+
+    books_with_data = []
+    for db_book in results:
+        books_with_data.append(
+            BookWithAuthorsAndGenres(
+                **db_book.model_dump(),
+                authors=[AuthorRead(**a.model_dump()) for a in db_book.authors],
+                genres=[GenreRead(**g.model_dump()) for g in db_book.genres]
+            )
+        )
+
+    return BookFilteredList(books=books_with_data, total=total)

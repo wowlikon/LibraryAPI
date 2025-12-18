@@ -1,9 +1,12 @@
-from sqlmodel import SQLModel
+"""Модуль DTO-моделей авторов"""
+from typing import List
+
 from pydantic import ConfigDict
-from typing import Optional, List
+from sqlmodel import SQLModel
 
 
 class AuthorBase(SQLModel):
+    """Базовая модель автора"""
     name: str
 
     model_config = ConfigDict(  # pyright: ignore
@@ -12,17 +15,21 @@ class AuthorBase(SQLModel):
 
 
 class AuthorCreate(AuthorBase):
+    """Модель автора для создания"""
     pass
 
 
 class AuthorUpdate(SQLModel):
-    name: Optional[str] = None
+    """Модель автора для обновления"""
+    name: str | None = None
 
 
 class AuthorRead(AuthorBase):
+    """Модель автора для чтения"""
     id: int
 
 
 class AuthorList(SQLModel):
+    """Список авторов"""
     authors: List[AuthorRead]
     total: int

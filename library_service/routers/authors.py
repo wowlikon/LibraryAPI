@@ -1,28 +1,28 @@
-from fastapi import APIRouter, Path, Depends, HTTPException
+"""Модуль работы с авторами"""
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlmodel import Session, select
 
+from library_service.auth import RequireAuth
 from library_service.settings import get_session
-from library_service.models.db import Author, AuthorBookLink, Book, AuthorWithBooks
-from library_service.models.dto import (
-    AuthorCreate,
-    AuthorUpdate,
-    AuthorRead,
-    AuthorList,
-    BookRead,
-)
-
+from library_service.models.db import Author, AuthorBookLink, Book
+from library_service.models.dto import (BookRead, AuthorWithBooks,
+    AuthorCreate, AuthorList, AuthorRead, AuthorUpdate)
 
 router = APIRouter(prefix="/authors", tags=["authors"])
 
 
-# Create an author
 @router.post(
     "/",
     response_model=AuthorRead,
     summary="Создать автора",
     description="Добавляет автора в систему",
 )
-def create_author(author: AuthorCreate, session: Session = Depends(get_session)):
+def create_author(
+    current_user: RequireAuth,
+    author: AuthorCreate,
+    session: Session = Depends(get_session),
+):
+    """Эндпоинт создания автора"""
     db_author = Author(**author.model_dump())
     session.add(db_author)
     session.commit()
@@ -30,7 +30,6 @@ def create_author(author: AuthorCreate, session: Session = Depends(get_session))
     return AuthorRead(**db_author.model_dump())
 
 
-# Read authors
 @router.get(
     "/",
     response_model=AuthorList,
@@ -38,6 +37,7 @@ def create_author(author: AuthorCreate, session: Session = Depends(get_session))
     description="Возвращает список всех авторов в системе",
 )
 def read_authors(session: Session = Depends(get_session)):
+    """Эндпоинт чтения списка авторов"""
     authors = session.exec(select(Author)).all()
     return AuthorList(
         authors=[AuthorRead(**author.model_dump()) for author in authors],
@@ -45,7 +45,6 @@ def read_authors(session: Session = Depends(get_session)):
     )
 
 
-# Read an author with their books
 @router.get(
     "/{author_id}",
     response_model=AuthorWithBooks,
@@ -56,6 +55,7 @@ def get_author(
     author_id: int = Path(..., description="ID автора (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт чтения конкретного автора"""
     author = session.get(Author, author_id)
     if not author:
         raise HTTPException(status_code=404, detail="Author not found")
@@ -72,7 +72,6 @@ def get_author(
     return AuthorWithBooks(**author_data)
 
 
-# Update an author
 @router.put(
     "/{author_id}",
     response_model=AuthorRead,
@@ -80,10 +79,12 @@ def get_author(
     description="Обновляет информацию об авторе в системе",
 )
 def update_author(
+    current_user: RequireAuth,
     author: AuthorUpdate,
     author_id: int = Path(..., description="ID автора (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт обновления автора"""
     db_author = session.get(Author, author_id)
     if not db_author:
         raise HTTPException(status_code=404, detail="Author not found")
@@ -97,7 +98,6 @@ def update_author(
     return AuthorRead(**db_author.model_dump())
 
 
-# Delete an author
 @router.delete(
     "/{author_id}",
     response_model=AuthorRead,
@@ -105,9 +105,11 @@ def update_author(
     description="Удаляет автора из системы",
 )
 def delete_author(
+    current_user: RequireAuth,
     author_id: int = Path(..., description="ID автора (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт удаления автора"""
     author = session.get(Author, author_id)
     if not author:
         raise HTTPException(status_code=404, detail="Author not found")

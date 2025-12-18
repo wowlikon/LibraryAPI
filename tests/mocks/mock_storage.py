@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 class MockStorage:
@@ -15,7 +15,7 @@ class MockStorage:
         self.genre_id_counter = 1
 
     def clear_all(self):
-        """Clear all data"""
+        """Очистка всех данных"""
         self.books.clear()
         self.authors.clear()
         self.genres.clear()
@@ -33,7 +33,7 @@ class MockStorage:
         self.book_id_counter += 1
         return book
 
-    def get_book(self, book_id: int) -> Optional[dict]:
+    def get_book(self, book_id: int) -> dict | None:
         return self.books.get(book_id)
 
     def get_all_books(self) -> List[dict]:
@@ -42,9 +42,9 @@ class MockStorage:
     def update_book(
         self,
         book_id: int,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-    ) -> Optional[dict]:
+        title: str | None = None,
+        description: str | None = None,
+    ) -> dict | None:
         if book_id not in self.books:
             return None
         book = self.books[book_id]
@@ -54,7 +54,7 @@ class MockStorage:
             book["description"] = description
         return book
 
-    def delete_book(self, book_id: int) -> Optional[dict]:
+    def delete_book(self, book_id: int) -> dict | None:
         if book_id not in self.books:
             return None
         book = self.books.pop(book_id)
@@ -74,15 +74,15 @@ class MockStorage:
         self.author_id_counter += 1
         return author
 
-    def get_author(self, author_id: int) -> Optional[dict]:
+    def get_author(self, author_id: int) -> dict | None:
         return self.authors.get(author_id)
 
     def get_all_authors(self) -> List[dict]:
         return list(self.authors.values())
 
     def update_author(
-        self, author_id: int, name: Optional[str] = None
-    ) -> Optional[dict]:
+        self, author_id: int, name: str | None = None
+    ) -> dict | None:
         if author_id not in self.authors:
             return None
         author = self.authors[author_id]
@@ -90,7 +90,7 @@ class MockStorage:
             author["name"] = name
         return author
 
-    def delete_author(self, author_id: int) -> Optional[dict]:
+    def delete_author(self, author_id: int) -> dict | None:
         if author_id not in self.authors:
             return None
         author = self.authors.pop(author_id)
@@ -107,15 +107,13 @@ class MockStorage:
         self.genre_id_counter += 1
         return genre
 
-    def get_genre(self, genre_id: int) -> Optional[dict]:
+    def get_genre(self, genre_id: int) -> dict | None:
         return self.genres.get(genre)
 
     def get_all_authors(self) -> List[dict]:
         return list(self.authors.values())
 
-    def update_genre(
-        self, genre_id: int, name: Optional[str] = None
-    ) -> Optional[dict]:
+    def update_genre(self, genre_id: int, name: str | None = None) -> dict | None:
         if genre_id not in self.genres:
             return None
         genre = self.genres[genre_id]
@@ -123,7 +121,7 @@ class MockStorage:
             genre["name"] = name
         return genre
 
-    def delete_genre(self, genre_id: int) -> Optional[dict]:
+    def delete_genre(self, genre_id: int) -> dict | None:
         if genre_id not in self.genres:
             return None
         genre = self.genres.pop(genre_id)

@@ -1,12 +1,9 @@
+"""Модуль связей между сущностями в БД"""
 from sqlmodel import SQLModel, Field
-from typing import List
-
-from library_service.models.dto.author import AuthorRead
-from library_service.models.dto.book import BookRead
-from library_service.models.dto.genre import GenreRead
 
 
 class AuthorBookLink(SQLModel, table=True):
+    """Модель связи автора и книги"""
     author_id: int | None = Field(
         default=None, foreign_key="author.id", primary_key=True
     )
@@ -14,26 +11,14 @@ class AuthorBookLink(SQLModel, table=True):
 
 
 class GenreBookLink(SQLModel, table=True):
+    """Модель связи жанра и книги"""
     genre_id: int | None = Field(default=None, foreign_key="genre.id", primary_key=True)
     book_id: int | None = Field(default=None, foreign_key="book.id", primary_key=True)
 
 
-class AuthorWithBooks(AuthorRead):
-    books: List[BookRead] = Field(default_factory=list)
+class UserRoleLink(SQLModel, table=True):
+    """Модель связи роли и пользователя"""
+    __tablename__ = "user_roles"
 
-
-class BookWithAuthors(BookRead):
-    authors: List[AuthorRead] = Field(default_factory=list)
-
-
-class BookWithGenres(BookRead):
-    genres: List[GenreRead] = Field(default_factory=list)
-
-
-class GenreWithBooks(GenreRead):
-    books: List[BookRead] = Field(default_factory=list)
-
-
-class BookWithAuthorsAndGenres(BookRead):
-    authors: List[AuthorRead] = Field(default_factory=list)
-    genres: List[GenreRead] = Field(default_factory=list)
+    user_id: int | None = Field(default=None, foreign_key="users.id", primary_key=True)
+    role_id: int | None = Field(default=None, foreign_key="roles.id", primary_key=True)

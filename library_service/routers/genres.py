@@ -1,28 +1,28 @@
-from fastapi import APIRouter, Path, Depends, HTTPException
+"""Модуль работы с жанрами"""
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlmodel import Session, select
 
+from library_service.auth import RequireAuth
+from library_service.models.db import Book, Genre, GenreBookLink
+from library_service.models.dto import BookRead, GenreCreate, GenreList, GenreRead, GenreUpdate, GenreWithBooks
 from library_service.settings import get_session
-from library_service.models.db import Genre, GenreBookLink, Book, GenreWithBooks
-from library_service.models.dto import (
-    GenreCreate,
-    GenreUpdate,
-    GenreRead,
-    GenreList,
-    BookRead,
-)
-
 
 router = APIRouter(prefix="/genres", tags=["genres"])
 
 
-# Create a genre
+# Создание жанра
 @router.post(
     "/",
     response_model=GenreRead,
     summary="Создать жанр",
     description="Добавляет жанр книг в систему",
 )
-def create_genre(genre: GenreCreate, session: Session = Depends(get_session)):
+def create_genre(
+    current_user: RequireAuth,
+    genre: GenreCreate,
+    session: Session = Depends(get_session),
+):
+    """Эндпоинт создания жанра"""
     db_genre = Genre(**genre.model_dump())
     session.add(db_genre)
     session.commit()
@@ -30,7 +30,7 @@ def create_genre(genre: GenreCreate, session: Session = Depends(get_session)):
     return GenreRead(**db_genre.model_dump())
 
 
-# Read genres
+# Чтение жанров
 @router.get(
     "/",
     response_model=GenreList,
@@ -38,13 +38,14 @@ def create_genre(genre: GenreCreate, session: Session = Depends(get_session)):
     description="Возвращает список всех жанров в системе",
 )
 def read_genres(session: Session = Depends(get_session)):
+    """Эндпоинт чтения списка жанров"""
     genres = session.exec(select(Genre)).all()
     return GenreList(
         genres=[GenreRead(**genre.model_dump()) for genre in genres], total=len(genres)
     )
 
 
-# Read a genre with their books
+# Чтение жанра с его книгами
 @router.get(
     "/{genre_id}",
     response_model=GenreWithBooks,
@@ -55,6 +56,7 @@ def get_genre(
     genre_id: int = Path(..., description="ID жанра (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт чтения конкретного жанра"""
     genre = session.get(Genre, genre_id)
     if not genre:
         raise HTTPException(status_code=404, detail="Genre not found")
@@ -71,7 +73,7 @@ def get_genre(
     return GenreWithBooks(**genre_data)
 
 
-# Update a genre
+# Обновление жанра
 @router.put(
     "/{genre_id}",
     response_model=GenreRead,
@@ -79,10 +81,12 @@ def get_genre(
     description="Обновляет информацию о жанре в системе",
 )
 def update_genre(
+    current_user: RequireAuth,
     genre: GenreUpdate,
     genre_id: int = Path(..., description="ID жанра (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт обновления жанра"""
     db_genre = session.get(Genre, genre_id)
     if not db_genre:
         raise HTTPException(status_code=404, detail="Genre not found")
@@ -96,7 +100,7 @@ def update_genre(
     return GenreRead(**db_genre.model_dump())
 
 
-# Delete a genre
+# Удаление жанра
 @router.delete(
     "/{genre_id}",
     response_model=GenreRead,
@@ -104,9 +108,11 @@ def update_genre(
     description="Удаляет автора из системы",
 )
 def delete_genre(
+    current_user: RequireAuth,
     genre_id: int = Path(..., description="ID жанра (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
+    """Эндпоинт удаления жанра"""
     genre = session.get(Genre, genre_id)
     if not genre:
         raise HTTPException(status_code=404, detail="Genre not found")

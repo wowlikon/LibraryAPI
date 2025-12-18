@@ -1,2 +1,3 @@
-from .dto import *
+"""Модуль моделей"""
 from .db import *
+from .dto import *
