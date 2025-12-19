@@ -7,8 +7,10 @@ from fastapi import APIRouter, Request
 from fastapi.params import Depends
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlmodel import Session, select, func
 
-from library_service.settings import get_app
+from library_service.settings import get_app, get_session
+from library_service.models.db import Author, Book, Genre, User
 
 
 router = APIRouter(tags=["misc"])
@@ -70,8 +72,27 @@ async def favicon():
 @router.get(
     "/api/info",
     summary="Информация о сервисе",
-    description="Возвращает информацию о системе",
+    description="Возвращает общую информацию о системе",
 )
 async def api_info(app=Depends(lambda: get_app())):
     """Эндпоинт информации об API"""
     return JSONResponse(content=get_info(app))
+
+
+@router.get(
+    "/api/stats",
+    summary="Статистика сервиса",
+    description="Возвращает статистическую информацию о системе",
+)
+async def api_stats(session: Session = Depends(get_session)):
+    """Эндпоинт стстистика системы"""
+    authors = select(func.count()).select_from(Author)
+    books = select(func.count()).select_from(Book)
+    genres = select(func.count()).select_from(Genre)
+    users = select(func.count()).select_from(User)
+    return JSONResponse(content={
+        "authors": session.exec(authors).one(),
+        "books": session.exec(books).one(),
+        "genres": session.exec(genres).one(),
+        "users": session.exec(users).one(),
+    })
