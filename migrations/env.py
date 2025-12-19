@@ -6,7 +6,6 @@ from sqlmodel import SQLModel
 
 from library_service.settings import POSTGRES_DATABASE_URL
 
-print(POSTGRES_DATABASE_URL)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

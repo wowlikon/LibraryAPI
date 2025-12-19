@@ -25,7 +25,7 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 logger = get_logger("uvicorn")
 
 # OAuth2 схема
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 # Хэширование паролей
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -177,18 +177,18 @@ def seed_admin(session: Session, admin_role: Role) -> User | None:
     ).all()
 
     if existing_admins:
-        logger.info(f"[*] Admin already exists: {existing_admins[0].username}")
+        logger.info(f"[=] Admin already exists: {existing_admins[0].username}, skipping creation")
         return None
 
     admin_username = os.getenv("DEFAULT_ADMIN_USERNAME", "admin")
     admin_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@example.com")
     admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD")
 
+    generated = False
     if not admin_password:
         import secrets
         admin_password = secrets.token_urlsafe(16)
-        logger.warning(f"[!] Generated admin password: {admin_password}")
-        logger.warning("[!] Please save this password and set DEFAULT_ADMIN_PASSWORD env var")
+        generated = True
 
     admin_user = User(
         username=admin_username,
@@ -205,6 +205,13 @@ def seed_admin(session: Session, admin_role: Role) -> User | None:
     session.refresh(admin_user)
 
     logger.info(f"[+] Created admin user: {admin_username}")
+
+    if generated:
+        logger.warning("=" * 50)
+        logger.warning(f"[!] GENERATED ADMIN PASSWORD: {admin_password}")
+        logger.warning("[!] Save this password! It won't be shown again!")
+        logger.warning("=" * 50)
+
     return admin_user
 
 

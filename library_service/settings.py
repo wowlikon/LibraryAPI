@@ -60,7 +60,7 @@ if not USER or not PASSWORD or not DATABASE or not HOST:
     raise ValueError("Missing environment variables")
 
 POSTGRES_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
-engine = create_engine(POSTGRES_DATABASE_URL, echo=True, future=True)
+engine = create_engine(POSTGRES_DATABASE_URL, echo=False, future=True)
 
 
 def get_session():
