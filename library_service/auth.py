@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 
 from library_service.models.db import Role, User
 from library_service.models.dto import TokenData
-from library_service.settings import get_session
+from library_service.settings import get_session, get_logger
 
 
 # Конфигурация из переменных окружения
@@ -20,11 +20,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
-# Хэширование паролей
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+#  Получение логгера
+logger = get_logger("uvicorn")
 
 # OAuth2 схема
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+
+# Хэширование паролей
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -161,7 +165,7 @@ def seed_roles(session: Session) -> dict[str, Role]:
             session.commit()
             session.refresh(role)
             roles[role_data["name"]] = role
-            print(f"[+] Created role: {role_data['name']}")
+            logger.info(f"[+] Created role: {role_data['name']}")
 
     return roles
 
@@ -173,7 +177,7 @@ def seed_admin(session: Session, admin_role: Role) -> User | None:
     ).all()
 
     if existing_admins:
-        print(f"[*] Admin already exists: {existing_admins[0].username}")
+        logger.info(f"[*] Admin already exists: {existing_admins[0].username}")
         return None
 
     admin_username = os.getenv("DEFAULT_ADMIN_USERNAME", "admin")
@@ -183,8 +187,8 @@ def seed_admin(session: Session, admin_role: Role) -> User | None:
     if not admin_password:
         import secrets
         admin_password = secrets.token_urlsafe(16)
-        print(f"[!] Generated admin password: {admin_password}")
-        print("[!] Please save this password and set DEFAULT_ADMIN_PASSWORD env var")
+        logger.warning(f"[!] Generated admin password: {admin_password}")
+        logger.warning("[!] Please save this password and set DEFAULT_ADMIN_PASSWORD env var")
 
     admin_user = User(
         username=admin_username,
@@ -200,7 +204,7 @@ def seed_admin(session: Session, admin_role: Role) -> User | None:
     session.commit()
     session.refresh(admin_user)
 
-    print(f"[+] Created admin user: {admin_username}")
+    logger.info(f"[+] Created admin user: {admin_username}")
     return admin_user
 
 

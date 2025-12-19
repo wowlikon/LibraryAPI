@@ -1,5 +1,5 @@
 """Модуль настроек проекта"""
-import os
+import os, logging
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -12,39 +12,42 @@ with open("pyproject.toml", 'r', encoding='utf-8') as f:
     config = load(f)
 
 
-def get_app() -> FastAPI:
-    """Dependency, для получение экземплярра FastAPI application"""
-    return FastAPI(
-        title=config["tool"]["poetry"]["name"],
-        description=config["tool"]["poetry"]["description"],
-        version=config["tool"]["poetry"]["version"],
-        openapi_tags=[
-            {
-                "name": "authentication",
-                "description": "Авторизация пользователя."
-            },
-            {
-                "name": "authors",
-                "description": "Действия с авторами.",
-            },
-            {
-                "name": "books",
-                "description": "Действия с книгами.",
-            },
-            {
-                "name": "genres",
-                "description": "Действия с жанрами.",
-            },
-            {
-                "name": "relations",
-                "description": "Действия с связями.",
-            },
-            {
-                "name": "misc",
-                "description": "Прочие.",
-            },
-        ],
-    )
+def get_app(lifespan=None) -> FastAPI:
+    """Dependency для получения экземпляра FastAPI application"""
+    if not hasattr(get_app, 'instance'):
+        get_app.instance = FastAPI(
+            title=config["tool"]["poetry"]["name"],
+            description=config["tool"]["poetry"]["description"],
+            version=config["tool"]["poetry"]["version"],
+            lifespan=lifespan,
+            openapi_tags=[
+                {
+                    "name": "authentication",
+                    "description": "Авторизация пользователя."
+                },
+                {
+                    "name": "authors",
+                    "description": "Действия с авторами.",
+                },
+                {
+                    "name": "books",
+                    "description": "Действия с книгами.",
+                },
+                {
+                    "name": "genres",
+                    "description": "Действия с жанрами.",
+                },
+                {
+                    "name": "relations",
+                    "description": "Действия с связями.",
+                },
+                {
+                    "name": "misc",
+                    "description": "Прочие.",
+                },
+            ],
+        )
+    return get_app.instance
 
 
 HOST = os.getenv("POSTGRES_HOST")
@@ -64,3 +67,8 @@ def get_session():
     """Dependency, для получение сессии БД"""
     with Session(engine) as session:
         yield session
+
+
+def get_logger(name: str = "uvicorn"):
+    """Dependency, для получение логгера"""
+    return logging.getLogger(name)
