@@ -22,33 +22,33 @@ def get_info(app) -> Dict:
         "app_info": {
             "title": app.title,
             "version": app.version,
-            "description": app.description,
+            "description": app.description.rsplit('|', 1)[0],
         },
         "server_time": datetime.now().isoformat(),
     }
 
 
 @router.get("/", include_in_schema=False)
-async def root(request: Request, app=Depends(get_app)):
+async def root(request: Request, app=Depends(lambda: get_app())):
     """Эндпоинт главной страницы"""
     return RedirectResponse("/books")
 
 
 @router.get("/books", include_in_schema=False)
-async def books(request: Request, app=Depends(get_app)):
+async def books(request: Request, app=Depends(lambda: get_app())):
     """Эндпоинт страницы выбора книг"""
     return templates.TemplateResponse(request, "books.html", get_info(app))
 
 
 @router.get("/auth", include_in_schema=False)
-async def root(request: Request, app=Depends(get_app)):
+async def auth(request: Request, app=Depends(lambda: get_app())):
     """Эндпоинт страницы авторизации"""
     return templates.TemplateResponse(request, "auth.html", get_info(app))
 
 
 
 @router.get("/api", include_in_schema=False)
-async def root(request: Request, app=Depends(get_app)):
+async def api(request: Request, app=Depends(lambda: get_app())):
     """Страница с сылками на документацию API"""
     return templates.TemplateResponse(request, "api.html", get_info(app))
 
@@ -72,6 +72,6 @@ async def favicon():
     summary="Информация о сервисе",
     description="Возвращает информацию о системе",
 )
-async def api_info(app=Depends(get_app)):
+async def api_info(app=Depends(lambda: get_app())):
     """Эндпоинт информации об API"""
     return JSONResponse(content=get_info(app))

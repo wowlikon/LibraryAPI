@@ -12,12 +12,12 @@ with open("pyproject.toml", 'r', encoding='utf-8') as f:
     config = load(f)
 
 
-def get_app(lifespan=None) -> FastAPI:
+def get_app(lifespan=None, /) -> FastAPI:
     """Dependency для получения экземпляра FastAPI application"""
     if not hasattr(get_app, 'instance'):
         get_app.instance = FastAPI(
             title=config["tool"]["poetry"]["name"],
-            description=config["tool"]["poetry"]["description"],
+            description=config["tool"]["poetry"]["description"] + " | [Вернутьсяна главную](/)",
             version=config["tool"]["poetry"]["version"],
             lifespan=lifespan,
             openapi_tags=[
