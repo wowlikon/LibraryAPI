@@ -75,3 +75,91 @@ nav ul li a {
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
 }
+
+.auth-tab {
+    font-family: "Dited", sans-serif;
+    letter-spacing: 1.5px;
+}
+
+input:focus {
+    transform: translateY(-1px);
+}
+
+button:disabled {
+    opacity: 0.7;
+}
+
+#login-form,
+#register-form {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.flex.justify-center.gap-4 button:hover {
+    transform: translateY(-2px);
+}
+
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+#req-length, #req-upper, #req-lower, #req-digit {
+    transition: color 0.2s ease;
+}
+
+.req-icon {
+    font-size: 10px;
+    width: 12px;
+    display: inline-block;
+}
+
+#login-form:not(.hidden),
+#register-form:not(.hidden) {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#login-tab, #register-tab {
+    font-family: "Dited", sans-serif;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+}
+
+#user-dropdown {
+    animation: dropdownFade 0.1s ease-out;
+}
+
+@keyframes dropdownFade {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#user-arrow.rotate-180 {
+    transform: rotate(180deg);
+}

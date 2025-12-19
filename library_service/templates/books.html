@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}LiB - Главная{% endblock %}
+
+{% block content %}
+<div class="flex flex-1 mt-4 p-4">
+    <aside class="w-1/4 bg-white p-4 rounded-lg shadow-md mr-4 h-fit resize-x overflow-auto min-w-64 max-w-96">
+        <h2 class="text-xl font-semibold mb-4">Фильтры</h2>
+        <div class="mb-4">
+            <h3 class="font-medium mb-2">Авторы</h3>
+            <div class="relative">
+                <div class="flex flex-wrap gap-2 p-2 border border-gray-300 rounded-md bg-white" id="selected-authors-container">
+                    <input type="text" id="author-search-input" class="flex-grow outline-none bg-transparent" placeholder="Начните вводить..." />
+                </div>
+                <div id="author-dropdown" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 hidden max-h-60 overflow-y-auto"></div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <h3 class="font-medium mb-2">Жанры</h3>
+            <ul id="genres-list"></ul>
+        </div>
+        <button class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-200">
+            Применить фильтры
+        </button>
+    </aside>
+
+    <main class="flex-1">
+        <div class="bg-white p-4 rounded-lg shadow-md mb-4 flex justify-between items-start">
+            <div>
+                <h3 class="text-lg font-bold mb-1">Product Title 1</h3>
+                <p class="text-gray-700 text-sm">
+                    A short description of the product, highlighting its
+                    key features and benefits.
+                </p>
+            </div>
+            <span class="text-lg font-semibold text-gray-600">$29.99</span>
+        </div>
+
+        <div class="bg-white p-4 rounded-lg shadow-md mb-4 flex justify-between items-start">
+            <div>
+                <h3 class="text-lg font-bold mb-1">Product Title 2</h3>
+                <p class="text-gray-700 text-sm">
+                    Another great product with amazing features. You'll
+                    love it!
+                </p>
+            </div>
+            <span class="text-lg font-semibold text-blue-600">$49.99</span>
+        </div>
+
+        <div class="bg-white p-4 rounded-lg shadow-md mb-4 flex justify-between items-start">
+            <div>
+                <h3 class="text-lg font-bold mb-1">Product Title 3</h3>
+                <p class="text-gray-700 text-sm">
+                    This product is a must-have for every modern home.
+                    High quality and durable.
+                </p>
+            </div>
+            <span class="text-lg font-semibold text-gray-600">$19.99</span>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="/static/books.js"></script>
+{% endblock %}

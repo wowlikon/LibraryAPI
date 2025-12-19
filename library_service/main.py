@@ -1,9 +1,11 @@
 """Основной модуль"""
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from .routers import api_router
 from .settings import engine, get_app
@@ -29,3 +31,5 @@ async def lifespan(app: FastAPI):
 
 # Подключение маршрутов
 app.include_router(api_router)
+static_path = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=static_path), name="static")

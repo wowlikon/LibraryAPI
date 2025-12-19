@@ -31,7 +31,13 @@ def get_info(app) -> Dict:
 @router.get("/", include_in_schema=False)
 async def root(request: Request, app=Depends(get_app)):
     """Эндпоинт главной страницы"""
-    return templates.TemplateResponse(request, "index.html", get_info(app))
+    return RedirectResponse("/books")
+
+
+@router.get("/books", include_in_schema=False)
+async def books(request: Request, app=Depends(get_app)):
+    """Эндпоинт страницы выбора книг"""
+    return templates.TemplateResponse(request, "books.html", get_info(app))
 
 
 @router.get("/auth", include_in_schema=False)
@@ -59,18 +65,6 @@ async def favicon():
     return FileResponse(
         "library_service/static/favicon.svg", media_type="image/svg+xml"
     )
-
-
-@router.get("/static/{path:path}", include_in_schema=False)
-async def serve_static(path: str):
-    """Статические файлы"""
-    static_dir = Path(__file__).parent.parent / "static"
-    file_path = static_dir / path
-
-    if not file_path.is_file() or not file_path.is_relative_to(static_dir):
-        return JSONResponse(status_code=404, content={"error": "File not found"})
-
-    return FileResponse(file_path)
 
 
 @router.get(
