@@ -11,9 +11,9 @@ from .misc import router as misc_router
 api_router = APIRouter()
 
 # Подключение всех маршрутов
-api_router.include_router(auth_router)
-api_router.include_router(authors_router)
-api_router.include_router(books_router)
-api_router.include_router(genres_router)
-api_router.include_router(relationships_router)
 api_router.include_router(misc_router)
+api_router.include_router(auth_router, prefix="/api")
+api_router.include_router(authors_router, prefix="/api")
+api_router.include_router(books_router, prefix="/api")
+api_router.include_router(genres_router, prefix="/api")
+api_router.include_router(relationships_router, prefix="/api")

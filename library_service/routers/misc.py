@@ -34,6 +34,13 @@ async def root(request: Request, app=Depends(get_app)):
     return templates.TemplateResponse(request, "index.html", get_info(app))
 
 
+@router.get("/auth", include_in_schema=False)
+async def root(request: Request, app=Depends(get_app)):
+    """Эндпоинт страницы авторизации"""
+    return templates.TemplateResponse(request, "auth.html", get_info(app))
+
+
+
 @router.get("/api", include_in_schema=False)
 async def root(request: Request, app=Depends(get_app)):
     """Страница с сылками на документацию API"""
