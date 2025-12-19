@@ -33,7 +33,7 @@ def get_info(app) -> Dict:
 @router.get("/", include_in_schema=False)
 async def root(request: Request, app=Depends(lambda: get_app())):
     """Эндпоинт главной страницы"""
-    return RedirectResponse("/books")
+    return templates.TemplateResponse(request, "index.html", get_info(app))
 
 
 @router.get("/books", include_in_schema=False)
@@ -85,7 +85,7 @@ async def api_info(app=Depends(lambda: get_app())):
     description="Возвращает статистическую информацию о системе",
 )
 async def api_stats(session: Session = Depends(get_session)):
-    """Эндпоинт стстистика системы"""
+    """Эндпоинт стстистики системы"""
     authors = select(func.count()).select_from(Author)
     books = select(func.count()).select_from(Book)
     genres = select(func.count()).select_from(Genre)

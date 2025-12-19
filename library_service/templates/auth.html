@@ -1,80 +1,135 @@
-<!-- templates/auth.html -->
-{% extends "base.html" %}
-
-{% block title %}LiB - Авторизация{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}LiB - Авторизация{% endblock %} {%
+block content %}
 <div class="flex flex-1 items-center justify-center p-4">
     <div class="w-full max-w-md">
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
             <div class="flex border-b border-gray-200">
-                <button type="button" id="login-tab" class="flex-1 py-4 text-center font-medium transition duration-200 text-gray-700 bg-gray-50 border-b-2 border-gray-500">Вход</button>
-                <button type="button" id="register-tab" class="flex-1 py-4 text-center font-medium transition duration-200 text-gray-400 hover:text-gray-600">Регистрация</button>
+                <button
+                    type="button"
+                    id="login-tab"
+                    class="flex-1 py-4 text-center font-medium transition duration-200 text-gray-700 bg-gray-50 border-b-2 border-gray-500"
+                >
+                    Вход
+                </button>
+                <button
+                    type="button"
+                    id="register-tab"
+                    class="flex-1 py-4 text-center font-medium transition duration-200 text-gray-400 hover:text-gray-600"
+                >
+                    Регистрация
+                </button>
             </div>
 
             <form id="login-form" class="p-6">
                 <div class="mb-4">
-                    <label for="login-username" class="block text-sm font-medium text-gray-700 mb-2">Имя пользователя</label>
-                    <input 
-                        type="text" 
-                        id="login-username" 
+                    <label
+                        for="login-username"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Имя пользователя</label
+                    >
+                    <input
+                        type="text"
+                        id="login-username"
                         name="username"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition duration-200"
                         placeholder="Введите имя пользователя"
                         required
                     />
                 </div>
-
                 <div class="mb-4">
-                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
+                    <label
+                        for="login-password"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Пароль</label
+                    >
                     <div class="relative">
-                        <input 
-                            type="password" 
-                            id="login-password" 
+                        <input
+                            type="password"
+                            id="login-password"
                             name="password"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition duration-200"
                             placeholder="Введите пароль"
                             required
                         />
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             onclick="togglePassword(this)"
                         >
-                            <svg class="eye-open w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            <svg
+                                class="eye-open w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                ></path>
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                ></path>
                             </svg>
-                            <svg class="eye-closed w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            <svg
+                                class="eye-closed w-5 h-5 hidden"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                ></path>
                             </svg>
                         </button>
                     </div>
                 </div>
-
                 <div class="flex items-center justify-between mb-6">
-                    <label class="custom-checkbox flex items-center text-sm text-gray-600">
+                    <label
+                        class="custom-checkbox flex items-center text-sm text-gray-600"
+                    >
                         <input type="checkbox" id="remember-me" />
                         <span class="checkmark"></span>Запомнить меня
                     </label>
-                    <a href="#" class="text-sm text-gray-500 hover:text-gray-700 transition">Забыли пароль?</a>
+                    <a
+                        href="#"
+                        class="text-sm text-gray-500 hover:text-gray-700 transition"
+                        >Забыли пароль?</a
+                    >
                 </div>
-
-                <div id="login-error" class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"></div>
-
-                <button 
-                    type="submit" 
+                <div
+                    id="login-error"
+                    class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"
+                ></div>
+                <button
+                    type="submit"
                     id="login-submit"
                     class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition duration-200 font-medium"
-                >Войти</button>
+                >
+                    Войти
+                </button>
             </form>
-
-            <form id="register-form" class="p-6 hidden" onsubmit="return handleRegister(event)">
+            <form
+                id="register-form"
+                class="p-6 hidden"
+                onsubmit="return handleRegister(event);"
+            >
                 <div class="mb-4">
-                    <label for="register-username" class="block text-sm font-medium text-gray-700 mb-2">Имя пользователя</label>
-                    <input 
-                        type="text" 
-                        id="register-username" 
+                    <label
+                        for="register-username"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Имя пользователя</label
+                    >
+                    <input
+                        type="text"
+                        id="register-username"
                         name="username"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition duration-200"
                         placeholder="Придумайте имя пользователя (мин. 3 символа)"
@@ -83,37 +138,49 @@
                         maxlength="50"
                     />
                 </div>
-
                 <div class="mb-4">
-                    <label for="register-email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input 
-                        type="email" 
-                        id="register-email" 
+                    <label
+                        for="register-email"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Email</label
+                    >
+                    <input
+                        type="email"
+                        id="register-email"
                         name="email"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition duration-200"
                         placeholder="example@mail.com"
                         required
                     />
                 </div>
-
                 <div class="mb-4">
-                    <label for="register-fullname" class="block text-sm font-medium text-gray-700 mb-2">Полное имя <span class="text-gray-400">(необязательно)</span></label>
-                    <input 
-                        type="text" 
-                        id="register-fullname" 
+                    <label
+                        for="register-fullname"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Полное имя
+                        <span class="text-gray-400"
+                            >(необязательно)</span
+                        ></label
+                    >
+                    <input
+                        type="text"
+                        id="register-fullname"
                         name="full_name"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition duration-200"
                         placeholder="Иван Иванов"
                         maxlength="100"
                     />
                 </div>
-
                 <div class="mb-4">
-                    <label for="register-password" class="block text-sm font-medium text-gray-700 mb-2">Пароль</label>
+                    <label
+                        for="register-password"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Пароль</label
+                    >
                     <div class="relative">
-                        <input 
-                            type="password" 
-                            id="register-password" 
+                        <input
+                            type="password"
+                            id="register-password"
                             name="password"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition duration-200"
                             placeholder="Минимум 8 символов, A-Z, a-z, 0-9"
@@ -121,62 +188,131 @@
                             minlength="8"
                             maxlength="100"
                         />
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             onclick="togglePassword(this)"
                         >
-                            <svg class="eye-open w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            <svg
+                                class="eye-open w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                ></path>
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                ></path>
                             </svg>
-                            <svg class="eye-closed w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            <svg
+                                class="eye-closed w-5 h-5 hidden"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                ></path>
                             </svg>
                         </button>
                     </div>
                     <div class="mt-2">
-                        <div class="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                            <div id="password-strength-bar" class="h-full w-0 transition-all duration-300"></div>
+                        <div
+                            class="h-1 w-full bg-gray-200 rounded-full overflow-hidden"
+                        >
+                            <div
+                                id="password-strength-bar"
+                                class="h-full w-0 transition-all duration-300"
+                            ></div>
                         </div>
-                        <p id="password-strength-text" class="text-xs mt-1 text-gray-500"></p>
+                        <p
+                            id="password-strength-text"
+                            class="text-xs mt-1 text-gray-500"
+                        ></p>
                     </div>
                 </div>
-
                 <div class="mb-4">
-                    <label for="register-password-confirm" class="block text-sm font-medium text-gray-700 mb-2">Подтвердите пароль</label>
+                    <label
+                        for="register-password-confirm"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                        >Подтвердите пароль</label
+                    >
                     <div class="relative">
-                        <input 
-                            type="password" 
-                            id="register-password-confirm" 
+                        <input
+                            type="password"
+                            id="register-password-confirm"
                             name="password_confirm"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition duration-200"
                             placeholder="Повторите пароль"
                             required
                         />
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             class="toggle-password absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             onclick="togglePassword(this)"
                         >
-                            <svg class="eye-open w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            <svg
+                                class="eye-open w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                ></path>
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                ></path>
                             </svg>
-                            <svg class="eye-closed w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            <svg
+                                class="eye-closed w-5 h-5 hidden"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                ></path>
                             </svg>
                         </button>
                     </div>
-                    <p id="password-match-error" class="text-xs mt-1 text-red-500 hidden">Пароли не совпадают</p>
+                    <p
+                        id="password-match-error"
+                        class="text-xs mt-1 text-red-500 hidden"
+                    >
+                        Пароли не совпадают
+                    </p>
                 </div>
-
-                <div id="register-error" class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"></div>
-
-                <div id="register-success" class="hidden mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm"></div>
-
-                <button 
-                    type="submit" 
+                <div
+                    id="register-error"
+                    class="hidden mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"
+                ></div>
+                <div
+                    id="register-success"
+                    class="hidden mb-4 p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm"
+                ></div>
+                <button
+                    type="submit"
                     id="register-submit"
                     class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition duration-200 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
@@ -186,8 +322,6 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script type="text/javascript" src="/static/auth.js"></script>
 {% endblock %}
