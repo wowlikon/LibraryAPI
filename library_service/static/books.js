@@ -1,6 +1,9 @@
 $(document).ready(function () {
-  let selectedAuthors = new Set();
-  let selectedGenres = new Set();
+  let selectedAuthors = new Map(); // Map<id, name>
+  let selectedGenres = new Map(); // Map<id, name>
+  let currentPage = 1;
+  let pageSize = 20;
+  let totalBooks = 0;
 
   Promise.all([
     fetch("/api/authors").then((response) => response.json()),
@@ -11,7 +14,8 @@ $(document).ready(function () {
       authorsData.authors.forEach((author) => {
         $("<div>")
           .addClass("p-2 hover:bg-gray-100 cursor-pointer author-item")
-          .attr("data-value", author.name)
+          .attr("data-id", author.id)
+          .attr("data-name", author.name)
           .text(author.name)
           .appendTo($dropdown);
       });
@@ -22,7 +26,7 @@ $(document).ready(function () {
           .addClass("mb-1")
           .html(
             `<label class="custom-checkbox flex items-center">
-              <input type="checkbox" data-genre="${genre.name}" />
+              <input type="checkbox" data-id="${genre.id}" data-name="${genre.name}" />
               <span class="checkmark"></span>
               ${genre.name}
             </label>`,
@@ -32,9 +36,271 @@ $(document).ready(function () {
 
       initializeAuthorDropdown();
       initializeFilters();
+
+      // Загружаем книги при старте
+      loadBooks();
     })
     .catch((error) => console.error("Error loading data:", error));
 
+  // === Функция загрузки книг ===
+  function loadBooks() {
+    const searchQuery = $("#book-search-input").val().trim();
+
+    // Формируем URL с параметрами
+    const params = new URLSearchParams();
+
+    // Добавляем поиск (минимум 3 символа)
+    if (searchQuery.length >= 3) {
+      params.append("q", searchQuery);
+    }
+
+    // Добавляем авторов
+    selectedAuthors.forEach((name, id) => {
+      params.append("author_ids", id);
+    });
+
+    // Добавляем жанры
+    selectedGenres.forEach((name, id) => {
+      params.append("genre_ids", id);
+    });
+
+    // Пагинация
+    params.append("page", currentPage);
+    params.append("size", pageSize);
+
+    const url = `/api/books/filter?${params.toString()}`;
+
+    // Показываем индикатор загрузки
+    showLoadingState();
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        totalBooks = data.total;
+        renderBooks(data.books);
+        renderPagination();
+      })
+      .catch((error) => {
+        console.error("Error loading books:", error);
+        showErrorState();
+      });
+  }
+
+  // === Отображение книг ===
+  function renderBooks(books) {
+    const $container = $("#books-container");
+    $container.empty();
+
+    if (books.length === 0) {
+      $container.html(`
+        <div class="bg-white p-8 rounded-lg shadow-md text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Книги не найдены</h3>
+          <p class="text-gray-500">Попробуйте изменить параметры поиска или фильтры</p>
+        </div>
+      `);
+      return;
+    }
+
+    books.forEach((book) => {
+      const authorsText =
+        book.authors.map((a) => a.name).join(", ") || "Автор неизвестен";
+      const genresText =
+        book.genres.map((g) => g.name).join(", ") || "Без жанра";
+
+      const $bookCard = $(`
+        <div class="bg-white p-4 rounded-lg shadow-md mb-4 hover:shadow-lg transition-shadow duration-200 cursor-pointer book-card" data-id="${book.id}">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <h3 class="text-lg font-bold mb-1 text-gray-900 hover:text-blue-600 transition-colors">
+                ${escapeHtml(book.title)}
+              </h3>
+              <p class="text-sm text-gray-600 mb-2">
+                <span class="font-medium">Авторы:</span> ${escapeHtml(authorsText)}
+              </p>
+              <p class="text-gray-700 text-sm mb-2">
+                ${escapeHtml(book.description || "Описание отсутствует")}
+              </p>
+              <div class="flex flex-wrap gap-1">
+                ${book.genres
+                  .map(
+                    (g) => `
+                  <span class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                    ${escapeHtml(g.name)}
+                  </span>
+                `,
+                  )
+                  .join("")}
+              </div>
+            </div>
+          </div>
+        </div>
+      `);
+
+      $container.append($bookCard);
+    });
+
+    // Обработчик клика на карточку книги
+    $container.on("click", ".book-card", function () {
+      const bookId = $(this).data("id");
+      window.location.href = `/books/${bookId}`;
+    });
+  }
+
+  // === Пагинация ===
+  function renderPagination() {
+    // Удаляем старую пагинацию
+    $("#pagination-container").remove();
+
+    const totalPages = Math.ceil(totalBooks / pageSize);
+
+    if (totalPages <= 1) return;
+
+    const $pagination = $(`
+      <div id="pagination-container" class="flex justify-center items-center gap-2 mt-6 mb-4">
+        <button id="prev-page" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" ${currentPage === 1 ? "disabled" : ""}>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div id="page-numbers" class="flex gap-1"></div>
+        <button id="next-page" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" ${currentPage === totalPages ? "disabled" : ""}>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    `);
+
+    const $pageNumbers = $pagination.find("#page-numbers");
+
+    // Генерируем номера страниц
+    const pages = generatePageNumbers(currentPage, totalPages);
+
+    pages.forEach((page) => {
+      if (page === "...") {
+        $pageNumbers.append(`<span class="px-3 py-2">...</span>`);
+      } else {
+        const isActive = page === currentPage;
+        $pageNumbers.append(`
+          <button class="page-btn px-3 py-2 rounded-lg ${isActive ? "bg-gray-500 text-white" : "bg-white border border-gray-300 hover:bg-gray-50"}" data-page="${page}">
+            ${page}
+          </button>
+        `);
+      }
+    });
+
+    $("#books-container").after($pagination);
+
+    // Обработчики пагинации
+    $("#prev-page").on("click", function () {
+      if (currentPage > 1) {
+        currentPage--;
+        loadBooks();
+        scrollToTop();
+      }
+    });
+
+    $("#next-page").on("click", function () {
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadBooks();
+        scrollToTop();
+      }
+    });
+
+    $(".page-btn").on("click", function () {
+      const page = parseInt($(this).data("page"));
+      if (page !== currentPage) {
+        currentPage = page;
+        loadBooks();
+        scrollToTop();
+      }
+    });
+  }
+
+  function generatePageNumbers(current, total) {
+    const pages = [];
+    const delta = 2;
+
+    for (let i = 1; i <= total; i++) {
+      if (
+        i === 1 ||
+        i === total ||
+        (i >= current - delta && i <= current + delta)
+      ) {
+        pages.push(i);
+      } else if (pages[pages.length - 1] !== "...") {
+        pages.push("...");
+      }
+    }
+
+    return pages;
+  }
+
+  function scrollToTop() {
+    $("html, body").animate({ scrollTop: 0 }, 300);
+  }
+
+  // === Состояния загрузки ===
+  function showLoadingState() {
+    const $container = $("#books-container");
+    $container.html(`
+      <div class="space-y-4">
+        ${Array(3)
+          .fill()
+          .map(
+            () => `
+          <div class="bg-white p-4 rounded-lg shadow-md animate-pulse">
+            <div class="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+            <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+            <div class="flex gap-2">
+              <div class="h-6 bg-gray-200 rounded-full w-16"></div>
+              <div class="h-6 bg-gray-200 rounded-full w-20"></div>
+            </div>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    `);
+  }
+
+  function showErrorState() {
+    const $container = $("#books-container");
+    $container.html(`
+      <div class="bg-red-50 p-8 rounded-lg shadow-md text-center">
+        <svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <h3 class="text-lg font-medium text-red-900 mb-2">Ошибка загрузки</h3>
+        <p class="text-red-700 mb-4">Не удалось загрузить список книг</p>
+        <button id="retry-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+          Попробовать снова
+        </button>
+      </div>
+    `);
+
+    $("#retry-btn").on("click", loadBooks);
+  }
+
+  // === Экранирование HTML ===
+  function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // === Dropdown авторов ===
   function initializeAuthorDropdown() {
     const $input = $("#author-search-input");
     const $dropdown = $("#author-dropdown");
@@ -42,8 +308,8 @@ $(document).ready(function () {
 
     function updateHighlights() {
       $dropdown.find(".author-item").each(function () {
-        const value = $(this).attr("data-value");
-        const isSelected = selectedAuthors.has(value);
+        const id = $(this).attr("data-id");
+        const isSelected = selectedAuthors.has(parseInt(id));
         $(this)
           .toggleClass("bg-gray-300 text-gray-600", isSelected)
           .toggleClass("hover:bg-gray-100", !isSelected);
@@ -59,10 +325,10 @@ $(document).ready(function () {
 
     function renderChips() {
       $container.find(".author-chip").remove();
-      selectedAuthors.forEach((author) => {
+      selectedAuthors.forEach((name, id) => {
         $(`<span class="author-chip flex items-center bg-gray-500 text-white text-sm font-medium px-2.5 py-0.5 rounded-full">
-            ${author}
-            <button type="button" class="remove-author ml-1.5 inline-flex items-center p-0.5 text-gray-200 hover:text-white hover:bg-gray-600 rounded-full" data-author="${author}">
+            ${escapeHtml(name)}
+            <button type="button" class="remove-author ml-1.5 inline-flex items-center p-0.5 text-gray-200 hover:text-white hover:bg-gray-600 rounded-full" data-id="${id}">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 14 14">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
               </svg>
@@ -72,11 +338,13 @@ $(document).ready(function () {
       updateHighlights();
     }
 
-    function toggleAuthor(author) {
-      if (selectedAuthors.has(author)) {
-        selectedAuthors.delete(author);
+    function toggleAuthor(id, name) {
+      id = parseInt(id);
+      if (selectedAuthors.has(id)) {
+        selectedAuthors.delete(id);
       } else {
-        selectedAuthors.add(author);
+        selectedAuthors.add(id, name);
+        selectedAuthors.set(id, name);
       }
       $input.val("");
       filterDropdown("");
@@ -101,13 +369,13 @@ $(document).ready(function () {
 
     $dropdown.on("click", ".author-item", function (e) {
       e.stopPropagation();
-      toggleAuthor($(this).attr("data-value"));
+      toggleAuthor($(this).attr("data-id"), $(this).attr("data-name"));
       $input.focus();
     });
 
     $container.on("click", ".remove-author", function (e) {
       e.stopPropagation();
-      selectedAuthors.delete($(this).attr("data-author"));
+      selectedAuthors.delete(parseInt($(this).attr("data-id")));
       renderChips();
       $input.focus();
     });
@@ -122,29 +390,30 @@ $(document).ready(function () {
     window.updateAuthorHighlights = updateHighlights;
   }
 
+  // === Инициализация фильтров ===
   function initializeFilters() {
     const $bookSearch = $("#book-search-input");
     const $applyBtn = $("#apply-filters-btn");
     const $resetBtn = $("#reset-filters-btn");
 
+    // Обработка жанров
     $("#genres-list").on("change", "input[type='checkbox']", function () {
-      const genre = $(this).attr("data-genre");
+      const id = parseInt($(this).attr("data-id"));
+      const name = $(this).attr("data-name");
       if ($(this).is(":checked")) {
-        selectedGenres.add(genre);
+        selectedGenres.set(id, name);
       } else {
-        selectedGenres.delete(genre);
+        selectedGenres.delete(id);
       }
     });
 
+    // Применить фильтры
     $applyBtn.on("click", function () {
-      const searchQuery = $bookSearch.val().trim();
-      console.log("Применены фильтры:", {
-        search: searchQuery,
-        authors: Array.from(selectedAuthors),
-        genres: Array.from(selectedGenres),
-      });
+      currentPage = 1; // Сбрасываем на первую страницу
+      loadBooks();
     });
 
+    // Сбросить фильтры
     $resetBtn.on("click", function () {
       $bookSearch.val("");
 
@@ -155,18 +424,36 @@ $(document).ready(function () {
       selectedGenres.clear();
       $("#genres-list input[type='checkbox']").prop("checked", false);
 
-      console.log("Фильтры сброшены");
+      currentPage = 1;
+      loadBooks();
     });
 
+    // Поиск с дебаунсом
     let searchTimeout;
     $bookSearch.on("input", function () {
       clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        console.log("Поиск:", $(this).val());
-      }, 300);
+      const query = $(this).val().trim();
+
+      // Автопоиск только если >= 3 символов или пусто
+      if (query.length >= 3 || query.length === 0) {
+        searchTimeout = setTimeout(() => {
+          currentPage = 1;
+          loadBooks();
+        }, 500);
+      }
+    });
+
+    // Поиск по Enter
+    $bookSearch.on("keypress", function (e) {
+      if (e.which === 13) {
+        clearTimeout(searchTimeout);
+        currentPage = 1;
+        loadBooks();
+      }
     });
   }
 
+  // === Остальной код (пользователь/авторизация) ===
   const $guestLink = $("#guest-link");
   const $userBtn = $("#user-btn");
   const $userDropdown = $("#user-dropdown");
