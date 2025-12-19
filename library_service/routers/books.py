@@ -6,7 +6,7 @@ from sqlmodel import Session, select, col, func
 
 from library_service.auth import RequireAuth
 from library_service.settings import get_session
-from library_service.models.db import Author, AuthorBookLink, Book
+from library_service.models.db import Author, AuthorBookLink, Book, GenreBookLink
 from library_service.models.dto import AuthorRead, BookCreate, BookList, BookRead, BookUpdate, GenreRead
 from library_service.models.dto.combined import (
     BookWithAuthorsAndGenres,

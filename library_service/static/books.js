@@ -1,4 +1,7 @@
 $(document).ready(function () {
+  let selectedAuthors = new Set();
+  let selectedGenres = new Set();
+
   Promise.all([
     fetch("/api/authors").then((response) => response.json()),
     fetch("/api/genres").then((response) => response.json()),
@@ -6,111 +9,162 @@ $(document).ready(function () {
     .then(([authorsData, genresData]) => {
       const $dropdown = $("#author-dropdown");
       authorsData.authors.forEach((author) => {
-        const $div = $("<div>", {
-          class: "p-2 hover:bg-gray-100 cursor-pointer",
-          "data-value": author.name,
-          text: author.name,
-        });
-        $dropdown.append($div);
+        $("<div>")
+          .addClass("p-2 hover:bg-gray-100 cursor-pointer author-item")
+          .attr("data-value", author.name)
+          .text(author.name)
+          .appendTo($dropdown);
       });
 
       const $list = $("#genres-list");
       genresData.genres.forEach((genre) => {
-        const $li = $("<li>", { class: "mb-1" });
-        $li.html(`
-        <label class="custom-checkbox flex items-center">
-          <input type="checkbox" />
-          <span class="checkmark"></span>
-          ${genre.name}
-        </label>
-      `);
-        $list.append($li);
+        $("<li>")
+          .addClass("mb-1")
+          .html(
+            `<label class="custom-checkbox flex items-center">
+              <input type="checkbox" data-genre="${genre.name}" />
+              <span class="checkmark"></span>
+              ${genre.name}
+            </label>`,
+          )
+          .appendTo($list);
       });
 
       initializeAuthorDropdown();
+      initializeFilters();
     })
     .catch((error) => console.error("Error loading data:", error));
 
   function initializeAuthorDropdown() {
-    const $authorSearchInput = $("#author-search-input");
-    const $authorDropdown = $("#author-dropdown");
-    const $selectedAuthorsContainer = $("#selected-authors-container");
-    const $dropdownItems = $authorDropdown.find("[data-value]");
-    let selectedAuthors = new Set();
+    const $input = $("#author-search-input");
+    const $dropdown = $("#author-dropdown");
+    const $container = $("#selected-authors-container");
 
-    const updateDropdownHighlights = () => {
-      $dropdownItems.each(function () {
-        const value = $(this).data("value");
-        $(this).toggleClass("bg-gray-200", selectedAuthors.has(value));
+    function updateHighlights() {
+      $dropdown.find(".author-item").each(function () {
+        const value = $(this).attr("data-value");
+        const isSelected = selectedAuthors.has(value);
+        $(this)
+          .toggleClass("bg-gray-300 text-gray-600", isSelected)
+          .toggleClass("hover:bg-gray-100", !isSelected);
       });
-    };
+    }
 
-    const renderSelectedAuthors = () => {
-      $selectedAuthorsContainer.children().not("#author-search-input").remove();
+    function filterDropdown(query) {
+      const lowerQuery = query.toLowerCase();
+      $dropdown.find(".author-item").each(function () {
+        $(this).toggle($(this).text().toLowerCase().includes(lowerQuery));
+      });
+    }
 
+    function renderChips() {
+      $container.find(".author-chip").remove();
       selectedAuthors.forEach((author) => {
-        const $authorChip = $("<span>", {
-          class:
-            "flex items-center bg-gray-200 text-gray-800 text-sm font-medium px-2.5 py-0.5 rounded-full",
-        });
-        $authorChip.html(`
-          ${author}
-          <button type="button" class="ml-1 inline-flex items-center p-0.5 text-sm text-gray-400 bg-transparent rounded-sm hover:bg-gray-200 hover:text-gray-900" data-author="${author}">
-            <svg class="w-2 h-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
-            </svg>
-            <span class="sr-only">Remove author</span>
-          </button>
-        `);
-        $selectedAuthorsContainer.append($authorChip);
+        $(`<span class="author-chip flex items-center bg-gray-500 text-white text-sm font-medium px-2.5 py-0.5 rounded-full">
+            ${author}
+            <button type="button" class="remove-author ml-1.5 inline-flex items-center p-0.5 text-gray-200 hover:text-white hover:bg-gray-600 rounded-full" data-author="${author}">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 14 14">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+              </svg>
+            </button>
+          </span>`).insertBefore($input);
       });
-      updateDropdownHighlights();
-    };
+      updateHighlights();
+    }
 
-    $authorSearchInput.on("focus", () => {
-      $authorDropdown.removeClass("hidden");
-    });
-
-    $authorSearchInput.on("input", function () {
-      const query = $(this).val().toLowerCase();
-      $dropdownItems.each(function () {
-        const text = $(this).text().toLowerCase();
-        $(this).css("display", text.includes(query) ? "block" : "none");
-      });
-      $authorDropdown.removeClass("hidden");
-    });
-
-    $(document).on("click", function (event) {
-      if (
-        !$selectedAuthorsContainer.is(event.target) &&
-        !$selectedAuthorsContainer.has(event.target).length &&
-        !$authorDropdown.is(event.target) &&
-        !$authorDropdown.has(event.target).length
-      ) {
-        $authorDropdown.addClass("hidden");
-      }
-    });
-
-    $authorDropdown.on("click", "[data-value]", function () {
-      const selectedValue = $(this).data("value");
-      if (selectedAuthors.has(selectedValue)) {
-        selectedAuthors.delete(selectedValue);
+    function toggleAuthor(author) {
+      if (selectedAuthors.has(author)) {
+        selectedAuthors.delete(author);
       } else {
-        selectedAuthors.add(selectedValue);
+        selectedAuthors.add(author);
       }
-      $authorSearchInput.val("");
-      renderSelectedAuthors();
-      $authorSearchInput.focus();
+      $input.val("");
+      filterDropdown("");
+      renderChips();
+    }
+
+    $input.on("focus", () => $dropdown.removeClass("hidden"));
+
+    $input.on("input", function () {
+      filterDropdown($(this).val().toLowerCase());
+      $dropdown.removeClass("hidden");
     });
 
-    $selectedAuthorsContainer.on("click", "button", function () {
-      const authorToRemove = $(this).data("author");
-      selectedAuthors.delete(authorToRemove);
-      renderSelectedAuthors();
-      $authorSearchInput.focus();
+    $(document).on("click", (e) => {
+      if (
+        !$(e.target).closest("#selected-authors-container, #author-dropdown")
+          .length
+      ) {
+        $dropdown.addClass("hidden");
+      }
     });
 
-    renderSelectedAuthors();
+    $dropdown.on("click", ".author-item", function (e) {
+      e.stopPropagation();
+      toggleAuthor($(this).attr("data-value"));
+      $input.focus();
+    });
+
+    $container.on("click", ".remove-author", function (e) {
+      e.stopPropagation();
+      selectedAuthors.delete($(this).attr("data-author"));
+      renderChips();
+      $input.focus();
+    });
+
+    $container.on("click", (e) => {
+      if (!$(e.target).closest(".author-chip").length) {
+        $input.focus();
+      }
+    });
+
+    window.renderAuthorChips = renderChips;
+    window.updateAuthorHighlights = updateHighlights;
+  }
+
+  function initializeFilters() {
+    const $bookSearch = $("#book-search-input");
+    const $applyBtn = $("#apply-filters-btn");
+    const $resetBtn = $("#reset-filters-btn");
+
+    $("#genres-list").on("change", "input[type='checkbox']", function () {
+      const genre = $(this).attr("data-genre");
+      if ($(this).is(":checked")) {
+        selectedGenres.add(genre);
+      } else {
+        selectedGenres.delete(genre);
+      }
+    });
+
+    $applyBtn.on("click", function () {
+      const searchQuery = $bookSearch.val().trim();
+      console.log("Применены фильтры:", {
+        search: searchQuery,
+        authors: Array.from(selectedAuthors),
+        genres: Array.from(selectedGenres),
+      });
+    });
+
+    $resetBtn.on("click", function () {
+      $bookSearch.val("");
+
+      selectedAuthors.clear();
+      $("#selected-authors-container .author-chip").remove();
+      if (window.updateAuthorHighlights) window.updateAuthorHighlights();
+
+      selectedGenres.clear();
+      $("#genres-list input[type='checkbox']").prop("checked", false);
+
+      console.log("Фильтры сброшены");
+    });
+
+    let searchTimeout;
+    $bookSearch.on("input", function () {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        console.log("Поиск:", $(this).val());
+      }, 300);
+    });
   }
 
   const $guestLink = $("#guest-link");
@@ -182,11 +236,13 @@ $(document).ready(function () {
   function updateUserAvatar(email) {
     if (!email) return;
     const cleanEmail = email.trim().toLowerCase();
-    const emailHash = sha256(cleanEmail); 
+    const emailHash = sha256(cleanEmail);
 
     const avatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=200`;
-    const avatarImg = document.getElementById('user-avatar');
-    if (avatarImg) { avatarImg.src = avatarUrl; }
+    const avatarImg = document.getElementById("user-avatar");
+    if (avatarImg) {
+      avatarImg.src = avatarUrl;
+    }
   }
 
   const token = localStorage.getItem("access_token");
@@ -204,9 +260,9 @@ $(document).ready(function () {
       .then((user) => {
         showUser(user);
         updateUserAvatar(user.email);
-        
-        document.getElementById('user-btn').classList.remove('hidden');
-        document.getElementById('guest-link').classList.add('hidden');
+
+        document.getElementById("user-btn").classList.remove("hidden");
+        document.getElementById("guest-link").classList.add("hidden");
       })
       .catch(() => {
         localStorage.removeItem("access_token");
