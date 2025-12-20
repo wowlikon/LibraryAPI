@@ -5,6 +5,7 @@ from sqlmodel import SQLModel, Field
 from .author import AuthorRead
 from .genre import GenreRead
 from .book import BookRead
+from .loan import LoanRead
 
 
 class AuthorWithBooks(SQLModel):
@@ -50,3 +51,11 @@ class BookFilteredList(SQLModel):
     """Список книг с фильтрацией"""
     books: List[BookWithAuthorsAndGenres]
     total: int
+
+class LoanWithBook(LoanRead):
+    """Модель выдачи, включающая данные о книге"""
+    book: BookRead
+    
+class BookStatusUpdate(SQLModel):
+    """Модель для ручного изменения статуса библиотекарем"""
+    status: str

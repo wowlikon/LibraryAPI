@@ -1,4 +1,4 @@
-"""auth
+"""Auth
 
 Revision ID: b838606ad8d1
 Revises: 9d7a43ac5dfc

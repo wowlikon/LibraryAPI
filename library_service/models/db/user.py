@@ -26,3 +26,4 @@ class User(UserBase, table=True):
 
     # Связи
     roles: List["Role"] = Relationship(back_populates="users", link_model=UserRoleLink)
+    loans: List["BookUserLink"] = Relationship(sa_relationship_kwargs={"cascade": "all, delete"})

@@ -20,6 +20,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
+from library_service.models.enums import *
 from library_service.models.db import *
 
 target_metadata = SQLModel.metadata

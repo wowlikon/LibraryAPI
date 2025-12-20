@@ -1,11 +1,10 @@
 """Модуль DTO-моделей книг"""
-from typing import List, TYPE_CHECKING
+from typing import List
 
 from pydantic import ConfigDict
 from sqlmodel import SQLModel
 
-if TYPE_CHECKING:
-    from .combined import BookWithAuthorsAndGenres
+from library_service.models.enums import BookStatus
 
 
 class BookBase(SQLModel):
@@ -29,11 +28,13 @@ class BookUpdate(SQLModel):
     """Модель книги для обновления"""
     title: str | None = None
     description: str | None = None
+    status: BookStatus | None = None
 
 
 class BookRead(BookBase):
     """Модель книги для чтения"""
     id: int
+    status: BookStatus
 
 
 class BookList(SQLModel):

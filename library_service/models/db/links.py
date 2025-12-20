@@ -1,4 +1,5 @@
 """Модуль связей между сущностями в БД"""
+from datetime import datetime
 from sqlmodel import SQLModel, Field
 
 
@@ -22,3 +23,20 @@ class UserRoleLink(SQLModel, table=True):
 
     user_id: int | None = Field(default=None, foreign_key="users.id", primary_key=True)
     role_id: int | None = Field(default=None, foreign_key="roles.id", primary_key=True)
+
+
+class BookUserLink(SQLModel, table=True):
+    """
+    Модель истории выдачи книг (Loan).
+    Связывает книгу и пользователя с фиксацией времени.
+    """
+    __tablename__ = "book_loans"
+
+    id: int | None = Field(default=None, primary_key=True, index=True)
+    
+    book_id: int = Field(foreign_key="book.id")
+    user_id: int = Field(foreign_key="users.id")
+    
+    borrowed_at: datetime = Field(default_factory=datetime.utcnow)
+    due_date: datetime
+    returned_at: datetime | None = Field(default=None)

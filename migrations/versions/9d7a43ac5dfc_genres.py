@@ -1,4 +1,4 @@
-"""genres
+"""Genres
 
 Revision ID: 9d7a43ac5dfc
 Revises: d266fdc61e99
