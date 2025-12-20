@@ -3,7 +3,7 @@ from .author import AuthorBase, AuthorCreate, AuthorList, AuthorRead, AuthorUpda
 from .genre import GenreBase, GenreCreate, GenreList, GenreRead, GenreUpdate
 from .book import BookBase, BookCreate, BookList, BookRead, BookUpdate
 from .role import RoleBase, RoleCreate, RoleList, RoleRead, RoleUpdate
-from .user import UserBase, UserCreate, UserLogin, UserRead, UserUpdate
+from .user import UserBase, UserCreate, UserList, UserRead, UserUpdate, UserLogin
 from .token import Token, TokenData
 from .combined import (AuthorWithBooks, GenreWithBooks, BookWithAuthors, BookWithGenres,
     BookWithAuthorsAndGenres, BookFilteredList)
@@ -36,5 +36,6 @@ __all__ = [
     "UserCreate",
     "UserRead",
     "UserUpdate",
+    "UserList",
     "UserLogin",
 ]

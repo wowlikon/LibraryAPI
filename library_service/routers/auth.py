@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
 from library_service.models.db import Role, User
-from library_service.models.dto import Token, UserCreate, UserRead, UserUpdate
+from library_service.models.dto import Token, UserCreate, UserRead, UserUpdate, UserList, RoleRead, RoleList
 from library_service.settings import get_session
 from library_service.auth import (ACCESS_TOKEN_EXPIRE_MINUTES, RequireAdmin,
                                   RequireAuth, authenticate_user, get_password_hash,
@@ -136,7 +136,7 @@ def update_user_me(
 
 @router.get(
     "/users",
-    response_model=list[UserRead],
+    response_model=UserList,
     summary="Список пользователей",
     description="Получить список всех пользователей (только для админов)",
 )
@@ -148,10 +148,10 @@ def read_users(
 ):
     """Эндпоинт получения списка всех пользователей"""
     users = session.exec(select(User).offset(skip).limit(limit)).all()
-    return [
-        UserRead(**user.model_dump(), roles=[role.name for role in user.roles])
-        for user in users
-    ]
+    return UserList(
+        users=[UserRead(**user.model_dump()) for user in users],
+        total=len(users),
+    )
 
 
 @router.post(
@@ -234,3 +234,20 @@ def remove_role_from_user(
     session.refresh(user)
 
     return UserRead(**user.model_dump(), roles=[r.name for r in user.roles])
+
+
+@router.get(
+    "/roles",
+    response_model=RoleList,
+    summary="Получить список ролей",
+    description="Возвращает список ролей",
+)
+def get_roles(
+    session: Session = Depends(get_session),
+):
+    """Эндпоинт получения списа ролей"""
+    roles = session.exec(select(Role)).all()
+    return RoleList(
+        roles=[RoleRead(**role.model_dump()) for role in roles],
+        total=len(roles),
+    )

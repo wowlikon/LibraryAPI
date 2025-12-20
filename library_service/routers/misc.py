@@ -66,6 +66,11 @@ async def auth(request: Request):
     return templates.TemplateResponse(request, "auth.html")
 
 
+@router.get("/profile", include_in_schema=False)
+async def profile(request: Request):
+    """Эндпоинт страницы профиля"""
+    return templates.TemplateResponse(request, "profile.html")
+
 
 @router.get("/api", include_in_schema=False)
 async def api(request: Request, app=Depends(lambda: get_app())):

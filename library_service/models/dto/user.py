@@ -59,3 +59,9 @@ class UserUpdate(SQLModel):
     email: EmailStr | None = None
     full_name: str | None = None
     password: str | None = None
+
+
+class UserList(SQLModel):
+    """Список пользователей"""
+    users: List[UserRead]
+    total: int
