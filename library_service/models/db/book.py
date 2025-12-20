@@ -1,6 +1,7 @@
 """Модуль DB-моделей книг"""
 from typing import TYPE_CHECKING, List
 
+from sqlalchemy import Column, String
 from sqlmodel import Field, Relationship
 
 from library_service.models.dto.book import BookBase
@@ -15,7 +16,10 @@ if TYPE_CHECKING:
 class Book(BookBase, table=True):
     """Модель книги в базе данных"""
     id: int | None = Field(default=None, primary_key=True, index=True)
-    status: BookStatus = Field(default=BookStatus.ACTIVE)
+    status: BookStatus = Field(
+        default=BookStatus.ACTIVE,
+        sa_column=Column(String, nullable=False, default="active")
+    )
     authors: List["Author"] = Relationship(
         back_populates="books", link_model=AuthorBookLink
     )
