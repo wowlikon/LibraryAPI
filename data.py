@@ -3,7 +3,7 @@ from typing import Optional
 
 # Конфигурация
 USERNAME = "admin"
-PASSWORD = "TzUlDpUCHutFa-oGCd1cBw"
+PASSWORD = "4ai2_pQnrJ1-tDx-XSLTKw"
 BASE_URL = "http://localhost:8000"
 
 
@@ -339,7 +339,7 @@ def main():
         for author_name in book_info["authors"]:
             if author_name in authors:
                 api.link_author_book(authors[author_name], book_id)
-                
+
         for genre_name in book_info["genres"]:
             if genre_name in genres:
                 api.link_genre_book(genres[genre_name], book_id)

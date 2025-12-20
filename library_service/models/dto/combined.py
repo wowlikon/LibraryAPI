@@ -6,7 +6,7 @@ from .author import AuthorRead
 from .genre import GenreRead
 from .book import BookRead
 from .loan import LoanRead
-
+from ..enums import BookStatus
 
 class AuthorWithBooks(SQLModel):
     """Модель автора с книгами"""
@@ -35,6 +35,7 @@ class BookWithGenres(SQLModel):
     id: int
     title: str
     description: str
+    status: BookStatus | None = None
     genres: List[GenreRead] = Field(default_factory=list)
 
 
@@ -43,6 +44,7 @@ class BookWithAuthorsAndGenres(SQLModel):
     id: int
     title: str
     description: str
+    status: BookStatus | None = None
     authors: List[AuthorRead] = Field(default_factory=list)
     genres: List[GenreRead] = Field(default_factory=list)
 
@@ -55,7 +57,7 @@ class BookFilteredList(SQLModel):
 class LoanWithBook(LoanRead):
     """Модель выдачи, включающая данные о книге"""
     book: BookRead
-    
+
 class BookStatusUpdate(SQLModel):
     """Модель для ручного изменения статуса библиотекарем"""
     status: str

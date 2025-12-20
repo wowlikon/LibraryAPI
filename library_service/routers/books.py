@@ -25,7 +25,7 @@ router = APIRouter(prefix="/books", tags=["books"])
 )
 def filter_books(
     session: Session = Depends(get_session),
-    q: str | None = Query(None, min_length=3, max_length=50, description="Поиск"),
+    q: str | None = Query(None, max_length=50, description="Поиск"),
     author_ids: List[int] | None = Query(None, description="Список ID авторов"),
     genre_ids: List[int] | None = Query(None, description="Список ID жанров"),
     page: int = Query(1, gt=0, description="Номер страницы"),

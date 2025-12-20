@@ -4,14 +4,30 @@
         <title>{% block title %}LiB{% endblock %}</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <script async="" src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.11.0/sha256.min.js"></script>
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
+        ></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cash/8.1.5/cash.min.js"></script>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="/static/utils.js"></script>
         <link rel="stylesheet" href="/static/styles.css" />
         {% block extra_head %}{% endblock %}
     </head>
-    <body class="flex flex-col min-h-screen bg-gray-100">
-        <header class="bg-gray-500 text-white p-4 shadow-md">
+    <body
+        class="flex flex-col min-h-screen bg-gray-100"
+        x-data="{
+              user: null,
+              async init() {
+                  document.addEventListener('auth:login', async (e) => {
+                      this.user = e.detail;
+                      this.user.avatar = await Utils.getGravatarUrl(this.user.email);
+                  });
+                  await Auth.init();
+              }
+          }"
+    >
+        <header class="bg-gray-600 text-white p-4 shadow-md">
             <div class="mx-auto pl-5 pr-3 flex justify-between items-center">
                 <a class="flex gap-4 items-center max-w-10 h-auto" href="/">
                     <img class="invert" src="/static/logo.svg" />
@@ -19,59 +35,168 @@
                 </a>
                 <nav>
                     <ul class="flex space-x-4">
-                        <li><a href="/" class="hover:text-gray-200">Главная</a></li>
-                        <li><a href="/books" class="hover:text-gray-200">Книги</a></li>
-                        <li><a href="/authors" class="hover:text-gray-200">Авторы</a></li>
-                        <li><a href="/api" class="hover:text-gray-200">API</a></li>
+                        <li>
+                            <a href="/" class="hover:text-gray-200">Главная</a>
+                        </li>
+                        <li>
+                            <a href="/books" class="hover:text-gray-200"
+                                >Книги</a
+                            >
+                        </li>
+                        <li>
+                            <a href="/authors" class="hover:text-gray-200"
+                                >Авторы</a
+                            >
+                        </li>
+                        <li>
+                            <a href="/api" class="hover:text-gray-200">API</a>
+                        </li>
                     </ul>
                 </nav>
-                <div class="relative" id="user-menu-area">
-                    <a href="/auth" id="guest-link" class="block hover:opacity-80 transition"><img class="w-6 h-6 invert" src="/static/avatar.svg" /></a>
-                    <button type="button" id="user-btn" class="hidden items-center gap-2 hover:opacity-80 transition focus:outline-none">
-                        <img 
-                            id="user-avatar" 
-                            src="https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y" 
-                            class="w-8 h-8 rounded-full border-2 border-white object-cover bg-gray-600"
-                            alt="User Avatar"
-                        />
-                        
-                        <svg id="user-arrow" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
-                        <div class="px-4 py-3 border-b border-gray-200">
-                            <p id="dropdown-name" class="text-sm font-semibold text-gray-900 truncate">Пользователь</p>
-                            <p id="dropdown-username" class="text-sm text-gray-500 truncate">@username</p>
-                            <p id="dropdown-email" class="text-xs text-gray-400 truncate mt-1">email@example.com</p>
-                        </div>
-                        <a href="/profile" class="flex items-center px-4 py-2 text-sm hover:bg-gray-100">
-                            <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                            <p class="text-gray-700 text-sm">Мой профиль</p>
+                <div class="relative" x-data="{ open: false }">
+                    <template x-if="!user">
+                        <a
+                            href="/auth"
+                            class="block hover:opacity-80 transition"
+                        >
+                            <svg
+                                class="w-7 h-7"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.5"
+                                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                ></path>
+                            </svg>
                         </a>
-                        <a href="/my-books" class="flex items-center px-4 py-2 text-sm hover:bg-gray-100">
-                            <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                            <p class="text-gray-700 text-sm">Мои книги</p>
-                        </a>
-                        <div class="border-t border-gray-200 mt-1 pt-1">
-                            <button type="button" id="logout-btn" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                <p class="text-gray-700 text-sm">Выйти</p>
+                    </template>
+                    <template x-if="user">
+                        <div>
+                            <button
+                                @click="open = !open"
+                                @click.outside="open = false"
+                                type="button"
+                                class="flex items-center gap-2 hover:opacity-80 transition focus:outline-none"
+                            >
+                                <img
+                                    :src="user.avatar"
+                                    class="w-8 h-8 rounded-full border border-white object-cover bg-gray-600"
+                                />
+                                <svg
+                                    class="w-4 h-4 transition-transform duration-200"
+                                    :class="open ? 'rotate-180' : ''"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
                             </button>
+                            <div
+                                x-show="open"
+                                x-transition
+                                class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden text-gray-900"
+                                style="display: none"
+                            >
+                                <div class="px-4 py-3 border-b border-gray-200">
+                                    <p
+                                        class="text-sm font-semibold truncate"
+                                        x-text="user.full_name || user.username"
+                                    ></p>
+                                    <p
+                                        class="text-sm text-gray-500 truncate"
+                                        x-text="'@' + user.username"
+                                    ></p>
+                                    <p
+                                        class="text-xs text-gray-400 truncate mt-1"
+                                        x-text="user.email"
+                                    ></p>
+                                </div>
+                                <a
+                                    href="/profile"
+                                    class="flex items-center px-4 py-2 text-sm hover:bg-gray-100 text-gray-700"
+                                >
+                                    <svg
+                                        class="w-4 h-4 mr-3 text-gray-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        ></path>
+                                    </svg>
+                                    Мой профиль
+                                </a>
+                                <a
+                                    href="/my-books"
+                                    class="flex items-center px-4 py-2 text-sm hover:bg-gray-100 text-gray-700"
+                                >
+                                    <svg
+                                        class="w-4 h-4 mr-3 text-gray-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                        ></path>
+                                    </svg>
+                                    Мои книги
+                                </a>
+                                <div class="border-t border-gray-200">
+                                    <button
+                                        @click="Auth.logout()"
+                                        class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    >
+                                        <svg
+                                            class="w-4 h-4 mr-3"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                            ></path>
+                                        </svg>
+                                        Выйти
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
             </div>
         </header>
-        
-        {% block content %}{% endblock %}
-        
+        <main class="flex-grow">{% block content %}{% endblock %}</main>
+        <div
+            id="toast-container"
+            class="fixed bottom-5 right-5 flex flex-col gap-2 z-50"
+        ></div>
+
         <footer class="bg-gray-800 text-white p-4 mt-8">
             <div class="container mx-auto text-center">
-                <p>&copy; 2025 My Awesome Library. All rights reserved.</p>
+                <p>&copy; 2025 LiB Library. All rights reserved.</p>
             </div>
         </footer>
-
         {% block scripts %}{% endblock %}
     </body>
 </html>

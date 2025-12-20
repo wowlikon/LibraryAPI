@@ -13,6 +13,7 @@ h1 {
     letter-spacing: 10px;
 }
 
+h2,
 nav ul li a {
     font-family: "Dited", sans-serif;
     letter-spacing: 2.5px;
@@ -245,8 +246,8 @@ button:disabled {
 }
 
 .line-clamp-3 {
-display: -webkit-box;
--webkit-line-clamp: 3;
--webkit-box-orient: vertical;
-overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }

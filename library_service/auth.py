@@ -146,9 +146,9 @@ RequireModerator = Annotated[User, Depends(require_role("moderator"))]
 def seed_roles(session: Session) -> dict[str, Role]:
     """Создаёт роли по умолчанию, если их нет."""
     default_roles = [
-        {"name": "admin", "description": "Администратор системы"},
-        {"name": "librarian", "description": "Библиотекарь"},
-        {"name": "member", "description": "Посетитель библиотеки"},
+        {"name": "admin", "description": "Администратор системы", "payroll": 80000},
+        {"name": "librarian", "description": "Библиотекарь", "payroll": 55000},
+        {"name": "member", "description": "Посетитель библиотеки", "payroll": 0},
     ]
 
     roles = {}

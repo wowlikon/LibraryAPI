@@ -11,9 +11,9 @@ const bookX = (svgWidth - bookWidth) / 2;
 const bookY = (svgHeight - bookHeight) / 2;
 const desiredLineSpacing = 8;
 const baseLineWidth = 2;
-const maxLineWidth = 10;
+const maxLineWidth = 8;
 const maxLineHeight = bookHeight - 24;
-const innerPaddingX = 10;
+const innerPaddingX = 15;
 const appearStagger = 8;
 
 let lineSpacing;
@@ -28,7 +28,7 @@ if (lineCount > 1) {
 const linesSpan = lineSpacing * (lineCount - 1);
 
 const rightBase = bookX + bookWidth - innerPaddingX - maxLineWidth;
-const lineStartX = rightBase - linesSpan;
+const lineStartX = rightBase - linesSpan + maxLineWidth;
 
 const leftLimit = bookX + innerPaddingX;
 
@@ -250,18 +250,16 @@ function observeStatCards() {
       entries.forEach((entry, index) => {
         if (entry.isIntersecting) {
           setTimeout(() => {
-            $(entry.target)
-              .addClass("animate-fade-in")
-              .css({
-                opacity: "1",
-                transform: "translateY(0)",
-              });
+            $(entry.target).addClass("animate-fade-in").css({
+              opacity: "1",
+              transform: "translateY(0)",
+            });
           }, index * 100);
           observer.unobserve(entry.target);
         }
       });
     },
-    { threshold: 0.1 }
+    { threshold: 0.1 },
   );
 
   $cards.each((index, card) => {
@@ -277,108 +275,4 @@ function observeStatCards() {
 $(document).ready(() => {
   loadStats();
   observeStatCards();
-
-  const $guestLink = $("#guest-link");
-  const $userBtn = $("#user-btn");
-  const $userDropdown = $("#user-dropdown");
-  const $userArrow = $("#user-arrow");
-  const $userAvatar = $("#user-avatar");
-  const $dropdownName = $("#dropdown-name");
-  const $dropdownUsername = $("#dropdown-username");
-  const $dropdownEmail = $("#dropdown-email");
-  const $logoutBtn = $("#logout-btn");
-
-  let isDropdownOpen = false;
-
-  function openDropdown() {
-    isDropdownOpen = true;
-    $userDropdown.removeClass("hidden");
-    $userArrow.addClass("rotate-180");
-  }
-
-  function closeDropdown() {
-    isDropdownOpen = false;
-    $userDropdown.addClass("hidden");
-    $userArrow.removeClass("rotate-180");
-  }
-
-  $userBtn.on("click", function (e) {
-    e.stopPropagation();
-    isDropdownOpen ? closeDropdown() : openDropdown();
-  });
-
-  $(document).on("click", function (e) {
-    if (isDropdownOpen && !$(e.target).closest("#user-menu-container").length) {
-      closeDropdown();
-    }
-  });
-
-  $(document).on("keydown", function (e) {
-    if (e.key === "Escape" && isDropdownOpen) {
-      closeDropdown();
-    }
-  });
-
-  $logoutBtn.on("click", function () {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    window.location.reload();
-  });
-
-  function showGuest() {
-    $guestLink.removeClass("hidden");
-    $userBtn.addClass("hidden").removeClass("flex");
-    closeDropdown();
-  }
-
-  function showUser(user) {
-    $guestLink.addClass("hidden");
-    $userBtn.removeClass("hidden").addClass("flex");
-
-    const displayName = user.full_name || user.username;
-    const firstLetter = displayName.charAt(0).toUpperCase();
-
-    $userAvatar.text(firstLetter);
-    $dropdownName.text(displayName);
-    $dropdownUsername.text("@" + user.username);
-    $dropdownEmail.text(user.email);
-  }
-
-  function updateUserAvatar(email) {
-    if (!email) return;
-    const cleanEmail = email.trim().toLowerCase();
-    const emailHash = sha256(cleanEmail);
-
-    const avatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=200`;
-    const avatarImg = document.getElementById("user-avatar");
-    if (avatarImg) {
-      avatarImg.src = avatarUrl;
-    }
-  }
-
-  const token = localStorage.getItem("access_token");
-
-  if (!token) {
-    showGuest();
-  } else {
-    fetch("/api/auth/me", {
-      headers: { Authorization: "Bearer " + token },
-    })
-      .then((response) => {
-        if (response.ok) return response.json();
-        throw new Error("Unauthorized");
-      })
-      .then((user) => {
-        showUser(user);
-        updateUserAvatar(user.email);
-
-        document.getElementById("user-btn").classList.remove("hidden");
-        document.getElementById("guest-link").classList.add("hidden");
-      })
-      .catch(() => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        showGuest();
-      });
-  }
 });

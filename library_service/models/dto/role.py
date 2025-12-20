@@ -8,6 +8,7 @@ class RoleBase(SQLModel):
     """Базовая модель роли"""
     name: str
     description: str | None = None
+    payroll: int
 
 
 class RoleCreate(RoleBase):
