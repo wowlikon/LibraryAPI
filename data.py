@@ -2,8 +2,8 @@ import requests
 from typing import Optional
 
 # Конфигурация
-USERNAME = "sys-admin"
-PASSWORD = "wTKPVqTIMqzXL2EZxYz80w"
+USERNAME = "admin"
+PASSWORD = "n_ElBL9LTfTTgZSqHShqOg"
 BASE_URL = "http://localhost:8000"
 
 
@@ -127,7 +127,6 @@ def main():
         print("Не удалось авторизоваться. Проверьте логин и пароль.")
         return
 
-    # === АВТОРЫ (12 авторов) ===
     print("\n📚 Создание авторов...")
     authors_data = [
         "Лев Толстой",
@@ -150,7 +149,6 @@ def main():
         if author_id:
             authors[name] = author_id
 
-    # === ЖАНРЫ (8 жанров) ===
     print("\n🏷️ Создание жанров...")
     genres_data = [
         "Роман",
@@ -169,7 +167,6 @@ def main():
         if genre_id:
             genres[name] = genre_id
 
-    # === КНИГИ (25 книг) ===
     print("\n📖 Создание книг...")
     books_data = [
         {
@@ -334,23 +331,19 @@ def main():
                 "genres": book["genres"]
             }
 
-    # === СОЗДАНИЕ СВЯЗЕЙ ===
     print("\n🔗 Создание связей...")
 
     for book_title, book_info in books.items():
         book_id = book_info["id"]
 
-        # Связи с авторами
         for author_name in book_info["authors"]:
             if author_name in authors:
                 api.link_author_book(authors[author_name], book_id)
-
-        # Связи с жанрами
+                
         for genre_name in book_info["genres"]:
             if genre_name in genres:
                 api.link_genre_book(genres[genre_name], book_id)
 
-    # === ИТОГИ ===
     print("\n" + "=" * 50)
     print("📊 ИТОГИ:")
     print(f"  • Авторов создано: {len(authors)}")

@@ -44,13 +44,11 @@ def register(user_data: UserCreate, session: Session = Depends(get_session)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
-    # Создание пользователя
     db_user = User(
         **user_data.model_dump(exclude={"password"}),
         hashed_password=get_password_hash(user_data.password)
     )
 
-    # Назначение роли по умолчанию
     default_role = session.exec(select(Role).where(Role.name == "user")).first()
     if default_role:
         db_user.roles.append(default_role)
@@ -154,3 +152,85 @@ def read_users(
         UserRead(**user.model_dump(), roles=[role.name for role in user.roles])
         for user in users
     ]
+
+
+@router.post(
+    "/users/{user_id}/roles/{role_name}",
+    response_model=UserRead,
+    summary="Назначить роль пользователю",
+    description="Добавить указанную роль пользователю",
+)
+def add_role_to_user(
+    user_id: int,
+    role_name: str,
+    admin: RequireAdmin,
+    session: Session = Depends(get_session),
+):
+    """Эндпоинт добавления роли пользователю"""
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    role = session.exec(select(Role).where(Role.name == role_name)).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role '{role_name}' not found",
+        )
+
+    if role in user.roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already has this role",
+        )
+
+    user.roles.append(role)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return UserRead(**user.model_dump(), roles=[r.name for r in user.roles])
+
+
+@router.delete(
+    "/users/{user_id}/roles/{role_name}",
+    response_model=UserRead,
+    summary="Удалить роль у пользователя",
+    description="Убрать указанную роль у пользователя",
+)
+def remove_role_from_user(
+    user_id: int,
+    role_name: str,
+    admin: RequireAdmin,
+    session: Session = Depends(get_session),
+):
+    """Эндпоинт удаления роли у пользователя"""
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    role = session.exec(select(Role).where(Role.name == role_name)).first()
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role '{role_name}' not found",
+        )
+
+    if role not in user.roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User does not have this role",
+        )
+
+    user.roles.remove(role)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return UserRead(**user.model_dump(), roles=[r.name for r in user.roles])

@@ -16,5 +16,4 @@ class Role(RoleBase, table=True):
 
     id: int | None = Field(default=None, primary_key=True, index=True)
 
-    # Связи
     users: List["User"] = Relationship(back_populates="roles", link_model=UserRoleLink)

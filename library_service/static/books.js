@@ -1,6 +1,6 @@
-$(document).ready(function () {
-  let selectedAuthors = new Map(); // Map<id, name>
-  let selectedGenres = new Map(); // Map<id, name>
+$(document).ready(() => {
+  let selectedAuthors = new Map();
+  let selectedGenres = new Map();
   let currentPage = 1;
   let pageSize = 20;
   let totalBooks = 0;
@@ -36,41 +36,32 @@ $(document).ready(function () {
 
       initializeAuthorDropdown();
       initializeFilters();
-
-      // Загружаем книги при старте
+      
       loadBooks();
     })
     .catch((error) => console.error("Error loading data:", error));
 
-  // === Функция загрузки книг ===
   function loadBooks() {
     const searchQuery = $("#book-search-input").val().trim();
 
-    // Формируем URL с параметрами
     const params = new URLSearchParams();
-
-    // Добавляем поиск (минимум 3 символа)
     if (searchQuery.length >= 3) {
       params.append("q", searchQuery);
     }
 
-    // Добавляем авторов
     selectedAuthors.forEach((name, id) => {
       params.append("author_ids", id);
     });
 
-    // Добавляем жанры
     selectedGenres.forEach((name, id) => {
       params.append("genre_ids", id);
     });
 
-    // Пагинация
     params.append("page", currentPage);
     params.append("size", pageSize);
 
     const url = `/api/books/filter?${params.toString()}`;
 
-    // Показываем индикатор загрузки
     showLoadingState();
 
     fetch(url)
@@ -91,7 +82,6 @@ $(document).ready(function () {
       });
   }
 
-  // === Отображение книг ===
   function renderBooks(books) {
     const $container = $("#books-container");
     $container.empty();
@@ -146,17 +136,14 @@ $(document).ready(function () {
 
       $container.append($bookCard);
     });
-
-    // Обработчик клика на карточку книги
+    
     $container.on("click", ".book-card", function () {
       const bookId = $(this).data("id");
-      window.location.href = `/books/${bookId}`;
+      window.location.href = `/book/${bookId}`;
     });
   }
 
-  // === Пагинация ===
   function renderPagination() {
-    // Удаляем старую пагинацию
     $("#pagination-container").remove();
 
     const totalPages = Math.ceil(totalBooks / pageSize);
@@ -181,7 +168,6 @@ $(document).ready(function () {
 
     const $pageNumbers = $pagination.find("#page-numbers");
 
-    // Генерируем номера страниц
     const pages = generatePageNumbers(currentPage, totalPages);
 
     pages.forEach((page) => {
@@ -199,7 +185,6 @@ $(document).ready(function () {
 
     $("#books-container").after($pagination);
 
-    // Обработчики пагинации
     $("#prev-page").on("click", function () {
       if (currentPage > 1) {
         currentPage--;
@@ -249,7 +234,6 @@ $(document).ready(function () {
     $("html, body").animate({ scrollTop: 0 }, 300);
   }
 
-  // === Состояния загрузки ===
   function showLoadingState() {
     const $container = $("#books-container");
     $container.html(`
@@ -292,7 +276,6 @@ $(document).ready(function () {
     $("#retry-btn").on("click", loadBooks);
   }
 
-  // === Экранирование HTML ===
   function escapeHtml(text) {
     if (!text) return "";
     const div = document.createElement("div");
@@ -300,7 +283,6 @@ $(document).ready(function () {
     return div.innerHTML;
   }
 
-  // === Dropdown авторов ===
   function initializeAuthorDropdown() {
     const $input = $("#author-search-input");
     const $dropdown = $("#author-dropdown");
@@ -390,13 +372,11 @@ $(document).ready(function () {
     window.updateAuthorHighlights = updateHighlights;
   }
 
-  // === Инициализация фильтров ===
   function initializeFilters() {
     const $bookSearch = $("#book-search-input");
     const $applyBtn = $("#apply-filters-btn");
     const $resetBtn = $("#reset-filters-btn");
 
-    // Обработка жанров
     $("#genres-list").on("change", "input[type='checkbox']", function () {
       const id = parseInt($(this).attr("data-id"));
       const name = $(this).attr("data-name");
@@ -407,13 +387,11 @@ $(document).ready(function () {
       }
     });
 
-    // Применить фильтры
     $applyBtn.on("click", function () {
-      currentPage = 1; // Сбрасываем на первую страницу
+      currentPage = 1;
       loadBooks();
     });
 
-    // Сбросить фильтры
     $resetBtn.on("click", function () {
       $bookSearch.val("");
 
@@ -428,13 +406,11 @@ $(document).ready(function () {
       loadBooks();
     });
 
-    // Поиск с дебаунсом
     let searchTimeout;
     $bookSearch.on("input", function () {
       clearTimeout(searchTimeout);
       const query = $(this).val().trim();
 
-      // Автопоиск только если >= 3 символов или пусто
       if (query.length >= 3 || query.length === 0) {
         searchTimeout = setTimeout(() => {
           currentPage = 1;
@@ -443,7 +419,6 @@ $(document).ready(function () {
       }
     });
 
-    // Поиск по Enter
     $bookSearch.on("keypress", function (e) {
       if (e.which === 13) {
         clearTimeout(searchTimeout);
@@ -453,7 +428,6 @@ $(document).ready(function () {
     });
   }
 
-  // === Остальной код (пользователь/авторизация) ===
   const $guestLink = $("#guest-link");
   const $userBtn = $("#user-btn");
   const $userDropdown = $("#user-dropdown");

@@ -147,8 +147,8 @@ def seed_roles(session: Session) -> dict[str, Role]:
     """Создаёт роли по умолчанию, если их нет."""
     default_roles = [
         {"name": "admin", "description": "Администратор системы"},
-        {"name": "moderator", "description": "Модератор"},
-        {"name": "user", "description": "Обычный пользователь"},
+        {"name": "librarian", "description": "Библиотекарь"},
+        {"name": "member", "description": "Посетитель библиотеки"},
     ]
 
     roles = {}

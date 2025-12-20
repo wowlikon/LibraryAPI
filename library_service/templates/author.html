@@ -1,0 +1,16 @@
+{% extends "base.html" %} {% block title %}LiB - Автор{% endblock %} {% block
+content %}
+<div class="flex flex-1 mt-4 p-4">
+    <main class="flex-1 max-w-4xl mx-auto">
+        <div id="author-card" class="bg-white p-6 rounded-lg shadow-md mb-6">
+        </div>
+        <div id="books-section" class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Книги автора</h2>
+            <div id="books-container">
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %} {% block scripts %}
+<script type="text/javascript" src="/static/author.js"></script>
+{% endblock %}

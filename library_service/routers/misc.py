@@ -31,21 +31,39 @@ def get_info(app) -> Dict:
 
 
 @router.get("/", include_in_schema=False)
-async def root(request: Request, app=Depends(lambda: get_app())):
+async def root(request: Request):
     """Эндпоинт главной страницы"""
-    return templates.TemplateResponse(request, "index.html", get_info(app))
+    return templates.TemplateResponse(request, "index.html")
+
+
+@router.get("/authors", include_in_schema=False)
+async def authors(request: Request):
+    """Эндпоинт страницы выбора автора"""
+    return templates.TemplateResponse(request, "authors.html")
+
+
+@router.get("/author/{author_id}", include_in_schema=False)
+async def author(request: Request, author_id: int):
+    """Эндпоинт страницы автора"""
+    return templates.TemplateResponse(request, "author.html")
 
 
 @router.get("/books", include_in_schema=False)
-async def books(request: Request, app=Depends(lambda: get_app())):
+async def books(request: Request):
     """Эндпоинт страницы выбора книг"""
-    return templates.TemplateResponse(request, "books.html", get_info(app))
+    return templates.TemplateResponse(request, "books.html")
+
+
+@router.get("/book/{book_id}", include_in_schema=False)
+async def book(request: Request, book_id: int):
+    """Эндпоинт страницы книги"""
+    return templates.TemplateResponse(request, "book.html")
 
 
 @router.get("/auth", include_in_schema=False)
-async def auth(request: Request, app=Depends(lambda: get_app())):
+async def auth(request: Request):
     """Эндпоинт страницы авторизации"""
-    return templates.TemplateResponse(request, "auth.html", get_info(app))
+    return templates.TemplateResponse(request, "auth.html")
 
 
 

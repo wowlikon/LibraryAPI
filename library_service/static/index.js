@@ -1,4 +1,4 @@
-const svg = document.getElementById("bookSvg");
+const $svg = $("#bookSvg");
 const NS = "http://www.w3.org/2000/svg";
 
 const svgWidth = 200;
@@ -48,27 +48,27 @@ const disappearDuration =
 const pauseDuration = 30;
 
 const book = document.createElementNS(NS, "rect");
-book.setAttribute("x", bookX);
-book.setAttribute("y", bookY);
-book.setAttribute("width", bookWidth);
-book.setAttribute("height", bookHeight);
-book.setAttribute("fill", "#374151");
-book.setAttribute("rx", "4");
-svg.appendChild(book);
+$(book)
+  .attr("x", bookX)
+  .attr("y", bookY)
+  .attr("width", bookWidth)
+  .attr("height", bookHeight)
+  .attr("fill", "#374151")
+  .attr("rx", "4");
+$svg.append(book);
 
 const lines = [];
 for (let i = 0; i < lineCount; i++) {
   const line = document.createElementNS(NS, "rect");
-  line.setAttribute("fill", "#ffffff");
-  line.setAttribute("rx", "1");
-  svg.appendChild(line);
+  $(line).attr("fill", "#ffffff").attr("rx", "1");
+  $svg.append(line);
 
   const baseX = lineStartX + i * lineSpacing;
   const targetX = leftLimit + i * lineSpacing;
   const moveDistance = baseX - targetX;
 
   lines.push({
-    el: line,
+    el: $(line),
     baseX,
     targetX,
     moveDistance,
@@ -91,13 +91,14 @@ function easeInQuad(t) {
 }
 
 function updateLine(line) {
-  const el = line.el;
+  const $el = line.el;
   const centerY = bookY + bookHeight / 2;
 
-  el.setAttribute("x", line.currentX);
-  el.setAttribute("y", centerY - line.height / 2);
-  el.setAttribute("width", line.width);
-  el.setAttribute("height", Math.max(0, line.height));
+  $el
+    .attr("x", line.currentX)
+    .attr("y", centerY - line.height / 2)
+    .attr("width", line.width)
+    .attr("height", Math.max(0, line.height));
 }
 
 function animateBook() {
@@ -171,7 +172,7 @@ function animateBook() {
 
 animateBook();
 
-function animateCounter(element, target, duration = 2000) {
+function animateCounter($element, target, duration = 2000) {
   const start = 0;
   const startTime = performance.now();
 
@@ -182,12 +183,12 @@ function animateCounter(element, target, duration = 2000) {
     const easedProgress = 1 - Math.pow(1 - progress, 3);
     const current = Math.floor(start + (target - start) * easedProgress);
 
-    element.textContent = current.toLocaleString("ru-RU");
+    $element.text(current.toLocaleString("ru-RU"));
 
     if (progress < 1) {
       requestAnimationFrame(update);
     } else {
-      element.textContent = target.toLocaleString("ru-RU");
+      $element.text(target.toLocaleString("ru-RU"));
     }
   }
 
@@ -204,71 +205,180 @@ async function loadStats() {
     const stats = await response.json();
 
     setTimeout(() => {
-      const booksEl = document.getElementById("stat-books");
-      const authorsEl = document.getElementById("stat-authors");
-      const genresEl = document.getElementById("stat-genres");
-      const usersEl = document.getElementById("stat-users");
+      const $booksEl = $("#stat-books");
+      const $authorsEl = $("#stat-authors");
+      const $genresEl = $("#stat-genres");
+      const $usersEl = $("#stat-users");
 
-      if (booksEl) {
-        animateCounter(booksEl, stats.books, 1500);
+      if ($booksEl.length) {
+        animateCounter($booksEl, stats.books, 1500);
       }
 
       setTimeout(() => {
-        if (authorsEl) {
-          animateCounter(authorsEl, stats.authors, 1500);
+        if ($authorsEl.length) {
+          animateCounter($authorsEl, stats.authors, 1500);
         }
       }, 150);
 
       setTimeout(() => {
-        if (genresEl) {
-          animateCounter(genresEl, stats.genres, 1500);
+        if ($genresEl.length) {
+          animateCounter($genresEl, stats.genres, 1500);
         }
       }, 300);
 
       setTimeout(() => {
-        if (usersEl) {
-          animateCounter(usersEl, stats.users, 1500);
+        if ($usersEl.length) {
+          animateCounter($usersEl, stats.users, 1500);
         }
       }, 450);
     }, 500);
   } catch (error) {
     console.error("Ошибка загрузки статистики:", error);
 
-    document.getElementById("stat-books").textContent = "—";
-    document.getElementById("stat-authors").textContent = "—";
-    document.getElementById("stat-genres").textContent = "—";
-    document.getElementById("stat-users").textContent = "—";
+    $("#stat-books").text("—");
+    $("#stat-authors").text("—");
+    $("#stat-genres").text("—");
+    $("#stat-users").text("—");
   }
 }
 
 function observeStatCards() {
-  const cards = document.querySelectorAll(".stat-card");
+  const $cards = $(".stat-card");
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry, index) => {
         if (entry.isIntersecting) {
           setTimeout(() => {
-            entry.target.classList.add("animate-fade-in");
-            entry.target.style.opacity = "1";
-            entry.target.style.transform = "translateY(0)";
+            $(entry.target)
+              .addClass("animate-fade-in")
+              .css({
+                opacity: "1",
+                transform: "translateY(0)",
+              });
           }, index * 100);
           observer.unobserve(entry.target);
         }
       });
     },
-    { threshold: 0.1 },
+    { threshold: 0.1 }
   );
 
-  cards.forEach((card) => {
-    card.style.opacity = "0";
-    card.style.transform = "translateY(20px)";
-    card.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+  $cards.each((index, card) => {
+    $(card).css({
+      opacity: "0",
+      transform: "translateY(20px)",
+      transition: "opacity 0.5s ease, transform 0.5s ease",
+    });
     observer.observe(card);
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+$(document).ready(() => {
   loadStats();
   observeStatCards();
+
+  const $guestLink = $("#guest-link");
+  const $userBtn = $("#user-btn");
+  const $userDropdown = $("#user-dropdown");
+  const $userArrow = $("#user-arrow");
+  const $userAvatar = $("#user-avatar");
+  const $dropdownName = $("#dropdown-name");
+  const $dropdownUsername = $("#dropdown-username");
+  const $dropdownEmail = $("#dropdown-email");
+  const $logoutBtn = $("#logout-btn");
+
+  let isDropdownOpen = false;
+
+  function openDropdown() {
+    isDropdownOpen = true;
+    $userDropdown.removeClass("hidden");
+    $userArrow.addClass("rotate-180");
+  }
+
+  function closeDropdown() {
+    isDropdownOpen = false;
+    $userDropdown.addClass("hidden");
+    $userArrow.removeClass("rotate-180");
+  }
+
+  $userBtn.on("click", function (e) {
+    e.stopPropagation();
+    isDropdownOpen ? closeDropdown() : openDropdown();
+  });
+
+  $(document).on("click", function (e) {
+    if (isDropdownOpen && !$(e.target).closest("#user-menu-container").length) {
+      closeDropdown();
+    }
+  });
+
+  $(document).on("keydown", function (e) {
+    if (e.key === "Escape" && isDropdownOpen) {
+      closeDropdown();
+    }
+  });
+
+  $logoutBtn.on("click", function () {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    window.location.reload();
+  });
+
+  function showGuest() {
+    $guestLink.removeClass("hidden");
+    $userBtn.addClass("hidden").removeClass("flex");
+    closeDropdown();
+  }
+
+  function showUser(user) {
+    $guestLink.addClass("hidden");
+    $userBtn.removeClass("hidden").addClass("flex");
+
+    const displayName = user.full_name || user.username;
+    const firstLetter = displayName.charAt(0).toUpperCase();
+
+    $userAvatar.text(firstLetter);
+    $dropdownName.text(displayName);
+    $dropdownUsername.text("@" + user.username);
+    $dropdownEmail.text(user.email);
+  }
+
+  function updateUserAvatar(email) {
+    if (!email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    const emailHash = sha256(cleanEmail);
+
+    const avatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon&s=200`;
+    const avatarImg = document.getElementById("user-avatar");
+    if (avatarImg) {
+      avatarImg.src = avatarUrl;
+    }
+  }
+
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    showGuest();
+  } else {
+    fetch("/api/auth/me", {
+      headers: { Authorization: "Bearer " + token },
+    })
+      .then((response) => {
+        if (response.ok) return response.json();
+        throw new Error("Unauthorized");
+      })
+      .then((user) => {
+        showUser(user);
+        updateUserAvatar(user.email);
+
+        document.getElementById("user-btn").classList.remove("hidden");
+        document.getElementById("guest-link").classList.add("hidden");
+      })
+      .catch(() => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        showGuest();
+      });
+  }
 });

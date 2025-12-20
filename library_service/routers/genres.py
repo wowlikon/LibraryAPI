@@ -10,7 +10,6 @@ from library_service.settings import get_session
 router = APIRouter(prefix="/genres", tags=["genres"])
 
 
-# Создание жанра
 @router.post(
     "/",
     response_model=GenreRead,
@@ -30,7 +29,6 @@ def create_genre(
     return GenreRead(**db_genre.model_dump())
 
 
-# Чтение жанров
 @router.get(
     "/",
     response_model=GenreList,
@@ -45,7 +43,6 @@ def read_genres(session: Session = Depends(get_session)):
     )
 
 
-# Чтение жанра с его книгами
 @router.get(
     "/{genre_id}",
     response_model=GenreWithBooks,
@@ -73,7 +70,6 @@ def get_genre(
     return GenreWithBooks(**genre_data)
 
 
-# Обновление жанра
 @router.put(
     "/{genre_id}",
     response_model=GenreRead,
@@ -100,7 +96,6 @@ def update_genre(
     return GenreRead(**db_genre.model_dump())
 
 
-# Удаление жанра
 @router.delete(
     "/{genre_id}",
     response_model=GenreRead,

@@ -11,7 +11,6 @@ class AuthorWithBooks(SQLModel):
     """Модель автора с книгами"""
     id: int
     name: str
-    bio: str
     books: List[BookRead] = Field(default_factory=list)
 
 

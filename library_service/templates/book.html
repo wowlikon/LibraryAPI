@@ -1,0 +1,21 @@
+{% extends "base.html" %} {% block title %}LiB - Книга{% endblock %} {% block
+content %}
+<div class="flex flex-1 mt-4 p-4">
+    <main class="flex-1 max-w-4xl mx-auto">
+        <div id="book-card" class="bg-white p-6 rounded-lg shadow-md mb-6">
+        </div>
+        <div id="authors-section" class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h2 class="text-xl font-semibold mb-4">Авторы</h2>
+            <div id="authors-container">
+            </div>
+        </div>
+        <div id="genres-section" class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Жанры</h2>
+            <div id="genres-container">
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %} {% block scripts %}
+<script type="text/javascript" src="/static/book.js"></script>
+{% endblock %}
