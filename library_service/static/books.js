@@ -5,6 +5,11 @@ $(document).ready(() => {
   let pageSize = 20;
   let totalBooks = 0;
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const genreIdsFromUrl = urlParams.getAll("genre_id");
+  const authorIdsFromUrl = urlParams.getAll("author_id");
+  const searchFromUrl = urlParams.get("q");
+
   Promise.all([
     fetch("/api/authors").then((response) => response.json()),
     fetch("/api/genres").then((response) => response.json()),
@@ -18,15 +23,25 @@ $(document).ready(() => {
           .attr("data-name", author.name)
           .text(author.name)
           .appendTo($dropdown);
+        
+        if (authorIdsFromUrl.includes(String(author.id))) {
+          selectedAuthors.set(author.id, author.name);
+        }
       });
 
       const $list = $("#genres-list");
       genresData.genres.forEach((genre) => {
+        const isChecked = genreIdsFromUrl.includes(String(genre.id));
+        
+        if (isChecked) {
+          selectedGenres.set(genre.id, genre.name);
+        }
+
         $("<li>")
           .addClass("mb-1")
           .html(
             `<label class="custom-checkbox flex items-center">
-              <input type="checkbox" data-id="${genre.id}" data-name="${genre.name}" />
+              <input type="checkbox" data-id="${genre.id}" data-name="${genre.name}" ${isChecked ? 'checked' : ''} />
               <span class="checkmark"></span>
               ${genre.name}
             </label>`,
@@ -57,12 +72,37 @@ $(document).ready(() => {
       params.append("genre_ids", id);
     });
 
+    function updateBrowserUrl() {
+      const params = new URLSearchParams();
+      
+      const searchQuery = $("#book-search-input").val().trim();
+      if (searchQuery.length >= 3) {
+        params.append("q", searchQuery);
+      }
+  
+      selectedAuthors.forEach((name, id) => {
+        params.append("author_id", id);
+      });
+  
+      selectedGenres.forEach((name, id) => {
+        params.append("genre_id", id);
+      });
+  
+      const newUrl = params.toString() 
+        ? `${window.location.pathname}?${params.toString()}`
+        : window.location.pathname;
+      
+      window.history.replaceState({}, "", newUrl);
+    }
+
     params.append("page", currentPage);
     params.append("size", pageSize);
 
     const url = `/api/books/filter?${params.toString()}`;
 
     showLoadingState();
+
+    updateBrowserUrl();
 
     fetch(url)
       .then((response) => {
