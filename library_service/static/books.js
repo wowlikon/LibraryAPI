@@ -40,7 +40,7 @@ $(document).ready(() => {
   let selectedAuthors = new Map();
   let selectedGenres = new Map();
   let currentPage = 1;
-  let pageSize = 20;
+  let pageSize = 12;
   let totalBooks = 0;
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -87,14 +87,31 @@ $(document).ready(() => {
       const isChecked = genreIdsFromUrl.includes(String(genre.id));
       if (isChecked) selectedGenres.set(genre.id, genre.name);
 
+      const editButton = window.canManage()
+        ? `<a href="/genre/${genre.id}/edit" class="ml-auto mr-2 p-1 text-gray-400 hover:text-gray-600 transition-colors" onclick="event.stopPropagation();" title="Редактировать жанр">
+             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+             </svg>
+           </a>`
+        : "";
+
       $list.append(`
-              <li class="mb-1">
-                <label class="custom-checkbox flex items-center">
-                  <input type="checkbox" data-id="${genre.id}" data-name="${genre.name}" ${isChecked ? "checked" : ""} />
-                  <span class="checkmark"></span> ${Utils.escapeHtml(genre.name)}
-                </label>
-              </li>
-            `);
+        <li class="mb-1">
+          <div class="flex items-center">
+            <label class="custom-checkbox flex items-center flex-1">
+              <input type="checkbox" data-id="${genre.id}" data-name="${Utils.escapeHtml(genre.name)}" ${isChecked ? "checked" : ""} />
+              <span class="checkmark"></span> ${Utils.escapeHtml(genre.name)}
+            </label>
+            ${editButton}
+          </div>
+        </li>
+      `);
+    });
+
+    $list.on("change", "input", function () {
+      const id = parseInt($(this).data("id"));
+      const name = $(this).data("name");
+      this.checked ? selectedGenres.set(id, name) : selectedGenres.delete(id);
     });
 
     $list.on("change", "input", function () {
@@ -211,14 +228,14 @@ $(document).ready(() => {
 
     $("#pagination-container").append($pagination);
 
-    $("#prev-page").on("click", () => {
+    $("#prev-page").on("click", function () {
       if (currentPage > 1) {
         currentPage--;
         loadBooks();
         scrollToTop();
       }
     });
-    $("#next-page").on("click", () => {
+    $("#next-page").on("click", function () {
       if (currentPage < totalPages) {
         currentPage++;
         loadBooks();
@@ -253,7 +270,7 @@ $(document).ready(() => {
   }
 
   function scrollToTop() {
-    $("html, body").animate({ scrollTop: 0 }, 300);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function showLoadingState() {
@@ -384,4 +401,13 @@ $(document).ready(() => {
       loadBooks();
     }
   });
+
+  function showAdminControls() {
+    if (window.canManage) {
+      $("#admin-actions").removeClass("hidden");
+    }
+  }
+
+  showAdminControls();
+  setTimeout(showAdminControls, 100);
 });

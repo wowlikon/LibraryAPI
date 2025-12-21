@@ -2,7 +2,7 @@ $(document).ready(() => {
   let allAuthors = [];
   let filteredAuthors = [];
   let currentPage = 1;
-  let pageSize = 12;
+  let pageSize = 24;
   let currentSort = "name_asc";
 
   loadAuthors();
@@ -119,7 +119,7 @@ $(document).ready(() => {
 
     $("#pagination-container").append($pagination);
 
-    $("#prev-page").on("click", () => {
+    $("#prev-page").on("click", function () {
       if (currentPage > 1) {
         currentPage--;
         renderAuthors();
@@ -127,7 +127,7 @@ $(document).ready(() => {
         scrollToTop();
       }
     });
-    $("#next-page").on("click", () => {
+    $("#next-page").on("click", function () {
       if (currentPage < totalPages) {
         currentPage++;
         renderAuthors();

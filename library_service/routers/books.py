@@ -67,7 +67,7 @@ def filter_books(
 
 @router.post(
     "/",
-    response_model=Book,
+    response_model=BookRead,
     summary="Создать книгу",
     description="Добавляет книгу в систему",
 )
@@ -149,6 +149,7 @@ def update_book(
 
     db_book.title = book.title or db_book.title
     db_book.description = book.description or db_book.description
+    db_book.status = book.status or db_book.status
     session.commit()
     session.refresh(db_book)
     return db_book
@@ -170,7 +171,7 @@ def delete_book(
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     book_read = BookRead(
-        id=(book.id or 0), title=book.title, description=book.description
+        id=(book.id or 0), title=book.title, description=book.description, status=book.status
     )
     session.delete(book)
     session.commit()

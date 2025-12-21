@@ -64,25 +64,27 @@ def create_refresh_token(data: dict) -> str:
     return encoded_jwt
 
 
-def decode_token(token: str) -> TokenData:
+def decode_token(token: str, expected_type: str = "access") -> TokenData:
     """Декодирование и проверка JWT токенов."""
+    token_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        user_id: int = payload.get("user_id")
-        if username is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        username: str | None = payload.get("sub")
+        user_id: int | None = payload.get("user_id")
+        token_type: str | None = payload.get("type")
+        if token_type != expected_type:
+            token_error.detail=f"Invalid token type. Expected {expected_type}"
+            raise token_error
+        if username is None or user_id is None:
+            token_error.detail="Could not validate credentials"
+            raise token_error
         return TokenData(username=username, user_id=user_id)
     except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        token_error.detail="Could not validate credentials"
+        raise token_error
 
 
 def authenticate_user(session: Session, username: str, password: str) -> User | None:
@@ -140,7 +142,8 @@ def require_role(role_name: str):
 # Создание dependencies
 RequireAuth = Annotated[User, Depends(get_current_active_user)]
 RequireAdmin = Annotated[User, Depends(require_role("admin"))]
-RequireModerator = Annotated[User, Depends(require_role("moderator"))]
+RequireMember = Annotated[User, Depends(require_role("member"))]
+RequireLibrarian = Annotated[User, Depends(require_role("librarian"))]
 
 
 def seed_roles(session: Session) -> dict[str, Role]:

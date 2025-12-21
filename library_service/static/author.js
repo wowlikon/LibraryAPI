@@ -12,6 +12,11 @@ $(document).ready(() => {
       document.title = `LiB - ${author.name}`;
       renderAuthor(author);
       renderBooks(author.books);
+      if (window.canManage) {
+        $("#edit-author-btn")
+          .attr("href", `/author/${author.id}/edit`)
+          .removeClass("hidden");
+      }
     })
     .catch((error) => {
       console.error(error);

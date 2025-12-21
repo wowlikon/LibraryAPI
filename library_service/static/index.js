@@ -262,7 +262,7 @@ function observeStatCards() {
     { threshold: 0.1 },
   );
 
-  $cards.each((index, card) => {
+  $cards.each(function (index, card) {
     $(card).css({
       opacity: "0",
       transform: "translateY(20px)",

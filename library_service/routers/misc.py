@@ -36,10 +36,34 @@ async def root(request: Request):
     return templates.TemplateResponse(request, "index.html")
 
 
+@router.get("/genre/create", include_in_schema=False)
+async def create_genre(request: Request):
+    """Эндпоинт страницы создания жанра"""
+    return templates.TemplateResponse(request, "create_genre.html")
+
+
+@router.get("/genre/{genre_id}/edit", include_in_schema=False)
+async def edit_genre(request: Request, genre_id: int):
+    """Эндпоинт страницы редактирования жанра"""
+    return templates.TemplateResponse(request, "edit_genre.html")
+
+
 @router.get("/authors", include_in_schema=False)
 async def authors(request: Request):
     """Эндпоинт страницы выбора автора"""
     return templates.TemplateResponse(request, "authors.html")
+
+
+@router.get("/author/create", include_in_schema=False)
+async def create_author(request: Request):
+    """Эндпоинт страницы создания автора"""
+    return templates.TemplateResponse(request, "create_author.html")
+
+
+@router.get("/author/{author_id}/edit", include_in_schema=False)
+async def edit_author(request: Request, author_id: int):
+    """Эндпоинт страницы редактирования автора"""
+    return templates.TemplateResponse(request, "edit_author.html")
 
 
 @router.get("/author/{author_id}", include_in_schema=False)
@@ -54,22 +78,40 @@ async def books(request: Request):
     return templates.TemplateResponse(request, "books.html")
 
 
+@router.get("/book/create", include_in_schema=False)
+async def create_book(request: Request):
+    """Эндпоинт страницы создания книги"""
+    return templates.TemplateResponse(request, "create_book.html")
+
+
+@router.get("/book/{book_id}/edit", include_in_schema=False)
+async def edit_book(request: Request, book_id: int):
+    """Эндпоинт страницы редактирования книги"""
+    return templates.TemplateResponse(request, "edit_book.html")
+
+
 @router.get("/book/{book_id}", include_in_schema=False)
 async def book(request: Request, book_id: int):
     """Эндпоинт страницы книги"""
     return templates.TemplateResponse(request, "book.html")
 
 
-@router.get("/auth", include_in_schema=False)
-async def auth(request: Request):
-    """Эндпоинт страницы авторизации"""
-    return templates.TemplateResponse(request, "auth.html")
+    @router.get("/auth", include_in_schema=False)
+    async def auth(request: Request):
+        """Эндпоинт страницы авторизации"""
+        return templates.TemplateResponse(request, "auth.html")
 
 
 @router.get("/profile", include_in_schema=False)
 async def profile(request: Request):
     """Эндпоинт страницы профиля"""
     return templates.TemplateResponse(request, "profile.html")
+
+
+@router.get("/users", include_in_schema=False)
+async def users(request: Request):
+    """Эндпоинт страницы управления пользователями"""
+    return templates.TemplateResponse(request, "users.html")
 
 
 @router.get("/api", include_in_schema=False)

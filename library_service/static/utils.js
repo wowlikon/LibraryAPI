@@ -1,15 +1,17 @@
 const Utils = {
   escapeHtml: (text) => {
     if (!text) return "";
-    return text.replace(/[&<>"']/g, function (m) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;",
-      }[m];
-    });
+    return text.replace(
+      /[&<>"']/g,
+      (m) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#039;",
+        })[m],
+    );
   },
 
   showToast: (message, type = "info") => {
@@ -66,10 +68,21 @@ const Api = {
 
     try {
       const response = await fetch(endpoint, config);
+
       if (response.status === 401) {
+        const refreshed = await Auth.tryRefresh();
+        if (refreshed) {
+          headers["Authorization"] =
+            `Bearer ${localStorage.getItem("access_token")}`;
+          const retryResponse = await fetch(endpoint, { ...options, headers });
+          if (retryResponse.ok) {
+            return retryResponse.json();
+          }
+        }
         Auth.logout();
         return null;
       }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || `Error ${response.status}`);
@@ -91,6 +104,17 @@ const Api = {
     });
   },
 
+  put(endpoint, body) {
+    return this.request(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  },
+
+  delete(endpoint) {
+    return this.request(endpoint, { method: "DELETE" });
+  },
+
   postForm(endpoint, formData) {
     return this.request(endpoint, {
       method: "POST",
@@ -104,20 +128,108 @@ const Auth = {
   logout: () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    window.location.reload();
+    localStorage.removeItem("user");
+    window.location.href = "/";
+  },
+
+  tryRefresh: async () => {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) return false;
+
+    try {
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
+        return true;
+      }
+    } catch (e) {
+      console.error("Refresh failed:", e);
+    }
+    return false;
   },
 
   init: async () => {
     const token = localStorage.getItem("access_token");
-    if (!token) return;
+    const refreshToken = localStorage.getItem("refresh_token");
+
+    if (!token && !refreshToken) {
+      localStorage.removeItem("user");
+      return null;
+    }
 
     try {
-      const user = await Api.get("/api/auth/me");
-      if (user) {
+      let response = await fetch("/api/auth/me", {
+        headers: { Authorization: "Bearer " + token },
+      });
+
+      if (response.status === 401 && refreshToken) {
+        const refreshed = await Auth.tryRefresh();
+        if (refreshed) {
+          response = await fetch("/api/auth/me", {
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("access_token"),
+            },
+          });
+        }
+      }
+
+      if (response.ok) {
+        const user = await response.json();
+        localStorage.setItem("user", JSON.stringify(user));
         document.dispatchEvent(new CustomEvent("auth:login", { detail: user }));
+        return user;
       }
     } catch (e) {
       console.error("Auth check failed", e);
     }
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
+    return null;
   },
+};
+
+window.getUser = function () {
+  const userJson = localStorage.getItem("user");
+  if (!userJson) return null;
+  try {
+    return JSON.parse(userJson);
+  } catch (e) {
+    return null;
+  }
+};
+
+window.hasRole = function (roleName) {
+  const user = window.getUser();
+  if (!user || !user.roles) {
+    return false;
+  }
+  return user.roles.includes(roleName);
+};
+
+window.isAdmin = function () {
+  return window.hasRole("admin");
+};
+
+window.isLibrarian = function () {
+  return window.hasRole("librarian") || window.hasRole("admin");
+};
+
+window.isAuthenticated = function () {
+  return !!window.getUser();
+};
+
+window.canManage = function () {
+  return (
+    (typeof window.isAdmin === "function" && window.isAdmin()) ||
+    (typeof window.isLibrarian === "function" && window.isLibrarian())
+  );
 };

@@ -1,0 +1,162 @@
+{% extends "base.html" %} {% block title %}Создание автора | LiB{% endblock %}
+{% block content %}
+<div class="container mx-auto p-4 max-w-xl">
+    <div class="bg-white rounded-lg shadow-md p-6 md:p-8">
+        <div class="mb-8 border-b border-gray-100 pb-4">
+            <h1
+                class="text-2xl font-bold text-gray-800 flex items-center gap-3"
+            >
+                <svg
+                    class="w-8 h-8 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                </svg>
+                Добавить автора
+            </h1>
+            <p class="text-gray-500 mt-2 text-sm ml-11">
+                Укажите имя нового автора для каталога.
+            </p>
+        </div>
+        <form id="create-author-form" class="space-y-6">
+            <div>
+                <label
+                    for="author-name"
+                    class="block text-sm font-semibold text-gray-700 mb-2"
+                >
+                    Имя автора <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    id="author-name"
+                    name="name"
+                    required
+                    maxlength="255"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gray-400 transition"
+                    placeholder="Имя или псевдоним автора"
+                />
+                <div class="flex justify-end mt-1">
+                    <span id="name-counter" class="text-xs text-gray-400"
+                        >0/255</span
+                    >
+                </div>
+            </div>
+            <div
+                class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-100"
+            >
+                <button
+                    type="submit"
+                    id="submit-btn"
+                    class="flex-1 flex justify-center items-center px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <svg
+                        class="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                        />
+                    </svg>
+                    <span id="submit-text">Создать автора</span>
+                    <svg
+                        id="loading-spinner"
+                        class="hidden animate-spin ml-2 h-5 w-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                        ></circle>
+                        <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                    </svg>
+                </button>
+                <a
+                    href="/authors"
+                    class="flex-1 flex justify-center items-center px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition text-center"
+                >
+                    Отмена
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+<div
+    id="success-modal"
+    class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center"
+>
+    <div
+        class="relative p-5 border w-full max-w-md shadow-lg rounded-lg bg-white"
+    >
+        <div class="mt-3 text-center">
+            <div
+                class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4"
+            >
+                <svg
+                    class="h-6 w-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                    ></path>
+                </svg>
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Автор успешно добавлен!
+            </h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Автор
+                    <span
+                        id="modal-author-name"
+                        class="font-bold text-gray-800"
+                    ></span>
+                    сохранён в каталоге.
+                </p>
+            </div>
+            <div class="flex gap-3 mt-4 justify-center">
+                <a
+                    id="modal-link-btn"
+                    href="/authors"
+                    class="px-4 py-2 bg-gray-600 text-white text-base font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                    К списку авторов
+                </a>
+                <button
+                    id="modal-close-btn"
+                    class="px-4 py-2 bg-white text-gray-700 border border-gray-300 text-base font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                >
+                    Создать ещё
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="/static/create_author.js"></script>
+{% endblock %}

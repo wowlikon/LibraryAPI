@@ -14,6 +14,8 @@ h1 {
 }
 
 h2,
+.book-id,
+.book-status,
 nav ul li a {
     font-family: "Dited", sans-serif;
     letter-spacing: 2.5px;

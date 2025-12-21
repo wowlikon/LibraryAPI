@@ -110,11 +110,8 @@ $(document).ready(() => {
     $btn.prop("disabled", true).text("Меняем...");
 
     try {
-      await Api.request("/api/auth/me", {
-        method: "PUT",
-        body: JSON.stringify({
-          password: newPass,
-        }),
+      await Api.put("/api/auth/me", {
+        password: newPass,
       });
 
       Utils.showToast("Пароль успешно изменен", "success");
