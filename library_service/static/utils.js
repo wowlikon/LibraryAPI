@@ -53,7 +53,12 @@ const Utils = {
 };
 
 const Api = {
+  getBaseUrl() {
+    return window.location.origin;
+  },
+
   async request(endpoint, options = {}) {
+    const fullUrl = this.getBaseUrl() + endpoint;
     const token = localStorage.getItem("access_token");
     const headers = {
       "Content-Type": "application/json",
@@ -67,14 +72,14 @@ const Api = {
     const config = { ...options, headers };
 
     try {
-      const response = await fetch(endpoint, config);
+      const response = await fetch(fullUrl, config);
 
       if (response.status === 401) {
         const refreshed = await Auth.tryRefresh();
         if (refreshed) {
           headers["Authorization"] =
             `Bearer ${localStorage.getItem("access_token")}`;
-          const retryResponse = await fetch(endpoint, { ...options, headers });
+          const retryResponse = await fetch(fullUrl, { ...options, headers });
           if (retryResponse.ok) {
             return retryResponse.json();
           }

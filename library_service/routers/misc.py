@@ -96,10 +96,10 @@ async def book(request: Request, book_id: int):
     return templates.TemplateResponse(request, "book.html")
 
 
-    @router.get("/auth", include_in_schema=False)
-    async def auth(request: Request):
-        """Эндпоинт страницы авторизации"""
-        return templates.TemplateResponse(request, "auth.html")
+@router.get("/auth", include_in_schema=False)
+async def auth(request: Request):
+    """Эндпоинт страницы авторизации"""
+    return templates.TemplateResponse(request, "auth.html")
 
 
 @router.get("/profile", include_in_schema=False)
