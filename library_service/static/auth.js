@@ -1,6 +1,6 @@
 $(() => {
   $("#login-tab").on("click", function () {
-    $("#login-tab")
+    $(this)
       .removeClass("text-gray-400 hover:text-gray-600")
       .addClass("text-gray-700 bg-gray-50 border-b-2 border-gray-500");
     $("#register-tab")
@@ -12,7 +12,7 @@ $(() => {
   });
 
   $("#register-tab").on("click", function () {
-    $("#register-tab")
+    $(this)
       .removeClass("text-gray-400 hover:text-gray-600")
       .addClass("text-gray-700 bg-gray-50 border-b-2 border-gray-500");
     $("#login-tab")
@@ -21,6 +21,15 @@ $(() => {
 
     $("#register-form").removeClass("hidden");
     $("#login-form").addClass("hidden");
+  });
+
+  $("body").on("click", ".toggle-password", function () {
+    const $btn = $(this);
+    const $input = $btn.siblings("input");
+
+    const isPassword = $input.attr("type") === "password";
+    $input.attr("type", isPassword ? "text" : "password");
+    $btn.find("svg").toggleClass("hidden");
   });
 
   $("#register-password").on("input", function () {
@@ -74,6 +83,7 @@ $(() => {
     const username = $("#login-username").val();
     const password = $("#login-password").val();
 
+    const rememberMe = $("#remember-me").prop("checked");
     $submitBtn.prop("disabled", true).text("Вход...");
 
     try {
@@ -82,10 +92,17 @@ $(() => {
       formData.append("password", password);
 
       const data = await Api.postForm("/api/auth/token", formData);
+      const storage = rememberMe ? localStorage : sessionStorage;
 
-      localStorage.setItem("access_token", data.access_token);
-      if (data.refresh_token)
-        localStorage.setItem("refresh_token", data.refresh_token);
+      storage.setItem("access_token", data.access_token);
+      if (rememberMe && data.refresh_token) {
+        storage.setItem("refresh_token", data.refresh_token);
+      }
+
+      const otherStorage = rememberMe ? sessionStorage : localStorage;
+      otherStorage.removeItem("access_token");
+      otherStorage.removeItem("refresh_token");
+
       window.location.href = "/";
     } catch (error) {
       Utils.showToast(error.message || "Ошибка входа", "error");
@@ -117,7 +134,11 @@ $(() => {
     try {
       await Api.post("/api/auth/register", userData);
       Utils.showToast("Регистрация успешна! Войдите в систему.", "success");
-      setTimeout(() => window.location.reload(), 1500);
+
+      setTimeout(() => {
+        $("#login-tab").trigger("click");
+        $("#login-username").val(userData.username);
+      }, 1500);
     } catch (error) {
       let msg = error.message;
       if (Array.isArray(error.detail)) {
@@ -127,12 +148,5 @@ $(() => {
     } finally {
       $submitBtn.prop("disabled", false).text("Зарегистрироваться");
     }
-  });
-
-  $("body").on("click", ".toggle-password", function () {
-    const $input = $(this).siblings("input");
-    const type = $input.attr("type") === "password" ? "text" : "password";
-    $input.attr("type", type);
-    $(this).find("svg").toggleClass("hidden");
   });
 });

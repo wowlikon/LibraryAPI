@@ -403,7 +403,7 @@ $(document).ready(() => {
   });
 
   function showAdminControls() {
-    if (window.canManage) {
+    if (window.canManage()) {
       $("#admin-actions").removeClass("hidden");
     }
   }

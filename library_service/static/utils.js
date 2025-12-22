@@ -1,3 +1,22 @@
+const StorageHelper = {
+  get: (key) => {
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
+  },
+  getCurrentStorage: () => {
+    return localStorage.getItem("refresh_token")
+      ? localStorage
+      : sessionStorage;
+  },
+  clearAll: () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("user");
+  },
+};
+
 const Utils = {
   escapeHtml: (text) => {
     if (!text) return "";
@@ -59,7 +78,8 @@ const Api = {
 
   async request(endpoint, options = {}) {
     const fullUrl = this.getBaseUrl() + endpoint;
-    const token = localStorage.getItem("access_token");
+    const token = StorageHelper.get("access_token");
+
     const headers = {
       "Content-Type": "application/json",
       ...options.headers,
@@ -74,11 +94,13 @@ const Api = {
     try {
       const response = await fetch(fullUrl, config);
 
-      if (response.status === 401) {
+      const isLoginRequest = endpoint.includes("/auth/token");
+
+      if (response.status === 401 && !isLoginRequest) {
         const refreshed = await Auth.tryRefresh();
         if (refreshed) {
           headers["Authorization"] =
-            `Bearer ${localStorage.getItem("access_token")}`;
+            `Bearer ${StorageHelper.get("access_token")}`;
           const retryResponse = await fetch(fullUrl, { ...options, headers });
           if (retryResponse.ok) {
             return retryResponse.json();
@@ -90,7 +112,11 @@ const Api = {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Error ${response.status}`);
+        throw new Error(
+          errorData.detail ||
+            errorData.error_description ||
+            `Ошибка ${response.status}`,
+        );
       }
       return response.json();
     } catch (error) {
@@ -131,15 +157,15 @@ const Api = {
 
 const Auth = {
   logout: () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    StorageHelper.clearAll();
     window.location.href = "/";
   },
 
   tryRefresh: async () => {
-    const refreshToken = localStorage.getItem("refresh_token");
+    const refreshToken = StorageHelper.get("refresh_token");
     if (!refreshToken) return false;
+
+    const activeStorage = StorageHelper.getCurrentStorage();
 
     try {
       const response = await fetch("/api/auth/refresh", {
@@ -150,8 +176,8 @@ const Auth = {
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
+        activeStorage.setItem("access_token", data.access_token);
+        activeStorage.setItem("refresh_token", data.refresh_token);
         return true;
       }
     } catch (e) {
@@ -161,13 +187,16 @@ const Auth = {
   },
 
   init: async () => {
-    const token = localStorage.getItem("access_token");
-    const refreshToken = localStorage.getItem("refresh_token");
+    const token = StorageHelper.get("access_token");
+    const refreshToken = StorageHelper.get("refresh_token");
 
     if (!token && !refreshToken) {
       localStorage.removeItem("user");
+      sessionStorage.removeItem("user");
       return null;
     }
+
+    const activeStorage = StorageHelper.getCurrentStorage();
 
     try {
       let response = await fetch("/api/auth/me", {
@@ -179,7 +208,7 @@ const Auth = {
         if (refreshed) {
           response = await fetch("/api/auth/me", {
             headers: {
-              Authorization: "Bearer " + localStorage.getItem("access_token"),
+              Authorization: "Bearer " + StorageHelper.get("access_token"),
             },
           });
         }
@@ -187,7 +216,7 @@ const Auth = {
 
       if (response.ok) {
         const user = await response.json();
-        localStorage.setItem("user", JSON.stringify(user));
+        activeStorage.setItem("user", JSON.stringify(user));
         document.dispatchEvent(new CustomEvent("auth:login", { detail: user }));
         return user;
       }
@@ -195,15 +224,13 @@ const Auth = {
       console.error("Auth check failed", e);
     }
 
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    StorageHelper.clearAll();
     return null;
   },
 };
 
 window.getUser = function () {
-  const userJson = localStorage.getItem("user");
+  const userJson = StorageHelper.get("user");
   if (!userJson) return null;
   try {
     return JSON.parse(userJson);

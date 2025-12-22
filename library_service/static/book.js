@@ -57,7 +57,7 @@ $(document).ready(() => {
       currentBook = book;
       document.title = `LiB - ${book.title}`;
       renderBook(book);
-      if (window.canManage) {
+      if (window.canManage()) {
         $("#edit-book-btn")
           .attr("href", `/book/${book.id}/edit`)
           .removeClass("hidden");
@@ -123,7 +123,7 @@ $(document).ready(() => {
     $container.empty();
     const config = getStatusConfig(book.status);
 
-    if (window.canManage) {
+    if (window.canManage()) {
       const $dropdownHTML = $(`
                 <div class="relative inline-block text-left w-full md:w-auto">
                     <button id="status-toggle-btn" type="button" class="w-full justify-center md:w-auto inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-sm ${config.bgClass} ${config.textClass} hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">

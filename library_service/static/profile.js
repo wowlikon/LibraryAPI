@@ -1,5 +1,5 @@
 $(document).ready(() => {
-  const token = localStorage.getItem("access_token");
+  const token = StorageHelper.get("access_token");
   if (!token) {
     window.location.href = "/auth";
     return;

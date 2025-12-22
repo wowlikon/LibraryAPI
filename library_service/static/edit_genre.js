@@ -1,5 +1,5 @@
 $(document).ready(() => {
-  if (!window.canManage) {
+  if (!window.canManage()) {
     Utils.showToast("У вас недостаточно прав", "error");
     setTimeout(() => (window.location.href = "/"), 1500);
     return;

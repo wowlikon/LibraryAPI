@@ -1,5 +1,5 @@
 $(document).ready(() => {
-  if (!window.canManage) return;
+  if (!window.canManage()) return;
   setTimeout(() => window.canManage, 100);
 
   const pathParts = window.location.pathname.split("/");

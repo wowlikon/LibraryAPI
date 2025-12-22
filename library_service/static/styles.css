@@ -1,11 +1,74 @@
+@keyframes shake {
+    0%,
+    to {
+        transform: translateX(0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-5px);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dropdownFade {
+    0% {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse-soft {
+    0%,
+    to {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @font-face {
     font-family: "Novem";
-    src: url("novem.regular.ttf") format("truetype");
+    src: url(novem.regular.ttf) format("truetype");
 }
 
 @font-face {
     font-family: "Dited";
-    src: url("dited.regular.ttf") format("truetype");
+    src: url(dited.regular.ttf) format("truetype");
 }
 
 h1 {
@@ -13,9 +76,9 @@ h1 {
     letter-spacing: 10px;
 }
 
-h2,
 .book-id,
 .book-status,
+h2,
 nav ul li a {
     font-family: "Dited", sans-serif;
     letter-spacing: 2.5px;
@@ -73,7 +136,7 @@ nav ul li a {
     top: 6px;
     width: 4px;
     height: 8px;
-    border: solid white;
+    border: solid #fff;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
 }
@@ -96,17 +159,6 @@ button:disabled {
     animation: fadeIn 0.3s ease-in-out;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .flex.justify-center.gap-4 button:hover {
     transform: translateY(-2px);
 }
@@ -115,30 +167,10 @@ button:disabled {
     animation: shake 0.5s ease-in-out;
 }
 
-@keyframes shake {
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-    10%,
-    30%,
-    50%,
-    70%,
-    90% {
-        transform: translateX(-5px);
-    }
-    20%,
-    40%,
-    60%,
-    80% {
-        transform: translateX(5px);
-    }
-}
-
+#req-digit,
 #req-length,
-#req-upper,
 #req-lower,
-#req-digit {
+#req-upper {
     transition: color 0.2s ease;
 }
 
@@ -153,17 +185,6 @@ button:disabled {
     animation: fadeIn 0.3s ease-in-out;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 #login-tab,
 #register-tab {
     font-family: "Dited", sans-serif;
@@ -173,17 +194,6 @@ button:disabled {
 
 #user-dropdown {
     animation: dropdownFade 0.1s ease-out;
-}
-
-@keyframes dropdownFade {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 #user-arrow.rotate-180 {
@@ -198,16 +208,6 @@ button:disabled {
     min-width: 140px;
 }
 
-@keyframes pulse-soft {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.7;
-    }
-}
-
 .animate-pulse-soft {
     animation: pulse-soft 2s ease-in-out infinite;
 }
@@ -216,32 +216,21 @@ button:disabled {
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 .animate-fade-in-up {
     animation: fadeInUp 0.5s ease-out forwards;
 }
 
 .stat-card:hover svg {
     transform: scale(1.1);
-    transition: transform 0.3s ease;
 }
 
-.stat-card svg {
+.stat-card svg,
+.stat-card:hover svg {
     transition: transform 0.3s ease;
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, #374151 0%, #6b7280 100%);
+    background: linear-gradient(135deg, #374151 0, #6b7280 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
