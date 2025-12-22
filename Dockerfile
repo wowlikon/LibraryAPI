@@ -26,4 +26,4 @@ USER app
 
 ENV PYTHONPATH=/code
 
-CMD ["uvicorn", "library_service.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "library_service.main:app", "--host", "0.0.0.0", "--port", "8000", "--forwarded-allow-ips=\"*\""]
