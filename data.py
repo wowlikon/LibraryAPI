@@ -3,7 +3,7 @@ from typing import Optional
 
 # Конфигурация
 USERNAME = "admin"
-PASSWORD = "GzwQMe3j2DsPRKpL2DVw6A"
+PASSWORD = "your-password-here"
 BASE_URL = "http://localhost:8000"
 
 

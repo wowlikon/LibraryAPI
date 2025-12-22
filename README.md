@@ -37,18 +37,23 @@
 
 5. Запустите приложение:
    ```bash
-   docker compose up api
+   docker compose up api -d
    ```
 
 Для создания новых миграций:
    ```bash
-   docker compose run --rm -T api alembic revision --autogenerate -m "Migration name"
+   alembic revision --autogenerate -m "Migration name"
    ```
 
 Для запуска тестов:
    ```bash
    docker compose up test
    ```
+
+Для добавление данных для примера используйте:
+  ```bash
+  python data.py
+  ```
 
 ### **Эндпоинты API**
 
@@ -100,37 +105,66 @@
 
 ```mermaid
 erDiagram
-    AUTHOR {
-        int id PK "ID автора"
-        string name "Имя автора"
+    USER {
+        int id PK
+        string username UK
+        string email UK
+        string full_name
+        string password
+        boolean is_active
+        boolean is_verified
+    }
+
+    USER_ROLE {
+        int user_id FK
+        string role
+    }
+
+    LOAN {
+        int id PK
+        int book_id FK
+        int user_id FK
+        datetime borrowed_at
+        datetime due_date
+        datetime returned_at
     }
 
     BOOK {
-        int id PK "ID книги"
-        string title "Название книги"
-        string description "Описание книги"
+        int id PK
+        string title
+        string description
+    }
+
+    AUTHOR {
+        int id PK
+        string name
+        string bio
     }
 
     GENRE {
-        int id PK "ID жанра"
-        string name "Название жанра"
+        int id PK
+        string name
     }
 
     AUTHOR_BOOK {
-        int author_id FK "ID автора"
-        int book_id FK "ID книги"
+        int author_id FK
+        int book_id FK
     }
 
     GENRE_BOOK {
-        int genre_id FK "ID жанра"
-        int book_id FK "ID книги"
+        int genre_id FK
+        int book_id FK
     }
 
-    AUTHOR ||--o{ AUTHOR_BOOK : "писал"
-    BOOK   ||--o{ AUTHOR_BOOK : "написан"
+    USER ||--o{ USER_ROLE : "имеет роли"
+    USER ||--o{ LOAN : "берёт книги"
+    LOAN }o--|| BOOK : "выдача"
 
-    BOOK   ||--o{ GENRE_BOOK : "принадлежит"
-    GENRE  ||--o{ GENRE_BOOK : "содержит"
+    AUTHOR ||--o{ AUTHOR_BOOK : "пишет"
+    AUTHOR_BOOK }o--|| BOOK : "авторство"
+
+    GENRE ||--o{ GENRE_BOOK : "содержит"
+    GENRE_BOOK }o--|| BOOK : "жанр"
 ```
 
 

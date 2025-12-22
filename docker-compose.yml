@@ -1,28 +1,63 @@
 services:
   db:
-    container_name: db
     image: postgres:17
-    ports:
-      - 5432:5432
-    # volumes:
-    #   - ./data/db:/var/lib/postgresql/data
+    container_name: db
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    networks:
+      - proxy
     env_file:
       - ./.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
-    container_name: api
     build: .
-    command: bash -c "alembic upgrade head && uvicorn library_service.main:app --host 0.0.0.0 --port 8000 --reload"
+    container_name: api
+    restart: unless-stopped
+    command: bash -c "uvicorn library_service.main:app --host 0.0.0.0 --port 8000"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - proxy
+    env_file:
+      - ./.env
     volumes:
       - .:/code
-    ports:
-      - "8000:8000"
-    # depends_on:
-    #   - db
+    depends_on:
+      db:
+        condition: service_healthy
 
   tests:
     container_name: tests
     build: .
     command: bash -c "pytest tests"
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - proxy
+    env_file:
+      - ./.env
     volumes:
       - .:/code
+    depends_on:
+        db:
+          condition: service_healthy
+
+networks:
+  proxy: # Рекомендуется использовать через реверс-прокси
+    name: proxy
+    external: true

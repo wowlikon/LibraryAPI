@@ -1,22 +1,29 @@
-FROM python:3.13 as requirements-stage
-WORKDIR /tmp
-RUN pip install poetry
-RUN poetry self add poetry-plugin-export
-COPY ./pyproject.toml ./poetry.lock* /tmp/
-RUN poetry export -f requirements.txt --output requirements.txt --with dev --without-hashes
+FROM python:3.12-slim
 
-FROM python:3.13
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update \
-    && apt-get -y install gcc postgresql \
-    && apt-get clean # netcat
-
-RUN pip install --upgrade pip
-
 WORKDIR /code
-COPY --from=requirements-stage /tmp/requirements.txt ./requirements.txt
-RUN pip install --no-cache-dir --upgrade -r ./requirements.txt
-COPY . .
-ENV PYTHONPATH=.
+
+RUN apt-get update \
+    && apt-get -y install gcc libpq-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install poetry
+RUN poetry config virtualenvs.create false
+
+COPY ./pyproject.toml ./poetry.lock* /code/
+
+RUN poetry install --with dev --no-root --no-interaction
+
+COPY ./library_service /code/library_service
+COPY ./alembic.ini /code/
+COPY ./data.py /code/
+
+RUN useradd app && chown -R app:app /code
+USER app
+
+ENV PYTHONPATH=/code
+
+CMD ["uvicorn", "library_service.main:app", "--host", "0.0.0.0", "--port", "8000"]

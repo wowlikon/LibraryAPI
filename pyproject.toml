@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "LibraryAPI"
-version = "0.2.0"
+version = "0.3.0"
 description = "Это простое API для управления авторами, книгами и их жанрами."
 authors = ["wowlikon"]
 readme = "README.md"
@@ -9,11 +9,11 @@ packages = [{ include = "library_service" }]
 [tool.poetry.dependencies]
 python = "^3.12"
 fastapi = { extras = ["all"], version = "^0.115.12" }
+uvicorn = { extras = ["standard"], version = "^0.40.0" }
 psycopg2-binary = "^2.9.10"
 alembic = "^1.16.1"
 python-dotenv = "^0.21.0"
 sqlmodel = "^0.0.24"
-uvicorn = "^0.34.3"
 jinja2 = "^3.1.6"
 toml = "^0.10.2"
 python-jose = {extras = ["cryptography"], version = "^3.5.0"}
