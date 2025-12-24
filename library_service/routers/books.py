@@ -1,12 +1,14 @@
 """Модуль работы с книгами"""
+from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlmodel import Session, select, col, func
 
-from library_service.auth import RequireAuth
+from library_service.auth import RequireStaff
 from library_service.settings import get_session
-from library_service.models.db import Author, AuthorBookLink, Book, GenreBookLink, Genre
+from library_service.models.enums import BookStatus
+from library_service.models.db import Author, AuthorBookLink, Book, GenreBookLink, Genre, BookUserLink
 from library_service.models.dto import AuthorRead, BookCreate, BookList, BookRead, BookUpdate, GenreRead
 from library_service.models.dto.combined import (
     BookWithAuthorsAndGenres,
@@ -15,6 +17,19 @@ from library_service.models.dto.combined import (
 
 
 router = APIRouter(prefix="/books", tags=["books"])
+
+
+def close_active_loan(session: Session, book_id: int) -> None:
+    """Закрывает активную выдачу книги при изменении статуса"""
+    active_loan = session.exec(
+        select(BookUserLink)
+        .where(BookUserLink.book_id == book_id)
+        .where(BookUserLink.returned_at == None)  # noqa: E711
+    ).first()
+
+    if active_loan:
+        active_loan.returned_at = datetime.utcnow()
+        session.add(active_loan)
 
 
 @router.get(
@@ -31,7 +46,7 @@ def filter_books(
     page: int = Query(1, gt=0, description="Номер страницы"),
     size: int = Query(20, gt=0, lt=101, description="Количество элементов на странице"),
 ):
-    """Эндпоинт получения отфильтрованного списка книг"""
+    """Возвращает отфильтрованный список книг с пагинацией"""
     statement = select(Book).distinct()
 
     if q:
@@ -72,9 +87,11 @@ def filter_books(
     description="Добавляет книгу в систему",
 )
 def create_book(
-    current_user: RequireAuth, book: BookCreate, session: Session = Depends(get_session)
+    book: BookCreate,
+    current_user: RequireStaff,
+    session: Session = Depends(get_session)
 ):
-    """Эндпоинт создания книги"""
+    """Создает новую книгу в системе"""
     db_book = Book(**book.model_dump())
     session.add(db_book)
     session.commit()
@@ -89,7 +106,7 @@ def create_book(
     description="Возвращает список всех книг в системе",
 )
 def read_books(session: Session = Depends(get_session)):
-    """Эндпоинт чтения списка книг"""
+    """Возвращает список всех книг"""
     books = session.exec(select(Book)).all()
     return BookList(
         books=[BookRead(**book.model_dump()) for book in books], total=len(books)
@@ -106,7 +123,7 @@ def get_book(
     book_id: int = Path(..., description="ID книги (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт чтения конкретной книги"""
+    """Возвращает информацию о книге с авторами и жанрами"""
     book = session.get(Book, book_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -137,22 +154,39 @@ def get_book(
     description="Обновляет информацию о книге в системе",
 )
 def update_book(
-    current_user: RequireAuth,
-    book: BookUpdate,
-    book_id: int = Path(..., description="ID книги (целое число, > 0)", gt=0),
+    current_user: RequireStaff,
+    book_update: BookUpdate,
+    book_id: int = Path(..., gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт обновления книги"""
+    """Обновляет информацию о книге"""
     db_book = session.get(Book, book_id)
     if not db_book:
         raise HTTPException(status_code=404, detail="Book not found")
 
-    db_book.title = book.title or db_book.title
-    db_book.description = book.description or db_book.description
-    db_book.status = book.status or db_book.status
+    if book_update.status is not None:
+        if book_update.status == BookStatus.BORROWED:
+            raise HTTPException(
+                status_code=400,
+                detail="Статус 'borrowed' устанавливается только через выдачу книги"
+            )
+
+        if db_book.status == BookStatus.BORROWED:
+            close_active_loan(session, book_id)
+
+        db_book.status = book_update.status
+
+    if book_update.title is not None or book_update.description is not None:
+        if book_update.title is not None:
+            db_book.title = book_update.title
+        if book_update.description is not None:
+            db_book.description = book_update.description
+
+    session.add(db_book)
     session.commit()
     session.refresh(db_book)
-    return db_book
+
+    return BookRead(**db_book.model_dump())
 
 
 @router.delete(
@@ -162,11 +196,11 @@ def update_book(
     description="Удаляет книгу их системы",
 )
 def delete_book(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     book_id: int = Path(..., description="ID книги (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт удаления книги"""
+    """Удаляет книгу из системы"""
     book = session.get(Book, book_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")

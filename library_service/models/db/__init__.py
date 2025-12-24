@@ -7,6 +7,7 @@ from .user import User
 from .links import (
     AuthorBookLink,
     GenreBookLink,
+    BookUserLink,
     UserRoleLink
 )
 
@@ -18,5 +19,6 @@ __all__ = [
     "User",
     "AuthorBookLink",
     "GenreBookLink",
+    "BookUserLink",
     "UserRoleLink",
 ]

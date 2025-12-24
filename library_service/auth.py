@@ -32,17 +32,17 @@ pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Проверка пароль по его хешу."""
+    """Проверяет пароль по его хешу"""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Хэширование пароля."""
+    """Хэширует пароль"""
     return pwd_context.hash(password)
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
-    """Создание JWT access токена."""
+    """Создает JWT access токен"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -56,7 +56,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 
 def create_refresh_token(data: dict) -> str:
-    """Создание JWT refresh токена."""
+    """Создает JWT refresh токен"""
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({"exp": expire, "type": "refresh"})
@@ -65,7 +65,7 @@ def create_refresh_token(data: dict) -> str:
 
 
 def decode_token(token: str, expected_type: str = "access") -> TokenData:
-    """Декодирование и проверка JWT токенов."""
+    """Декодирует и проверяет JWT токен"""
     token_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         headers={"WWW-Authenticate": "Bearer"},
@@ -88,7 +88,7 @@ def decode_token(token: str, expected_type: str = "access") -> TokenData:
 
 
 def authenticate_user(session: Session, username: str, password: str) -> User | None:
-    """Аутентификация пользователя по имени пользователя и паролю."""
+    """Аутентифицирует пользователя по имени и паролю"""
     statement = select(User).where(User.username == username)
     user = session.exec(statement).first()
     if not user or not verify_password(password, user.hashed_password):
@@ -100,7 +100,7 @@ def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     session: Session = Depends(get_session),
 ) -> User:
-    """Получить текущего авторизованного пользователя."""
+    """Возвращает текущего авторизованного пользователя"""
     token_data = decode_token(token)
 
     user = session.get(User, token_data.user_id)
@@ -116,7 +116,7 @@ def get_current_user(
 def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
-    """Получить текущего активного пользователя."""
+    """Проверяет активность пользователя и возвращает его"""
     if not current_user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user"
@@ -125,7 +125,7 @@ def get_current_active_user(
 
 
 def require_role(role_name: str):
-    """Dependency, требующая выполнения определенной роли."""
+    """Создает dependency для проверки наличия определенной роли"""
 
     def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
         user_roles = [role.name for role in current_user.roles]
@@ -139,15 +139,42 @@ def require_role(role_name: str):
     return role_checker
 
 
+def require_any_role(allowed_roles: list[str]):
+    """Создает dependency для проверки наличия хотя бы одной из ролей"""
+    def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
+        user_roles = {role.name for role in current_user.roles}
+        if not (user_roles & set(allowed_roles)):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires one of roles: {allowed_roles}",
+            )
+        return current_user
+    return role_checker
+
+
 # Создание dependencies
 RequireAuth = Annotated[User, Depends(get_current_active_user)]
 RequireAdmin = Annotated[User, Depends(require_role("admin"))]
 RequireMember = Annotated[User, Depends(require_role("member"))]
 RequireLibrarian = Annotated[User, Depends(require_role("librarian"))]
+RequireStaff = Annotated[User, Depends(require_any_role(["admin", "librarian"]))]
+
+
+def is_user_staff(user: User) -> bool:
+    """Проверяет, является ли пользователь сотрудником (admin или librarian)"""
+    roles = {role.name for role in user.roles}
+    return bool(roles & {"admin", "librarian"})
+
+
+
+def is_user_admin(user: User) -> bool:
+    """Проверяет, является ли пользователь администратором"""
+    roles = {role.name for role in user.roles}
+    return "admin" in roles
 
 
 def seed_roles(session: Session) -> dict[str, Role]:
-    """Создаёт роли по умолчанию, если их нет."""
+    """Создает роли по умолчанию, если их нет"""
     default_roles = [
         {"name": "admin", "description": "Администратор системы", "payroll": 80000},
         {"name": "librarian", "description": "Библиотекарь", "payroll": 55000},
@@ -174,7 +201,7 @@ def seed_roles(session: Session) -> dict[str, Role]:
 
 
 def seed_admin(session: Session, admin_role: Role) -> User | None:
-    """Создаёт администратора по умолчанию, если нет ни одного."""
+    """Создает администратора по умолчанию, если нет ни одного"""
     existing_admins = session.exec(
         select(User).join(User.roles).where(Role.name == "admin")
     ).all()
@@ -219,6 +246,6 @@ def seed_admin(session: Session, admin_role: Role) -> User | None:
 
 
 def run_seeds(session: Session) -> None:
-    """Запускаем создание ролей и администратора."""
+    """Запускает создание ролей и администратора"""
     roles = seed_roles(session)
     seed_admin(session, roles["admin"])

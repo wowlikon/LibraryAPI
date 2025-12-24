@@ -19,6 +19,8 @@ class LoanCreate(LoanBase):
 
 class LoanUpdate(SQLModel):
     """Модель для обновления записи о выдаче"""
+    user_id: int | None = None
+    due_date: datetime | None = None
     returned_at: datetime | None = None
 
 

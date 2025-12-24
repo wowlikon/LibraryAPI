@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory=Path(__file__).parent.parent / "templates"
 
 
 def get_info(app) -> Dict:
-    """Форматированная информация о приложении"""
+    """Возвращает информацию о приложении"""
     return {
         "status": "ok",
         "app_info": {
@@ -32,103 +32,115 @@ def get_info(app) -> Dict:
 
 @router.get("/", include_in_schema=False)
 async def root(request: Request):
-    """Эндпоинт главной страницы"""
+    """Рендерит главную страницу"""
     return templates.TemplateResponse(request, "index.html")
 
 
 @router.get("/genre/create", include_in_schema=False)
 async def create_genre(request: Request):
-    """Эндпоинт страницы создания жанра"""
+    """Рендерит страницу создания жанра"""
     return templates.TemplateResponse(request, "create_genre.html")
 
 
 @router.get("/genre/{genre_id}/edit", include_in_schema=False)
 async def edit_genre(request: Request, genre_id: int):
-    """Эндпоинт страницы редактирования жанра"""
+    """Рендерит страницу редактирования жанра"""
     return templates.TemplateResponse(request, "edit_genre.html")
 
 
 @router.get("/authors", include_in_schema=False)
 async def authors(request: Request):
-    """Эндпоинт страницы выбора автора"""
+    """Рендерит страницу списка авторов"""
     return templates.TemplateResponse(request, "authors.html")
 
 
 @router.get("/author/create", include_in_schema=False)
 async def create_author(request: Request):
-    """Эндпоинт страницы создания автора"""
+    """Рендерит страницу создания автора"""
     return templates.TemplateResponse(request, "create_author.html")
 
 
 @router.get("/author/{author_id}/edit", include_in_schema=False)
 async def edit_author(request: Request, author_id: int):
-    """Эндпоинт страницы редактирования автора"""
+    """Рендерит страницу редактирования автора"""
     return templates.TemplateResponse(request, "edit_author.html")
 
 
 @router.get("/author/{author_id}", include_in_schema=False)
 async def author(request: Request, author_id: int):
-    """Эндпоинт страницы автора"""
+    """Рендерит страницу просмотра автора"""
     return templates.TemplateResponse(request, "author.html")
 
 
 @router.get("/books", include_in_schema=False)
 async def books(request: Request):
-    """Эндпоинт страницы выбора книг"""
+    """Рендерит страницу списка книг"""
     return templates.TemplateResponse(request, "books.html")
 
 
 @router.get("/book/create", include_in_schema=False)
 async def create_book(request: Request):
-    """Эндпоинт страницы создания книги"""
+    """Рендерит страницу создания книги"""
     return templates.TemplateResponse(request, "create_book.html")
 
 
 @router.get("/book/{book_id}/edit", include_in_schema=False)
 async def edit_book(request: Request, book_id: int):
-    """Эндпоинт страницы редактирования книги"""
+    """Рендерит страницу редактирования книги"""
     return templates.TemplateResponse(request, "edit_book.html")
 
 
 @router.get("/book/{book_id}", include_in_schema=False)
 async def book(request: Request, book_id: int):
-    """Эндпоинт страницы книги"""
+    """Рендерит страницу просмотра книги"""
     return templates.TemplateResponse(request, "book.html")
 
 
 @router.get("/auth", include_in_schema=False)
 async def auth(request: Request):
-    """Эндпоинт страницы авторизации"""
+    """Рендерит страницу авторизации"""
     return templates.TemplateResponse(request, "auth.html")
 
 
 @router.get("/profile", include_in_schema=False)
 async def profile(request: Request):
-    """Эндпоинт страницы профиля"""
+    """Рендерит страницу профиля пользователя"""
     return templates.TemplateResponse(request, "profile.html")
 
 
 @router.get("/users", include_in_schema=False)
 async def users(request: Request):
-    """Эндпоинт страницы управления пользователями"""
+    """Рендерит страницу управления пользователями"""
     return templates.TemplateResponse(request, "users.html")
+
+
+@router.get("/my-books", include_in_schema=False)
+async def my_books(request: Request):
+    """Рендерит страницу моих книг пользователя"""
+    return templates.TemplateResponse(request, "my_books.html")
+
+
+@router.get("/analytics", include_in_schema=False)
+async def analytics(request: Request):
+    """Рендерит страницу аналитики выдач"""
+    return templates.TemplateResponse(request, "analytics.html")
 
 
 @router.get("/api", include_in_schema=False)
 async def api(request: Request, app=Depends(lambda: get_app())):
-    """Страница с сылками на документацию API"""
+    """Рендерит страницу с ссылками на документацию API"""
     return templates.TemplateResponse(request, "api.html", get_info(app))
 
 
 @router.get("/favicon.ico", include_in_schema=False)
 def redirect_favicon():
-    """Редирект иконки вкладки"""
+    """Редиректит на favicon.svg"""
     return RedirectResponse("/favicon.svg")
 
 
 @router.get("/favicon.svg", include_in_schema=False)
 async def favicon():
-    """Эндпоинт иконки вкладки"""
+    """Возвращает иконку сайта"""
     return FileResponse(
         "library_service/static/favicon.svg", media_type="image/svg+xml"
     )
@@ -140,7 +152,7 @@ async def favicon():
     description="Возвращает общую информацию о системе",
 )
 async def api_info(app=Depends(lambda: get_app())):
-    """Эндпоинт информации об API"""
+    """Возвращает информацию о сервисе"""
     return JSONResponse(content=get_info(app))
 
 
@@ -150,7 +162,7 @@ async def api_info(app=Depends(lambda: get_app())):
     description="Возвращает статистическую информацию о системе",
 )
 async def api_stats(session: Session = Depends(get_session)):
-    """Эндпоинт стстистики системы"""
+    """Возвращает статистику системы"""
     authors = select(func.count()).select_from(Author)
     books = select(func.count()).select_from(Book)
     genres = select(func.count()).select_from(Genre)

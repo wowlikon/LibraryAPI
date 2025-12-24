@@ -2,11 +2,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlmodel import Session, select
 
-from library_service.auth import RequireAuth
+from library_service.auth import RequireStaff
 from library_service.settings import get_session
 from library_service.models.db import Author, AuthorBookLink, Book
 from library_service.models.dto import (BookRead, AuthorWithBooks,
     AuthorCreate, AuthorList, AuthorRead, AuthorUpdate)
+
 
 router = APIRouter(prefix="/authors", tags=["authors"])
 
@@ -18,11 +19,11 @@ router = APIRouter(prefix="/authors", tags=["authors"])
     description="Добавляет автора в систему",
 )
 def create_author(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     author: AuthorCreate,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт создания автора"""
+    """Создает нового автора в системе"""
     db_author = Author(**author.model_dump())
     session.add(db_author)
     session.commit()
@@ -37,7 +38,7 @@ def create_author(
     description="Возвращает список всех авторов в системе",
 )
 def read_authors(session: Session = Depends(get_session)):
-    """Эндпоинт чтения списка авторов"""
+    """Возвращает список всех авторов"""
     authors = session.exec(select(Author)).all()
     return AuthorList(
         authors=[AuthorRead(**author.model_dump()) for author in authors],
@@ -55,7 +56,7 @@ def get_author(
     author_id: int = Path(..., description="ID автора (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт чтения конкретного автора"""
+    """Возвращает информацию об авторе и его книгах"""
     author = session.get(Author, author_id)
     if not author:
         raise HTTPException(status_code=404, detail="Author not found")
@@ -79,12 +80,12 @@ def get_author(
     description="Обновляет информацию об авторе в системе",
 )
 def update_author(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     author: AuthorUpdate,
     author_id: int = Path(..., description="ID автора (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт обновления автора"""
+    """Обновляет информацию об авторе"""
     db_author = session.get(Author, author_id)
     if not db_author:
         raise HTTPException(status_code=404, detail="Author not found")
@@ -105,11 +106,11 @@ def update_author(
     description="Удаляет автора из системы",
 )
 def delete_author(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     author_id: int = Path(..., description="ID автора (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт удаления автора"""
+    """Удаляет автора из системы"""
     author = session.get(Author, author_id)
     if not author:
         raise HTTPException(status_code=404, detail="Author not found")

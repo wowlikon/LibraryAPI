@@ -2,10 +2,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlmodel import Session, select
 
-from library_service.auth import RequireAuth
+from library_service.auth import RequireStaff
 from library_service.models.db import Book, Genre, GenreBookLink
 from library_service.models.dto import BookRead, GenreCreate, GenreList, GenreRead, GenreUpdate, GenreWithBooks
 from library_service.settings import get_session
+
 
 router = APIRouter(prefix="/genres", tags=["genres"])
 
@@ -17,11 +18,11 @@ router = APIRouter(prefix="/genres", tags=["genres"])
     description="Добавляет жанр книг в систему",
 )
 def create_genre(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     genre: GenreCreate,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт создания жанра"""
+    """Создает новый жанр в системе"""
     db_genre = Genre(**genre.model_dump())
     session.add(db_genre)
     session.commit()
@@ -36,7 +37,7 @@ def create_genre(
     description="Возвращает список всех жанров в системе",
 )
 def read_genres(session: Session = Depends(get_session)):
-    """Эндпоинт чтения списка жанров"""
+    """Возвращает список всех жанров"""
     genres = session.exec(select(Genre)).all()
     return GenreList(
         genres=[GenreRead(**genre.model_dump()) for genre in genres], total=len(genres)
@@ -53,7 +54,7 @@ def get_genre(
     genre_id: int = Path(..., description="ID жанра (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт чтения конкретного жанра"""
+    """Возвращает информацию о жанре и книгах с ним"""
     genre = session.get(Genre, genre_id)
     if not genre:
         raise HTTPException(status_code=404, detail="Genre not found")
@@ -73,16 +74,16 @@ def get_genre(
 @router.put(
     "/{genre_id}",
     response_model=GenreRead,
-    summary="Обновляет информацию о жанре",
+    summary="Обновить информацию о жанре",
     description="Обновляет информацию о жанре в системе",
 )
 def update_genre(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     genre: GenreUpdate,
     genre_id: int = Path(..., description="ID жанра (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт обновления жанра"""
+    """Обновляет информацию о жанре"""
     db_genre = session.get(Genre, genre_id)
     if not db_genre:
         raise HTTPException(status_code=404, detail="Genre not found")
@@ -100,14 +101,14 @@ def update_genre(
     "/{genre_id}",
     response_model=GenreRead,
     summary="Удалить жанр",
-    description="Удаляет автора из системы",
+    description="Удаляет жанр из системы",
 )
 def delete_genre(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     genre_id: int = Path(..., description="ID жанра (целое число, > 0)", gt=0),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт удаления жанра"""
+    """Удаляет жанр из системы"""
     genre = session.get(Genre, genre_id)
     if not genre:
         raise HTTPException(status_code=404, detail="Genre not found")

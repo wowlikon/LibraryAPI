@@ -4,7 +4,7 @@ from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from library_service.auth import RequireAuth
+from library_service.auth import RequireStaff
 from library_service.models.db import Author, AuthorBookLink, Book, Genre, GenreBookLink
 from library_service.models.dto import AuthorRead, BookRead, GenreRead
 from library_service.settings import get_session
@@ -14,7 +14,7 @@ router = APIRouter(tags=["relations"])
 
 
 def check_entity_exists(session, model, entity_id, entity_name):
-    """Проверка существования связи между сущностями в БД"""
+    """Проверяет существование сущности в базе данных"""
     entity = session.get(model, entity_id)
     if not entity:
         raise HTTPException(status_code=404, detail=f"{entity_name} not found")
@@ -22,7 +22,7 @@ def check_entity_exists(session, model, entity_id, entity_name):
 
 
 def add_relationship(session, link_model, id1, field1, id2, field2, detail):
-    """Создание связи между сущностями в БД"""
+    """Создает связь между сущностями в базе данных"""
     existing_link = session.exec(
         select(link_model)
         .where(getattr(link_model, field1) == id1)
@@ -40,7 +40,7 @@ def add_relationship(session, link_model, id1, field1, id2, field2, detail):
 
 
 def remove_relationship(session, link_model, id1, field1, id2, field2):
-    """Удаление связи между сущностями в БД"""
+    """Удаляет связь между сущностями в базе данных"""
     link = session.exec(
         select(link_model)
         .where(getattr(link_model, field1) == id1)
@@ -66,7 +66,7 @@ def get_related(
         link_related_field,
         read_model
     ):
-    """Получение связанных в БД сущностей"""
+    """Возвращает список связанных сущностей"""
     check_entity_exists(session, main_model, main_id, main_name)
 
     related = session.exec(
@@ -84,12 +84,12 @@ def get_related(
     description="Добавляет связь между автором и книгой в систему",
 )
 def add_author_to_book(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     author_id: int,
     book_id: int,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт добавления автора к книге"""
+    """Добавляет связь между автором и книгой"""
     check_entity_exists(session, Author, author_id, "Author")
     check_entity_exists(session, Book, book_id, "Book")
 
@@ -104,12 +104,12 @@ def add_author_to_book(
     description="Удаляет связь между автором и книгой в системе",
 )
 def remove_author_from_book(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     author_id: int,
     book_id: int,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт удаления автора из книги"""
+    """Удаляет связь между автором и книгой"""
     return remove_relationship(session, AuthorBookLink,
         author_id, "author_id", book_id, "book_id")
 
@@ -121,7 +121,7 @@ def remove_author_from_book(
     description="Возвращает все книги в системе, написанные автором",
 )
 def get_books_for_author(author_id: int, session: Session = Depends(get_session)):
-    """Эндпоинт получения книг, написанных автором"""
+    """Возвращает список книг автора"""
     return get_related(session,
         Author, author_id, "Author", Book,
         AuthorBookLink, "author_id", "book_id", BookRead)
@@ -134,7 +134,7 @@ def get_books_for_author(author_id: int, session: Session = Depends(get_session)
     description="Возвращает всех авторов книги в системе",
 )
 def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
-    """Эндпоинт получения авторов книги"""
+    """Возвращает список авторов книги"""
     return get_related(session,
         Book, book_id, "Book", Author,
         AuthorBookLink, "book_id", "author_id", AuthorRead)
@@ -147,12 +147,12 @@ def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
     description="Добавляет связь между книгой и жанром в систему",
 )
 def add_genre_to_book(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     genre_id: int,
     book_id: int,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт добавления жанра к книге"""
+    """Добавляет связь между жанром и книгой"""
     check_entity_exists(session, Genre, genre_id, "Genre")
     check_entity_exists(session, Book, book_id, "Book")
 
@@ -167,12 +167,12 @@ def add_genre_to_book(
     description="Удаляет связь между жанром и книгой в системе",
 )
 def remove_genre_from_book(
-    current_user: RequireAuth,
+    current_user: RequireStaff,
     genre_id: int,
     book_id: int,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт удаления жанра из книги"""
+    """Удаляет связь между жанром и книгой"""
     return remove_relationship(session, GenreBookLink,
         genre_id, "genre_id", book_id, "book_id")
 
@@ -184,7 +184,7 @@ def remove_genre_from_book(
     description="Возвращает все книги в системе в этом жанре",
 )
 def get_books_for_genre(genre_id: int, session: Session = Depends(get_session)):
-    """Эндпоинт получения книг с жанром"""
+    """Возвращает список книг в жанре"""
     return get_related(session,
         Genre, genre_id, "Genre", Book,
         GenreBookLink, "genre_id", "book_id", BookRead)
@@ -197,7 +197,7 @@ def get_books_for_genre(genre_id: int, session: Session = Depends(get_session)):
     description="Возвращает все жанры книги в системе",
 )
 def get_genres_for_book(book_id: int, session: Session = Depends(get_session)):
-    """Эндпоинт получения жанров книги"""
+    """Возвращает список жанров книги"""
     return get_related(session,
         Book, book_id, "Book", Genre,
         GenreBookLink, "book_id", "genre_id", GenreRead)

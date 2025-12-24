@@ -13,7 +13,7 @@ with open("pyproject.toml", 'r', encoding='utf-8') as f:
 
 
 def get_app(lifespan=None, /) -> FastAPI:
-    """Dependency для получения экземпляра FastAPI application"""
+    """Возвращает экземпляр FastAPI приложения"""
     if not hasattr(get_app, 'instance'):
         get_app.instance = FastAPI(
             title=config["tool"]["poetry"]["name"],
@@ -36,6 +36,10 @@ def get_app(lifespan=None, /) -> FastAPI:
                 {
                     "name": "genres",
                     "description": "Действия с жанрами.",
+                },
+                {
+                    "name": "loans",
+                    "description": "Действия с выдачами.",
                 },
                 {
                     "name": "relations",
@@ -64,11 +68,11 @@ engine = create_engine(POSTGRES_DATABASE_URL, echo=False, future=True)
 
 
 def get_session():
-    """Dependency, для получение сессии БД"""
+    """Возвращает сессию базы данных"""
     with Session(engine) as session:
         yield session
 
 
 def get_logger(name: str = "uvicorn"):
-    """Dependency, для получение логгера"""
+    """Возвращает логгер с указанным именем"""
     return logging.getLogger(name)

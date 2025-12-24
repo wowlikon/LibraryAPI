@@ -9,9 +9,10 @@ from sqlmodel import Session, select
 from library_service.models.db import Role, User
 from library_service.models.dto import Token, UserCreate, UserRead, UserUpdate, UserList, RoleRead, RoleList
 from library_service.settings import get_session
-from library_service.auth import (ACCESS_TOKEN_EXPIRE_MINUTES, RequireAdmin, RequireAuth,
+from library_service.auth import (ACCESS_TOKEN_EXPIRE_MINUTES, RequireAuth, RequireAdmin, RequireStaff,
                                   authenticate_user, get_password_hash, decode_token,
                                   create_access_token, create_refresh_token)
+
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -24,8 +25,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
     description="Создает нового пользователя в системе",
 )
 def register(user_data: UserCreate, session: Session = Depends(get_session)):
-    """Эндпоинт регистрации пользователя"""
-    # Проверка если username существует
+    """Регистрирует нового пользователя в системе"""
     existing_user = session.exec(
         select(User).where(User.username == user_data.username)
     ).first()
@@ -35,7 +35,6 @@ def register(user_data: UserCreate, session: Session = Depends(get_session)):
             detail="Username already registered",
         )
 
-    # Проверка если email существует
     existing_email = session.exec(
         select(User).where(User.email == user_data.email)
     ).first()
@@ -70,7 +69,7 @@ def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт аутентификации и получения JWT токена"""
+    """Аутентифицирует пользователя и возвращает JWT токены"""
     user = authenticate_user(session, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
@@ -103,7 +102,7 @@ def refresh_token(
     refresh_token: str = Body(..., embed=True),
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт для обновления токенов."""
+    """Обновляет пару токенов (access и refresh)"""
     try:
         token_data = decode_token(refresh_token, expected_type="refresh")
     except HTTPException:
@@ -149,7 +148,7 @@ def refresh_token(
     description="Получить информацию о текущем авторизованном пользователе",
 )
 def get_my_profile(current_user: RequireAuth):
-    """Эндпоинт получения информации о себе"""
+    """Возвращает информацию о текущем пользователе"""
     return UserRead(
         **current_user.model_dump(), roles=[role.name for role in current_user.roles]
     )
@@ -166,7 +165,7 @@ def update_user_me(
     current_user: RequireAuth,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт обновления пользователя"""
+    """Обновляет профиль текущего пользователя"""
     if user_update.email:
         current_user.email = user_update.email
     if user_update.full_name:
@@ -190,12 +189,12 @@ def update_user_me(
     description="Получить список всех пользователей (только для админов)",
 )
 def read_users(
-    admin: RequireAdmin,
+    current_user: RequireStaff,
     skip: int = 0,
     limit: int = 100,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт получения списка всех пользователей"""
+    """Возвращает список всех пользователей"""
     users = session.exec(select(User).offset(skip).limit(limit)).all()
     return UserList(
         users=[
@@ -218,7 +217,7 @@ def add_role_to_user(
     admin: RequireAdmin,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт добавления роли пользователю"""
+    """Добавляет роль пользователю"""
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(
@@ -259,7 +258,7 @@ def remove_role_from_user(
     admin: RequireAdmin,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт удаления роли у пользователя"""
+    """Удаляет роль у пользователя"""
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(
@@ -298,7 +297,7 @@ def get_roles(
     auth: RequireAuth,
     session: Session = Depends(get_session),
 ):
-    """Эндпоинт получения списа ролей"""
+    """Возвращает список ролей в системе"""
     user_roles = [role.name for role in auth.roles]
     exclude = {"payroll"} if "admin" in user_roles else set()
     roles = session.exec(select(Role)).all()
