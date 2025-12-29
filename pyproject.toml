@@ -20,6 +20,7 @@ python-jose = {extras = ["cryptography"], version = "^3.5.0"}
 passlib = {extras = ["argon2"], version = "^1.7.4"}
 aiofiles = "^25.1.0"
 pydantic = {extras = ["email"], version = "^2.12.5"}
+json-log-formatter = "^1.1.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"

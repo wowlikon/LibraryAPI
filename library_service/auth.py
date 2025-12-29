@@ -22,7 +22,7 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 
 #  Получение логгера
-logger = get_logger("uvicorn")
+logger = get_logger()
 
 # OAuth2 схема
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
