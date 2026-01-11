@@ -23,13 +23,15 @@ services:
     build: .
     container_name: api
     restart: unless-stopped
-    command: bash -c "uvicorn library_service.main:app --host 0.0.0.0 --port 8000 --forwarded-allow-ips=\"*\""
+    command: bash -c "uvicorn library_service.main:app --host 0.0.0.0 --port 8000 --forwarded-allow-ips=*"
     logging:
       options:
         max-size: "10m"
         max-file: "3"
     networks:
       - proxy
+    ports:
+      - 8000:8000
     env_file:
       - ./.env
     volumes:
@@ -42,7 +44,7 @@ services:
     container_name: tests
     build: .
     command: bash -c "pytest tests"
-    restart: unless-stopped
+    restart: no
     logging:
       options:
         max-size: "10m"

@@ -20,7 +20,7 @@ from library_service.settings import (
     get_logger,
 )
 
-SKIP_LOGGING_PATHS = frozenset({"/health", "/favicon.ico"})
+SKIP_LOGGING_PATHS = frozenset({"/favicon.ico", "/favicon.svg"})
 
 
 @asynccontextmanager

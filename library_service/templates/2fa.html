@@ -1,0 +1,159 @@
+{% extends "base.html" %} {% block title %}LiB - Настройка 2FA{% endblock %} {%
+block content %}
+<div class="flex flex-1 items-center justify-center p-4 bg-gray-100">
+    <div
+        class="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden flex flex-col md:flex-row"
+    >
+        <div
+            class="w-full md:w-1/2 p-8 bg-gray-50 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-200"
+        >
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">
+                Настройка 2FA
+            </h2>
+            <p class="text-sm text-gray-500 text-center mb-6">
+                Отсканируйте код в Google Authenticator
+            </p>
+            <div
+                id="qr-container"
+                class="relative flex items-center justify-center p-2 mb-4"
+                style="min-height: 220px"
+            >
+                <div class="loader flex items-center justify-center">
+                    <svg
+                        class="animate-spin h-8 w-8 text-gray-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                        ></circle>
+                        <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                    </svg>
+                </div>
+            </div>
+            <div
+                class="w-full max-w-[320px] p-4 border-2 border-dashed border-gray-300 rounded-lg bg-white bg-opacity-50 text-center"
+            >
+                <p
+                    class="text-xs text-gray-500 mb-2 uppercase tracking-wide font-semibold"
+                >
+                    Секретный ключ
+                </p>
+                <div
+                    id="secret-copy-btn"
+                    class="relative group cursor-pointer"
+                    title="Нажмите, чтобы скопировать"
+                >
+                    <code
+                        id="secret-code-display"
+                        class="block w-full py-2 bg-gray-100 text-gray-800 rounded border border-gray-200 text-sm font-mono break-all select-all hover:bg-gray-200 transition-colors"
+                        >...</code
+                    >
+                    <div
+                        class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-90 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    >
+                        Копировать
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="w-full md:w-1/2 p-8 flex flex-col justify-center">
+            <div class="max-w-xs mx-auto w-full">
+                <h2
+                    class="text-2xl font-semibold text-gray-800 text-center mb-6"
+                >
+                    Введите код
+                </h2>
+
+                <form id="totp-form">
+                    <div
+                        class="flex justify-center space-x-2 sm:space-x-4 mb-6"
+                    >
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            autocomplete="one-time-code"
+                            class="totp-digit w-10 h-14 text-center text-xl border-b-2 border-gray-300 focus:border-gray-800 focus:outline-none transition-colors caret-transparent bg-transparent"
+                            data-index="0"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            autocomplete="one-time-code"
+                            class="totp-digit w-10 h-14 text-center text-xl border-b-2 border-gray-300 focus:border-gray-800 focus:outline-none transition-colors caret-transparent bg-transparent"
+                            data-index="1"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            autocomplete="one-time-code"
+                            class="totp-digit w-10 h-14 text-center text-xl border-b-2 border-gray-300 focus:border-gray-800 focus:outline-none transition-colors caret-transparent bg-transparent"
+                            data-index="2"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            autocomplete="one-time-code"
+                            class="totp-digit w-10 h-14 text-center text-xl border-b-2 border-gray-300 focus:border-gray-800 focus:outline-none transition-colors caret-transparent bg-transparent"
+                            data-index="3"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            autocomplete="one-time-code"
+                            class="totp-digit w-10 h-14 text-center text-xl border-b-2 border-gray-300 focus:border-gray-800 focus:outline-none transition-colors caret-transparent bg-transparent"
+                            data-index="4"
+                        />
+                        <input
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="1"
+                            autocomplete="one-time-code"
+                            class="totp-digit w-10 h-14 text-center text-xl border-b-2 border-gray-300 focus:border-gray-800 focus:outline-none transition-colors caret-transparent bg-transparent"
+                            data-index="5"
+                        />
+                    </div>
+
+                    <div
+                        id="form-message"
+                        class="mb-4 text-center text-sm min-h-[20px]"
+                    ></div>
+
+                    <button
+                        type="submit"
+                        id="verify-btn"
+                        disabled
+                        class="w-full py-2 px-4 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+                    >
+                        Подтвердить
+                    </button>
+
+                    <a
+                        href="/profile"
+                        class="block w-full text-center mt-4 text-sm text-gray-500 hover:text-gray-700"
+                    >
+                        Отмена
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="/static/2fa.js"></script>
+{% endblock %}

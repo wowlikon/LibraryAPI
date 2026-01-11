@@ -1,4 +1,5 @@
 """Модуль прочих эндпоинтов"""
+
 from datetime import datetime
 from pathlib import Path
 from typing import Dict
@@ -24,7 +25,7 @@ def get_info(app) -> Dict:
         "app_info": {
             "title": app.title,
             "version": app.version,
-            "description": app.description.rsplit('|', 1)[0],
+            "description": app.description.rsplit("|", 1)[0],
         },
         "server_time": datetime.now().isoformat(),
     }
@@ -102,6 +103,12 @@ async def auth(request: Request):
     return templates.TemplateResponse(request, "auth.html")
 
 
+@router.get("/set-2fa", include_in_schema=False)
+async def set2fa(request: Request):
+    """Рендерит страницу установки двухфакторной аутентификации"""
+    return templates.TemplateResponse(request, "2fa.html")
+
+
 @router.get("/profile", include_in_schema=False)
 async def profile(request: Request):
     """Рендерит страницу профиля пользователя"""
@@ -167,9 +174,11 @@ async def api_stats(session: Session = Depends(get_session)):
     books = select(func.count()).select_from(Book)
     genres = select(func.count()).select_from(Genre)
     users = select(func.count()).select_from(User)
-    return JSONResponse(content={
-        "authors": session.exec(authors).one(),
-        "books": session.exec(books).one(),
-        "genres": session.exec(genres).one(),
-        "users": session.exec(users).one(),
-    })
+    return JSONResponse(
+        content={
+            "authors": session.exec(authors).one(),
+            "books": session.exec(books).one(),
+            "genres": session.exec(genres).one(),
+            "users": session.exec(users).one(),
+        }
+    )

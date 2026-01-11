@@ -1,19 +1,40 @@
 """Модуль работы с авторизацией и аутентификацией пользователей"""
+
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
+import pyotp
 
 from library_service.models.db import Role, User
-from library_service.models.dto import Token, UserCreate, UserRead, UserUpdate, UserList, RoleRead, RoleList
+from library_service.models.dto import (
+    Token,
+    UserCreate,
+    UserRead,
+    UserUpdate,
+    UserList,
+    RoleRead,
+    RoleList,
+)
 from library_service.settings import get_session
-from library_service.auth import (ACCESS_TOKEN_EXPIRE_MINUTES, RequireAuth, RequireAdmin, RequireStaff,
-                                  authenticate_user, get_password_hash, decode_token,
-                                  create_access_token, create_refresh_token)
+from library_service.auth import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    RequireAuth,
+    RequireAdmin,
+    RequireStaff,
+    authenticate_user,
+    get_password_hash,
+    decode_token,
+    create_access_token,
+    create_refresh_token,
+    qr_to_bitmap_b64,
+)
+from pathlib import Path
+from fastapi.templating import Jinja2Templates
 
-
+templates = Jinja2Templates(directory=Path(__file__).parent.parent / "templates")
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
@@ -45,7 +66,7 @@ def register(user_data: UserCreate, session: Session = Depends(get_session)):
 
     db_user = User(
         **user_data.model_dump(exclude={"password"}),
-        hashed_password=get_password_hash(user_data.password)
+        hashed_password=get_password_hash(user_data.password),
     )
 
     default_role = session.exec(select(Role).where(Role.name == "member")).first()
@@ -305,3 +326,22 @@ def get_roles(
         roles=[RoleRead(**role.model_dump(exclude=exclude)) for role in roles],
         total=len(roles),
     )
+
+
+@router.get(
+    "/2fa",
+    summary="Создание QR-кода TOTP 2FA",
+    description="Получить информацию о текущем авторизованном пользователе",
+)
+def get_totp_qr_bitmap(auth: RequireAuth):
+    """Возвращает qr-код bitmap"""
+    issuer = "issuer"
+    username = auth.username
+    secret = pyotp.random_base32()
+
+    totp = pyotp.TOTP(secret)
+    provisioning_uri = totp.provisioning_uri(name=username, issuer_name=issuer)
+
+    bitmap_data = qr_to_bitmap_b64(provisioning_uri)
+
+    return {"secret": secret, "username": username, "issuer": issuer, **bitmap_data}

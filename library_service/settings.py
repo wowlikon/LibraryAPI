@@ -1,4 +1,5 @@
 """Модуль настроек проекта"""
+
 import os, logging
 from pathlib import Path
 
@@ -65,11 +66,11 @@ OPENAPI_TAGS = [
 
 def get_app(lifespan=None, /) -> FastAPI:
     """Возвращает экземпляр FastAPI приложения"""
-    poetry_cfg = _pyproject["tool"]["poetry"]
+    project_cfg = _pyproject["project"]
     return FastAPI(
-        title=poetry_cfg["name"],
-        description=f"{poetry_cfg['description']} | [Вернуться на главную](/)",
-        version=poetry_cfg["version"],
+        title=project_cfg["name"],
+        description=f"{project_cfg['description']} | [Вернуться на главную](/)",
+        version=project_cfg["version"],
         lifespan=lifespan,
         openapi_tags=OPENAPI_TAGS,
     )
