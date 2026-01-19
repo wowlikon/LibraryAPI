@@ -5,18 +5,11 @@ $(document).ready(() => {
     );
     return;
   }
-  setTimeout(() => {
-    if (!window.isAdmin()) {
-      $("#users-container").html(
-        document.getElementById("access-denied-template").innerHTML,
-      );
-    }
-  }, 100);
 
   let allRoles = [];
   let users = [];
   let currentPage = 1;
-  let pageSize = 20;
+  const pageSize = 20;
   let totalUsers = 0;
   let searchQuery = "";
   let selectedFilterRoles = new Set();
@@ -28,8 +21,8 @@ $(document).ready(() => {
   showLoadingState();
 
   Promise.all([
-    Api.get("/api/auth/users?skip=0&limit=100"),
-    Api.get("/api/auth/roles"),
+    Api.get("/api/users?skip=0&limit=100"),
+    Api.get("/api/users/roles"),
   ])
     .then(([usersData, rolesData]) => {
       users = usersData.users;
@@ -57,12 +50,12 @@ $(document).ready(() => {
         .attr("data-name", role.name)
         .html(
           `<div>
-                        <div class="font-medium text-sm">${Utils.escapeHtml(role.name)}</div>
-                        ${role.description ? `<div class="text-xs text-gray-500">${Utils.escapeHtml(role.description)}</div>` : ""}
-                    </div>
-                    <svg class="check-icon w-4 h-4 text-green-600 hidden" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                    </svg>`,
+            <div class="font-medium text-sm">${Utils.escapeHtml(role.name)}</div>
+            ${role.description ? `<div class="text-xs text-gray-500">${Utils.escapeHtml(role.description)}</div>` : ""}
+          </div>
+          <svg class="check-icon w-4 h-4 text-green-600 hidden" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>`,
         )
         .appendTo($dropdown);
     });
@@ -139,13 +132,11 @@ $(document).ready(() => {
   }
 
   function loadUsers() {
-    const params = new URLSearchParams();
-    params.append("skip", (currentPage - 1) * pageSize);
-    params.append("limit", pageSize);
+    const skip = (currentPage - 1) * pageSize;
 
     showLoadingState();
 
-    Api.get(`/api/auth/users?${params.toString()}`)
+    Api.get(`/api/users?skip=${skip}&limit=${pageSize}`)
       .then((data) => {
         users = data.users;
         totalUsers = data.total;
@@ -220,6 +211,8 @@ $(document).ready(() => {
       }
 
       const rolesContainer = clone.querySelector(".user-roles");
+      let totalPayroll = 0;
+
       if (user.roles && user.roles.length > 0) {
         user.roles.forEach((roleName) => {
           const badge = roleBadgeTpl.content.cloneNode(true);
@@ -238,10 +231,23 @@ $(document).ready(() => {
           removeBtn.dataset.userId = user.id;
           removeBtn.dataset.roleName = roleName;
           rolesContainer.appendChild(badge);
+
+          const fullRole = allRoles.find((r) => r.name === roleName);
+          if (fullRole && fullRole.payroll) {
+            totalPayroll += fullRole.payroll;
+          }
         });
       } else {
         rolesContainer.innerHTML =
           '<span class="text-gray-400 text-sm italic">Нет ролей</span>';
+      }
+
+      if (totalPayroll > 0) {
+        const payrollBadge = clone.querySelector(".user-payroll");
+        const payrollAmount = clone.querySelector(".user-payroll-amount");
+
+        payrollBadge.classList.remove("hidden");
+        payrollAmount.textContent = totalPayroll.toLocaleString("ru-RU");
       }
 
       const addRoleBtn = clone.querySelector(".add-role-btn");
@@ -265,30 +271,30 @@ $(document).ready(() => {
 
   function showLoadingState() {
     $("#users-container").html(`
-            <div class="space-y-4">
-                ${Array(3)
-                  .fill()
-                  .map(
-                    () => `
-                    <div class="bg-white p-4 rounded-lg shadow-md animate-pulse">
-                        <div class="flex items-start gap-4">
-                            <div class="w-14 h-14 bg-gray-200 rounded-full"></div>
-                            <div class="flex-1">
-                                <div class="h-5 bg-gray-200 rounded w-1/4 mb-2"></div>
-                                <div class="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-                                <div class="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-                                <div class="flex gap-2">
-                                    <div class="h-6 bg-gray-200 rounded-full w-16"></div>
-                                    <div class="h-6 bg-gray-200 rounded-full w-20"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `,
-                  )
-                  .join("")}
+      <div class="space-y-4">
+        ${Array(3)
+          .fill()
+          .map(
+            () => `
+            <div class="bg-white p-4 rounded-lg shadow-md animate-pulse">
+              <div class="flex items-start gap-4">
+                <div class="w-14 h-14 bg-gray-200 rounded-full"></div>
+                <div class="flex-1">
+                  <div class="h-5 bg-gray-200 rounded w-1/4 mb-2"></div>
+                  <div class="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                  <div class="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                  <div class="flex gap-2">
+                    <div class="h-6 bg-gray-200 rounded-full w-16"></div>
+                    <div class="h-6 bg-gray-200 rounded-full w-20"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-        `);
+          `,
+          )
+          .join("")}
+      </div>
+    `);
   }
 
   function renderPagination() {
@@ -297,12 +303,12 @@ $(document).ready(() => {
     if (totalPages <= 1) return;
 
     const $pagination = $(`
-            <div class="flex justify-center items-center gap-2 mt-6 mb-4">
-                <button id="prev-page" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition" ${currentPage === 1 ? "disabled" : ""}>&larr;</button>
-                <div id="page-numbers" class="flex gap-1"></div>
-                <button id="next-page" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition" ${currentPage === totalPages ? "disabled" : ""}>&rarr;</button>
-            </div>
-        `);
+      <div class="flex justify-center items-center gap-2 mt-6 mb-4">
+        <button id="prev-page" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition" ${currentPage === 1 ? "disabled" : ""}>&larr;</button>
+        <div id="page-numbers" class="flex gap-1"></div>
+        <button id="next-page" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition" ${currentPage === totalPages ? "disabled" : ""}>&rarr;</button>
+      </div>
+    `);
 
     const $pageNumbers = $pagination.find("#page-numbers");
     const pages = generatePageNumbers(currentPage, totalPages);
@@ -313,8 +319,8 @@ $(document).ready(() => {
       } else {
         const isActive = page === currentPage;
         $pageNumbers.append(`
-                    <button class="page-btn px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-gray-600 text-white" : "bg-white border border-gray-300 hover:bg-gray-50"}" data-page="${page}">${page}</button>
-                `);
+          <button class="page-btn px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-gray-600 text-white" : "bg-white border border-gray-300 hover:bg-gray-50"}" data-page="${page}">${page}</button>
+        `);
       }
     });
 
@@ -383,13 +389,13 @@ $(document).ready(() => {
     }
 
     const $dropdown = $(`
-            <div class="role-add-dropdown absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden" style="min-width: 200px;">
-                <div class="p-2 border-b border-gray-100">
-                    <input type="text" class="role-search-input w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400" placeholder="Поиск роли..." autocomplete="off" />
-                </div>
-                <div class="role-items max-h-48 overflow-y-auto"></div>
-            </div>
-        `);
+      <div class="role-add-dropdown absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden" style="min-width: 200px;">
+        <div class="p-2 border-b border-gray-100">
+          <input type="text" class="role-search-input w-full border border-gray-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400" placeholder="Поиск роли..." autocomplete="off" />
+        </div>
+        <div class="role-items max-h-48 overflow-y-auto"></div>
+      </div>
+    `);
 
     const $roleItems = $dropdown.find(".role-items");
 
@@ -402,12 +408,12 @@ $(document).ready(() => {
             : "hover:bg-gray-50";
 
       $roleItems.append(`
-                <div class="role-item p-2 ${roleClass} cursor-pointer transition-colors border-b border-gray-50 last:border-0" data-role-name="${Utils.escapeHtml(role.name)}">
-                    <div class="font-medium text-sm text-gray-800">${Utils.escapeHtml(role.name)}</div>
-                    ${role.description ? `<div class="text-xs text-gray-500">${Utils.escapeHtml(role.description)}</div>` : ""}
-                    ${role.payroll ? `<div class="text-xs text-green-600">Оклад: ${role.payroll}</div>` : ""}
-                </div>
-            `);
+        <div class="role-item p-2 ${roleClass} cursor-pointer transition-colors border-b border-gray-50 last:border-0" data-role-name="${Utils.escapeHtml(role.name)}">
+          <div class="font-medium text-sm text-gray-800">${Utils.escapeHtml(role.name)}</div>
+          ${role.description ? `<div class="text-xs text-gray-500">${Utils.escapeHtml(role.description)}</div>` : ""}
+          ${role.payroll ? `<div class="text-xs text-green-600">Оклад: ${role.payroll}</div>` : ""}
+        </div>
+      `);
     });
 
     const $button = $(button);
@@ -457,12 +463,9 @@ $(document).ready(() => {
   }
 
   function addRoleToUser(userId, roleName) {
-    Api.request(
-      `/api/auth/users/${userId}/roles/${encodeURIComponent(roleName)}`,
-      {
-        method: "POST",
-      },
-    )
+    Api.request(`/api/users/${userId}/roles/${encodeURIComponent(roleName)}`, {
+      method: "POST",
+    })
       .then((updatedUser) => {
         const userIndex = users.findIndex((u) => u.id === userId);
         if (userIndex !== -1) {
@@ -485,12 +488,9 @@ $(document).ready(() => {
       return;
     }
 
-    Api.request(
-      `/api/auth/users/${userId}/roles/${encodeURIComponent(roleName)}`,
-      {
-        method: "DELETE",
-      },
-    )
+    Api.request(`/api/users/${userId}/roles/${encodeURIComponent(roleName)}`, {
+      method: "DELETE",
+    })
       .then((updatedUser) => {
         const userIndex = users.findIndex((u) => u.id === userId);
         if (userIndex !== -1) {
@@ -514,7 +514,6 @@ $(document).ready(() => {
     $("#edit-user-fullname").val(user.full_name || "");
     $("#edit-user-password").val("");
     $("#edit-user-active").prop("checked", user.is_active);
-    $("#edit-user-verified").prop("checked", user.is_verified);
 
     $("#edit-user-modal").removeClass("hidden");
   }
@@ -529,6 +528,7 @@ $(document).ready(() => {
     const email = $("#edit-user-email").val().trim();
     const fullName = $("#edit-user-fullname").val().trim();
     const password = $("#edit-user-password").val();
+    const isActive = $("#edit-user-active").prop("checked");
 
     if (!email) {
       Utils.showToast("Email обязателен", "error");
@@ -538,36 +538,26 @@ $(document).ready(() => {
     const updateData = {
       email: email,
       full_name: fullName || null,
+      is_active: isActive,
     };
 
     if (password) {
       updateData.password = password;
     }
 
-    Api.put(`/api/auth/me`, updateData)
+    Api.put(`/api/users/${userId}`, updateData)
       .then((updatedUser) => {
         const userIndex = users.findIndex((u) => u.id === userId);
         if (userIndex !== -1) {
-          users[userIndex] = { ...users[userIndex], ...updatedUser };
+          users[userIndex] = updatedUser;
         }
         renderUsers();
         closeEditModal();
         Utils.showToast("Пользователь обновлён", "success");
       })
       .catch((error) => {
-        console.warn("API update failed, updating locally:", error);
-        const userIndex = users.findIndex((u) => u.id === userId);
-        if (userIndex !== -1) {
-          users[userIndex].email = email;
-          users[userIndex].full_name = fullName || null;
-          users[userIndex].is_active = $("#edit-user-active").prop("checked");
-          users[userIndex].is_verified = $("#edit-user-verified").prop(
-            "checked",
-          );
-        }
-        renderUsers();
-        closeEditModal();
-        Utils.showToast("Изменения сохранены локально", "info");
+        console.error(error);
+        Utils.showToast(error.message || "Ошибка обновления", "error");
       });
   }
 
@@ -582,7 +572,16 @@ $(document).ready(() => {
     }
 
     userToDelete = user;
+
+    const actionText = user.is_active ? "деактивировать" : "удалить навсегда";
     $("#delete-user-name").text(user.full_name || user.username);
+    $("#delete-user-modal .text-sm.text-gray-500").html(
+      `Вы уверены, что хотите <strong>${actionText}</strong> пользователя <strong>${Utils.escapeHtml(user.full_name || user.username)}</strong>?` +
+        (user.is_active
+          ? ""
+          : " <span class='text-red-600'>Это действие необратимо!</span>"),
+    );
+
     $("#delete-user-modal").removeClass("hidden");
   }
 
@@ -594,22 +593,27 @@ $(document).ready(() => {
   function confirmDeleteUser() {
     if (!userToDelete) return;
 
-    Utils.showToast("Удаление пользователей не поддерживается API", "error");
-    closeDeleteModal();
-
-    // Api.delete(`/api/auth/users/${userToDelete.id}`)
-    //     .then(() => {
-    //         users = users.filter(u => u.id !== userToDelete.id);
-    //         totalUsers--;
-    //         $("#total-users-count").text(totalUsers);
-    //         renderUsers();
-    //         closeDeleteModal();
-    //         Utils.showToast("Пользователь удалён", "success");
-    //     })
-    //     .catch((error) => {
-    //         console.error(error);
-    //         Utils.showToast(error.message || "Ошибка удаления", "error");
-    //     });
+    Api.delete(`/api/users/${userToDelete.id}`)
+      .then((deletedUser) => {
+        if (deletedUser.is_active === false) {
+          const userIndex = users.findIndex((u) => u.id === userToDelete.id);
+          if (userIndex !== -1) {
+            users[userIndex] = deletedUser;
+          }
+          Utils.showToast("Пользователь деактивирован", "success");
+        } else {
+          users = users.filter((u) => u.id !== userToDelete.id);
+          totalUsers--;
+          $("#total-users-count").text(totalUsers);
+          Utils.showToast("Пользователь удалён", "success");
+        }
+        renderUsers();
+        closeDeleteModal();
+      })
+      .catch((error) => {
+        console.error(error);
+        Utils.showToast(error.message || "Ошибка удаления", "error");
+      });
   }
 
   $("#users-container").on("click", ".add-role-btn", function (e) {

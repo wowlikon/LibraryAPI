@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 from library_service.models.db import Role, User
 
 from .core import get_password_hash
-from library_service.settings import get_session, get_logger
+from library_service.settings import get_logger
 
 #  Получение логгера
 logger = get_logger()

@@ -8,7 +8,7 @@ from .user import UserBase, UserCreate, UserList, UserRead, UserUpdate, UserLogi
 from .loan import LoanBase, LoanCreate, LoanList, LoanRead, LoanUpdate
 from .recovery import RecoveryCodesResponse, RecoveryCodesStatus, RecoveryCodeUse
 from .token import Token, TokenData, PartialToken
-from .combined import (
+from .misc import (
     AuthorWithBooks,
     GenreWithBooks,
     BookWithAuthors,
@@ -19,6 +19,8 @@ from .combined import (
     LoanWithBook,
     LoginResponse,
     RegisterResponse,
+    UserCreateByAdmin,
+    UserUpdateByAdmin,
     TOTPSetupResponse,
     TOTPVerifyRequest,
     TOTPDisableRequest,
@@ -67,6 +69,8 @@ __all__ = [
     "TOTPVerifyRequest",
     "TOTPDisableRequest",
     "RecoveryCodeUse",
+    "UserCreateByAdmin",
+    "UserUpdateByAdmin",
     "LoginResponse",
     "RegisterResponse",
     "RecoveryCodesStatus",

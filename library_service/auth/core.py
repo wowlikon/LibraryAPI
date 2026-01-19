@@ -11,7 +11,7 @@ from jose import jwt, JWTError, ExpiredSignatureError
 from passlib.context import CryptContext
 from sqlmodel import Session, select
 
-from library_service.models.db import Role, User
+from library_service.models.db import User
 from library_service.models.dto import TokenData
 from library_service.settings import get_session, get_logger
 

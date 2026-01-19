@@ -2,13 +2,10 @@
 
 from datetime import timedelta
 from typing import Annotated
-from pathlib import Path
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
-import pyotp
 
 from library_service.models.db import Role, User
 from library_service.models.dto import (
@@ -56,7 +53,6 @@ from library_service.auth import (
 )
 
 
-templates = Jinja2Templates(directory=Path(__file__).parent.parent / "templates")
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
@@ -157,7 +153,7 @@ def login(
     "/refresh",
     response_model=Token,
     summary="Обновление токена",
-    description="Получение новой пары токенов (Access + Refresh) используя действующий Refresh токен",
+    description="Получение новой пары токенов, используя действующий Refresh токен",
 )
 def refresh_token(
     refresh_token: str = Body(..., embed=True),
@@ -240,131 +236,6 @@ def update_user_me(
 
     return UserRead(
         **current_user.model_dump(), roles=[role.name for role in current_user.roles]
-    )
-
-
-@router.get(
-    "/users",
-    response_model=UserList,
-    summary="Список пользователей",
-    description="Получить список всех пользователей (только для админов)",
-)
-def read_users(
-    current_user: RequireStaff,
-    skip: int = 0,
-    limit: int = 100,
-    session: Session = Depends(get_session),
-):
-    """Возвращает список всех пользователей"""
-    users = session.exec(select(User).offset(skip).limit(limit)).all()
-    return UserList(
-        users=[
-            UserRead(**user.model_dump(), roles=[r.name for r in user.roles])
-            for user in users
-        ],
-        total=len(users),
-    )
-
-
-@router.post(
-    "/users/{user_id}/roles/{role_name}",
-    response_model=UserRead,
-    summary="Назначить роль пользователю",
-    description="Добавить указанную роль пользователю",
-)
-def add_role_to_user(
-    user_id: int,
-    role_name: str,
-    admin: RequireAdmin,
-    session: Session = Depends(get_session),
-):
-    """Добавляет роль пользователю"""
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    role = session.exec(select(Role).where(Role.name == role_name)).first()
-    if not role:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role '{role_name}' not found",
-        )
-
-    if role in user.roles:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already has this role",
-        )
-
-    user.roles.append(role)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-
-    return UserRead(**user.model_dump(), roles=[r.name for r in user.roles])
-
-
-@router.delete(
-    "/users/{user_id}/roles/{role_name}",
-    response_model=UserRead,
-    summary="Удалить роль у пользователя",
-    description="Убрать указанную роль у пользователя",
-)
-def remove_role_from_user(
-    user_id: int,
-    role_name: str,
-    admin: RequireAdmin,
-    session: Session = Depends(get_session),
-):
-    """Удаляет роль у пользователя"""
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    role = session.exec(select(Role).where(Role.name == role_name)).first()
-    if not role:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role '{role_name}' not found",
-        )
-
-    if role not in user.roles:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User does not have this role",
-        )
-
-    user.roles.remove(role)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-
-    return UserRead(**user.model_dump(), roles=[r.name for r in user.roles])
-
-
-@router.get(
-    "/roles",
-    response_model=RoleList,
-    summary="Получить список ролей",
-    description="Возвращает список ролей",
-)
-def get_roles(
-    auth: RequireAuth,
-    session: Session = Depends(get_session),
-):
-    """Возвращает список ролей в системе"""
-    user_roles = [role.name for role in auth.roles]
-    exclude = {"payroll"} if "admin" in user_roles else set()
-    roles = session.exec(select(Role)).all()
-    return RoleList(
-        roles=[RoleRead(**role.model_dump(exclude=exclude)) for role in roles],
-        total=len(roles),
     )
 
 

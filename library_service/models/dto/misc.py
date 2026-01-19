@@ -1,4 +1,4 @@
-"""Модуль объединёных объектов"""
+"""Модуль разных моделей"""
 
 from datetime import datetime
 from typing import List
@@ -11,8 +11,8 @@ from .book import BookRead
 from .loan import LoanRead
 from ..enums import BookStatus
 
-from .user import UserRead
-from .recovery import RecoveryCodesResponse, RecoveryCodesStatus
+from .user import UserCreate, UserRead, UserUpdate
+from .recovery import RecoveryCodesResponse
 
 
 class AuthorWithBooks(SQLModel):
@@ -78,6 +78,20 @@ class BookStatusUpdate(SQLModel):
     """Модель для ручного изменения статуса библиотекарем"""
 
     status: str
+
+
+class UserCreateByAdmin(UserCreate):
+    """Создание пользователя администратором"""
+
+    is_active: bool = True
+    roles: list[str] | None = None
+
+
+class UserUpdateByAdmin(UserUpdate):
+    """Обновление пользователя администратором"""
+
+    is_active: bool | None = None
+    roles: list[str] | None = None
 
 
 class LoginResponse(SQLModel):

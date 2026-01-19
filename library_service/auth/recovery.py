@@ -1,6 +1,5 @@
 """Модуль резервных кодов восстановления пароля"""
 
-import os
 import secrets
 from datetime import datetime, timezone, timedelta
 

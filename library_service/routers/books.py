@@ -25,7 +25,7 @@ from library_service.models.dto import (
     BookUpdate,
     GenreRead,
 )
-from library_service.models.dto.combined import (
+from library_service.models.dto.misc import (
     BookWithAuthorsAndGenres,
     BookFilteredList,
 )
@@ -71,13 +71,17 @@ def filter_books(
 
     if author_ids:
         statement = statement.join(AuthorBookLink).where(
-            AuthorBookLink.author_id.in_(author_ids)
-        )  # ty: ignore[unresolved-attribute, unresolved-reference]
+            AuthorBookLink.author_id.in_(  # ty: ignore[unresolved-attribute, unresolved-reference]
+                author_ids
+            )
+        )
 
     if genre_ids:
         statement = statement.join(GenreBookLink).where(
-            GenreBookLink.genre_id.in_(genre_ids)
-        )  # ty: ignore[unresolved-attribute, unresolved-reference]
+            GenreBookLink.genre_id.in_(  # ty: ignore[unresolved-attribute, unresolved-reference]
+                genre_ids
+            )
+        )
 
     total_statement = select(func.count()).select_from(statement.subquery())
     total = session.exec(total_statement).one()

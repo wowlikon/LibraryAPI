@@ -13,7 +13,7 @@ $(document).ready(() => {
   function loadProfile() {
     Promise.all([
       Api.get("/api/auth/me"),
-      Api.get("/api/auth/roles").catch(() => ({ roles: [] })),
+      Api.get("/api/users/roles").catch(() => ({ roles: [] })),
       Api.get("/api/auth/recovery-codes/status").catch(() => null),
     ])
       .then(async ([user, rolesData, recoveryStatus]) => {

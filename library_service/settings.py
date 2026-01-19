@@ -60,6 +60,7 @@ OPENAPI_TAGS = [
     {"name": "genres", "description": "Действия с жанрами."},
     {"name": "loans", "description": "Действия с выдачами."},
     {"name": "relations", "description": "Действия со связями."},
+    {"name": "users", "description": "Действия с пользователями."},
     {"name": "misc", "description": "Прочие."},
 ]
 

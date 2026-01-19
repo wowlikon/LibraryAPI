@@ -619,7 +619,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/e8/ef/324f4a28ed0152a32
 
 [[package]]
 name = "libraryapi"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
