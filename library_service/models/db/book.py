@@ -1,4 +1,5 @@
 """Модуль DB-моделей книг"""
+
 from typing import TYPE_CHECKING, List
 
 from sqlalchemy import Column, String
@@ -15,10 +16,11 @@ if TYPE_CHECKING:
 
 class Book(BookBase, table=True):
     """Модель книги в базе данных"""
+
     id: int | None = Field(default=None, primary_key=True, index=True)
     status: BookStatus = Field(
         default=BookStatus.ACTIVE,
-        sa_column=Column(String, nullable=False, default="active")
+        sa_column=Column(String, nullable=False, default="active"),
     )
     authors: List["Author"] = Relationship(
         back_populates="books", link_model=AuthorBookLink
@@ -26,4 +28,6 @@ class Book(BookBase, table=True):
     genres: List["Genre"] = Relationship(
         back_populates="books", link_model=GenreBookLink
     )
-    loans: List["BookUserLink"] = Relationship(sa_relationship_kwargs={"cascade": "all, delete"})
+    loans: List["BookUserLink"] = Relationship(  # ty: ignore[unresolved-reference]
+        sa_relationship_kwargs={"cascade": "all, delete"}
+    )

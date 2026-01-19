@@ -177,8 +177,10 @@ $(async () => {
     $msg.text("").attr("class", "mb-4 text-center text-sm min-h-[20px]");
 
     try {
-      await Api.post("/api/auth/2fa/verify", {
-        code: code,
+      await Api.post("/api/auth/2fa/enable", {
+        data: {
+          code: code,
+        },
         secret: secretKey,
       });
 

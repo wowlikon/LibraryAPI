@@ -18,11 +18,10 @@ $(document).ready(() => {
     try {
       const data = await Api.get("/api/loans/?page=1&size=100");
       allLoans = data.loans;
-      
-      // Загружаем информацию о книгах
-      const bookIds = [...new Set(allLoans.map(loan => loan.book_id))];
+
+      const bookIds = [...new Set(allLoans.map((loan) => loan.book_id))];
       await loadBooks(bookIds);
-      
+
       renderLoans();
     } catch (error) {
       console.error("Failed to load loans", error);
@@ -46,12 +45,12 @@ $(document).ready(() => {
 
   function renderLoans() {
     const reservations = allLoans.filter(
-      loan => !loan.returned_at && getBookStatus(loan.book_id) === "reserved"
+      (loan) => !loan.returned_at && getBookStatus(loan.book_id) === "reserved",
     );
     const activeLoans = allLoans.filter(
-      loan => !loan.returned_at && getBookStatus(loan.book_id) === "borrowed"
+      (loan) => !loan.returned_at && getBookStatus(loan.book_id) === "borrowed",
     );
-    const returned = allLoans.filter(loan => loan.returned_at !== null);
+    const returned = allLoans.filter((loan) => loan.returned_at !== null);
 
     renderReservations(reservations);
     renderActiveLoans(activeLoans);
@@ -70,7 +69,7 @@ $(document).ready(() => {
 
     if (reservations.length === 0) {
       $container.html(
-        '<div class="text-center text-gray-500 py-8">Нет активных бронирований</div>'
+        '<div class="text-center text-gray-500 py-8">Нет активных бронирований</div>',
       );
       return;
     }
@@ -79,7 +78,9 @@ $(document).ready(() => {
       const book = booksCache.get(loan.book_id);
       if (!book) return;
 
-      const borrowedDate = new Date(loan.borrowed_at).toLocaleDateString("ru-RU");
+      const borrowedDate = new Date(loan.borrowed_at).toLocaleDateString(
+        "ru-RU",
+      );
       const dueDate = new Date(loan.due_date).toLocaleDateString("ru-RU");
 
       const $card = $(`
@@ -90,7 +91,7 @@ $(document).ready(() => {
                 ${Utils.escapeHtml(book.title)}
               </a>
               <p class="text-sm text-gray-600 mt-1">
-                Авторы: ${book.authors.map(a => a.name).join(", ") || "Не указаны"}
+                Авторы: ${book.authors.map((a) => a.name).join(", ") || "Не указаны"}
               </p>
               <div class="mt-3 space-y-1 text-sm text-gray-600">
                 <p><span class="font-medium">Дата бронирования:</span> ${borrowedDate}</p>
@@ -130,7 +131,7 @@ $(document).ready(() => {
 
     if (activeLoans.length === 0) {
       $container.html(
-        '<div class="text-center text-gray-500 py-8">Нет активных выдач</div>'
+        '<div class="text-center text-gray-500 py-8">Нет активных выдач</div>',
       );
       return;
     }
@@ -139,7 +140,9 @@ $(document).ready(() => {
       const book = booksCache.get(loan.book_id);
       if (!book) return;
 
-      const borrowedDate = new Date(loan.borrowed_at).toLocaleDateString("ru-RU");
+      const borrowedDate = new Date(loan.borrowed_at).toLocaleDateString(
+        "ru-RU",
+      );
       const dueDate = new Date(loan.due_date).toLocaleDateString("ru-RU");
       const isOverdue = new Date(loan.due_date) < new Date();
 
@@ -151,7 +154,7 @@ $(document).ready(() => {
                 ${Utils.escapeHtml(book.title)}
               </a>
               <p class="text-sm text-gray-600 mt-1">
-                Авторы: ${book.authors.map(a => a.name).join(", ") || "Не указаны"}
+                Авторы: ${book.authors.map((a) => a.name).join(", ") || "Не указаны"}
               </p>
               <div class="mt-3 space-y-1 text-sm text-gray-600">
                 <p><span class="font-medium">Дата выдачи:</span> ${borrowedDate}</p>
@@ -179,7 +182,7 @@ $(document).ready(() => {
 
     if (returned.length === 0) {
       $container.html(
-        '<div class="text-center text-gray-500 py-8">Нет возвращенных книг</div>'
+        '<div class="text-center text-gray-500 py-8">Нет возвращенных книг</div>',
       );
       return;
     }
@@ -188,8 +191,12 @@ $(document).ready(() => {
       const book = booksCache.get(loan.book_id);
       if (!book) return;
 
-      const borrowedDate = new Date(loan.borrowed_at).toLocaleDateString("ru-RU");
-      const returnedDate = new Date(loan.returned_at).toLocaleDateString("ru-RU");
+      const borrowedDate = new Date(loan.borrowed_at).toLocaleDateString(
+        "ru-RU",
+      );
+      const returnedDate = new Date(loan.returned_at).toLocaleDateString(
+        "ru-RU",
+      );
       const dueDate = new Date(loan.due_date).toLocaleDateString("ru-RU");
 
       const $card = $(`
@@ -200,7 +207,7 @@ $(document).ready(() => {
                 ${Utils.escapeHtml(book.title)}
               </a>
               <p class="text-sm text-gray-600 mt-1">
-                Авторы: ${book.authors.map(a => a.name).join(", ") || "Не указаны"}
+                Авторы: ${book.authors.map((a) => a.name).join(", ") || "Не указаны"}
               </p>
               <div class="mt-3 space-y-1 text-sm text-gray-600">
                 <p><span class="font-medium">Дата выдачи:</span> ${borrowedDate}</p>
@@ -229,15 +236,14 @@ $(document).ready(() => {
     try {
       await Api.delete(`/api/loans/${loanId}`);
       Utils.showToast("Бронирование отменено", "success");
-      
-      // Удаляем из кэша и перезагружаем
-      allLoans = allLoans.filter(loan => loan.id !== loanId);
+
+      allLoans = allLoans.filter((loan) => loan.id !== loanId);
       const book = booksCache.get(bookId);
       if (book) {
         book.status = "active";
         booksCache.set(bookId, book);
       }
-      
+
       renderLoans();
     } catch (error) {
       console.error(error);
@@ -245,4 +251,3 @@ $(document).ready(() => {
     }
   }
 });
-

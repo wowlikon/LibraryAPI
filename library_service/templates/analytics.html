@@ -1,11 +1,11 @@
-{% extends "base.html" %} {% block title %}Аналитика - LiB{% endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}LiB - Аналитика{% endblock %}
+{% block content %}
 <div class="container mx-auto p-4 max-w-7xl">
     <div class="mb-8">
         <h1 class="text-2xl font-semibold text-gray-900 mb-1">Аналитика выдач и возвратов</h1>
         <p class="text-sm text-gray-500">Статистика и графики по выдачам книг</p>
     </div>
 
-    <!-- Период анализа -->
     <div class="bg-white rounded-xl shadow-sm p-4 mb-6 border border-gray-100">
         <div class="flex items-center gap-4">
             <label class="text-sm font-medium text-gray-600">Период анализа:</label>
@@ -22,7 +22,6 @@
         </div>
     </div>
 
-    <!-- Общая статистика -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
             <div class="flex items-center justify-between">
@@ -109,7 +108,6 @@
         </div>
     </div>
 
-    <!-- Графики -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <h2 class="text-base font-medium text-gray-700 mb-6">Выдачи по дням</h2>
@@ -126,7 +124,6 @@
         </div>
     </div>
 
-    <!-- Топ книг -->
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
         <h2 class="text-base font-medium text-gray-700 mb-6">Топ книг по выдачам</h2>
         <div id="top-books-container" class="space-y-2">
@@ -137,6 +134,5 @@
 {% endblock %} {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endblock %} {% block scripts %}
-<script src="/static/analytics.js"></script>
+<script src="/static/page/analytics.js"></script>
 {% endblock %}
-

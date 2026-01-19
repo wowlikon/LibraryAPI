@@ -1,4 +1,5 @@
 """Модуль DTO-моделей пользователей"""
+
 import re
 from typing import List
 
@@ -8,6 +9,7 @@ from sqlmodel import Field, SQLModel
 
 class UserBase(SQLModel):
     """Базовая модель пользователя"""
+
     username: str = Field(min_length=3, max_length=50, index=True, unique=True)
     email: EmailStr = Field(index=True, unique=True)
     full_name: str | None = Field(default=None, max_length=100)
@@ -25,6 +27,7 @@ class UserBase(SQLModel):
 
 class UserCreate(UserBase):
     """Модель пользователя для создания"""
+
     password: str = Field(min_length=8, max_length=100)
 
     @field_validator("password")
@@ -42,20 +45,24 @@ class UserCreate(UserBase):
 
 class UserLogin(SQLModel):
     """Модель аутентификации для пользователя"""
+
     username: str
     password: str
 
 
 class UserRead(UserBase):
     """Модель пользователя для чтения"""
+
     id: int
     is_active: bool
     is_verified: bool
+    is_2fa_enabled: bool
     roles: List[str] = []
 
 
 class UserUpdate(SQLModel):
     """Модель пользователя для обновления"""
+
     email: EmailStr | None = None
     full_name: str | None = None
     password: str | None = None
@@ -63,5 +70,6 @@ class UserUpdate(SQLModel):
 
 class UserList(SQLModel):
     """Список пользователей"""
+
     users: List[UserRead]
     total: int

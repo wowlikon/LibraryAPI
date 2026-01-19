@@ -1,6 +1,6 @@
 [project]
 name = "LibraryAPI"
-version = "0.4.0"
+version = "0.5.0"
 description = "Это простое API для управления авторами, книгами и их жанрами."
 authors = [{ name = "wowlikon" }]
 readme = "README.md"

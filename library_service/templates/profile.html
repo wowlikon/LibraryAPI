@@ -1,159 +1,294 @@
-{% extends "base.html" %} {% block content %}
-<div
-    class="container mx-auto p-4 max-w-2xl"
-    x-data="{ showPasswordModal: false }"
-    @close-modal.window="showPasswordModal = false"
->
+{% extends "base.html" %} {% block title %}LiB - Профиль{% endblock %}
+{% block content %}
+<div class="container mx-auto p-4 max-w-2xl"
+    x-data="{ showPasswordModal: false, showDisable2FAModal: false, showRecoveryCodesModal: false, is2FAEnabled: false, recoveryCodesRemaining: null }"
+    @update-2fa.window="is2FAEnabled = $event.detail"
+    @update-recovery-codes.window="recoveryCodesRemaining = $event.detail"
+    @close-password-modal.window="showPasswordModal = false"
+    @close-disable-2fa-modal.window="showDisable2FAModal = false"
+    @close-recovery-codes-modal.window="showRecoveryCodesModal = false"
+    @open-recovery-codes-modal.window="showRecoveryCodesModal = true">
+
     <div id="profile-card" class="bg-white rounded-lg shadow-md p-6 mb-6">
         <div class="animate-pulse flex items-center">
             <div class="w-24 h-24 bg-gray-200 rounded-full mr-6"></div>
             <div class="h-6 bg-gray-200 w-48 rounded"></div>
         </div>
     </div>
-    <div
-        id="account-section"
-        class="bg-white rounded-lg shadow-md p-6 mb-6 hidden"
-    >
+
+    <div id="account-section" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
         <h2 class="text-xl font-bold mb-4 border-b pb-2">Информация</h2>
         <div id="account-info" class="space-y-4"></div>
     </div>
-    <div
-        id="roles-section"
-        class="bg-white rounded-lg shadow-md p-6 mb-6 hidden"
-    >
+
+    <div id="roles-section" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
         <h2 class="text-xl font-bold mb-4 border-b pb-2">Роли</h2>
         <div id="roles-container" class="space-y-3"></div>
     </div>
+
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4 border-b pb-2">Безопасность</h2>
         <div class="space-y-3">
-            <button
-                @click="showPasswordModal = true"
-                class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-                <span class="text-gray-700 font-medium">Сменить пароль</span>
-                <svg
-                    class="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 5l7 7-7 7"
-                    />
+            <button type="button"
+                @click="is2FAEnabled ? showDisable2FAModal = true : window.location.href = '/2fa'"
+                class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span class="text-gray-700 font-medium">Двухфакторная аутентификация</span>
+                </div>
+                <span x-show="is2FAEnabled" class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Включена
+                </span>
+                <span x-show="!is2FAEnabled" class="px-2 py-1 text-xs font-medium rounded-full bg-gray-200 text-gray-600">
+                    Выключена
+                </span>
+            </button>
+
+            <button type="button" id="recovery-codes-btn"
+                class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    <span class="text-gray-700 font-medium">Резервные коды</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <template x-if="recoveryCodesRemaining !== null">
+                        <span :class="{
+                            'bg-green-100 text-green-800': recoveryCodesRemaining > 5,
+                            'bg-yellow-100 text-yellow-800': recoveryCodesRemaining > 2 && recoveryCodesRemaining <= 5,
+                            'bg-red-100 text-red-800': recoveryCodesRemaining <= 2
+                        }" class="px-2 py-1 text-xs font-medium rounded-full">
+                            <span x-text="recoveryCodesRemaining"></span> / 10
+                        </span>
+                    </template>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </div>
+            </button>
+
+            <button @click="showPasswordModal = true"
+                class="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    <span class="text-gray-700 font-medium">Сменить пароль</span>
+                </div>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
             </button>
-            <button
-                onclick="Auth.logout()"
-                class="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-            >
-                <span class="text-red-700 font-medium">Выйти из аккаунта</span>
-                <svg
-                    class="w-5 h-5 text-red-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                </svg>
+
+            <button onclick="Auth.logout()"
+                class="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span class="text-red-700 font-medium">Выйти из аккаунта</span>
+                </div>
             </button>
         </div>
     </div>
-    <div
-        x-show="showPasswordModal"
-        class="fixed inset-0 z-50 overflow-y-auto"
-        style="display: none"
-    >
-        <div
-            class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0"
-        >
-            <div
-                x-show="showPasswordModal"
-                x-transition.opacity
-                class="fixed inset-0 transition-opacity"
-                aria-hidden="true"
-            >
-                <div
-                    class="absolute inset-0 bg-gray-500 opacity-75"
-                    @click="showPasswordModal = false"
-                ></div>
+
+    <div x-show="showPasswordModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showPasswordModal" x-transition.opacity class="fixed inset-0 transition-opacity">
+                <div class="absolute inset-0 bg-gray-500 opacity-75" @click="showPasswordModal = false"></div>
             </div>
-            <div
-                x-show="showPasswordModal"
-                x-transition.scale
-                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full"
-            >
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3
-                        class="text-lg leading-6 font-medium text-gray-900 mb-4"
-                    >
-                        Смена пароля
-                    </h3>
-                    <form id="change-password-form">
-                        <div class="mb-4">
-                            <label
-                                class="block text-gray-700 text-sm font-bold mb-2"
-                                >Текущий пароль</label
-                            >
-                            <input
-                                type="password"
-                                id="current-password"
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            />
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div x-show="showPasswordModal" x-transition
+                class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <h3 class="text-lg leading-6 font-semibold text-gray-900 mb-4">Смена пароля</h3>
+                    <form id="change-password-form" class="space-y-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Новый пароль</label>
+                            <input type="password" id="new-password"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition"
+                                placeholder="Минимум 8 символов" />
                         </div>
-                        <div class="mb-4">
-                            <label
-                                class="block text-gray-700 text-sm font-bold mb-2"
-                                >Новый пароль</label
-                            >
-                            <input
-                                type="password"
-                                id="new-password"
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            />
-                        </div>
-                        <div class="mb-4">
-                            <label
-                                class="block text-gray-700 text-sm font-bold mb-2"
-                                >Подтвердите пароль</label
-                            >
-                            <input
-                                type="password"
-                                id="confirm-password"
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            />
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Подтвердите пароль</label>
+                            <input type="password" id="confirm-password"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition"
+                                placeholder="Повторите пароль" />
                         </div>
                     </form>
                 </div>
-                <div
-                    class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"
-                >
-                    <button
-                        type="button"
-                        id="submit-password-btn"
-                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-600 text-base font-medium text-white hover:bg-gray-700 sm:ml-3 sm:w-auto sm:text-sm"
-                    >
+                <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-3">
+                    <button type="button" id="submit-password-btn"
+                        class="px-5 py-2.5 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition">
                         Сменить
                     </button>
-                    <button
-                        type="button"
-                        @click="showPasswordModal = false"
-                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                    >
+                    <button type="button" @click="showPasswordModal = false"
+                        class="px-5 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition">
                         Отмена
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <div x-show="showDisable2FAModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showDisable2FAModal" x-transition.opacity class="fixed inset-0 transition-opacity">
+                <div class="absolute inset-0 bg-gray-500 opacity-75" @click="showDisable2FAModal = false"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div x-show="showDisable2FAModal" x-transition
+                class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg leading-6 font-semibold text-gray-900">Отключить 2FA</h3>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Это снизит безопасность вашего аккаунта. Для подтверждения введите пароль.
+                    </p>
+                    <form id="disable-2fa-form">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Пароль</label>
+                            <input type="password" id="disable-2fa-password"
+                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-transparent outline-none transition"
+                                placeholder="Введите ваш пароль" />
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse gap-3">
+                    <button type="button" id="submit-disable-2fa-btn"
+                        class="px-5 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">
+                        Отключить
+                    </button>
+                    <button type="button" @click="showDisable2FAModal = false"
+                        class="px-5 py-2.5 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition">
+                        Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showRecoveryCodesModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showRecoveryCodesModal" x-transition.opacity class="fixed inset-0 transition-opacity">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div x-show="showRecoveryCodesModal" x-transition
+                class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full">
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div id="recovery-codes-loading" class="text-center py-8">
+                        <div class="animate-spin w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full mx-auto mb-4"></div>
+                        <p class="text-gray-500">Загрузка...</p>
+                    </div>
+
+                    <div id="recovery-codes-status" class="hidden">
+                        <div class="flex items-center justify-center w-12 h-12 mx-auto rounded-full mb-4" id="status-icon-container">
+                        </div>
+                        <h3 class="text-lg font-semibold text-center text-gray-800 mb-2">
+                            Резервные коды
+                        </h3>
+
+                        <div id="codes-status-summary" class="text-center mb-4"></div>
+
+                        <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                            <p class="text-xs text-gray-500 mb-2 text-center">Статус кодов:</p>
+                            <div id="codes-status-list" class="space-y-1 max-h-48 overflow-y-auto"></div>
+                        </div>
+
+                        <div id="codes-warning" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-yellow-800 flex items-start gap-2">
+                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span id="warning-text"></span>
+                            </p>
+                        </div>
+
+                        <p id="codes-generated-at" class="text-xs text-gray-400 text-center mb-4"></p>
+
+                        <button type="button" id="regenerate-codes-btn"
+                            class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition duration-200 font-medium mb-3">
+                            Сгенерировать новые коды
+                        </button>
+                        <button type="button" id="close-status-modal-btn"
+                            class="w-full text-gray-500 hover:text-gray-700 text-sm py-2">
+                            Закрыть
+                        </button>
+                    </div>
+
+                    <div id="recovery-codes-display" class="hidden">
+                        <div class="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-full mb-4">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-center text-gray-800 mb-2">
+                            Новые резервные коды
+                        </h3>
+                        <p class="text-sm text-gray-500 text-center mb-4">
+                            <strong class="text-red-600">Сохраните эти коды!</strong>
+                            Они понадобятся для восстановления доступа.
+                        </p>
+
+                        <div id="recovery-codes-list"
+                            class="bg-gray-50 rounded-lg p-4 font-mono text-sm text-center space-y-2 mb-4 max-h-64 overflow-y-auto">
+                        </div>
+
+                        <p id="recovery-codes-generated-at" class="text-xs text-gray-400 text-center mb-4"></p>
+
+                        <div class="flex gap-2 mb-4">
+                            <button type="button" id="copy-codes-btn"
+                                class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <span>Копировать</span>
+                            </button>
+                            <button type="button" id="download-codes-btn"
+                                class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                <span>Скачать</span>
+                            </button>
+                        </div>
+
+                        <label class="flex items-center gap-2 text-sm text-gray-600 mb-4 cursor-pointer">
+                            <input type="checkbox" id="codes-saved-checkbox" class="rounded border-gray-300 text-gray-600 focus:ring-gray-500" />
+                            <span>Я сохранил(а) коды в надёжном месте</span>
+                        </label>
+
+                        <button type="button" id="close-recovery-modal-btn" disabled
+                            class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition duration-200 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            Закрыть
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% endblock %} {% block scripts %}
-<script src="/static/profile.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/page/profile.js"></script>
 {% endblock %}

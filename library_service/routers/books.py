@@ -1,5 +1,6 @@
 """Модуль работы с книгами"""
-from datetime import datetime
+
+from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
@@ -8,11 +9,25 @@ from sqlmodel import Session, select, col, func
 from library_service.auth import RequireStaff
 from library_service.settings import get_session
 from library_service.models.enums import BookStatus
-from library_service.models.db import Author, AuthorBookLink, Book, GenreBookLink, Genre, BookUserLink
-from library_service.models.dto import AuthorRead, BookCreate, BookList, BookRead, BookUpdate, GenreRead
+from library_service.models.db import (
+    Author,
+    AuthorBookLink,
+    Book,
+    GenreBookLink,
+    Genre,
+    BookUserLink,
+)
+from library_service.models.dto import (
+    AuthorRead,
+    BookCreate,
+    BookList,
+    BookRead,
+    BookUpdate,
+    GenreRead,
+)
 from library_service.models.dto.combined import (
     BookWithAuthorsAndGenres,
-    BookFilteredList
+    BookFilteredList,
 )
 
 
@@ -28,7 +43,7 @@ def close_active_loan(session: Session, book_id: int) -> None:
     ).first()
 
     if active_loan:
-        active_loan.returned_at = datetime.utcnow()
+        active_loan.returned_at = datetime.now(timezone.utc)
         session.add(active_loan)
 
 
@@ -36,7 +51,7 @@ def close_active_loan(session: Session, book_id: int) -> None:
     "/filter",
     response_model=BookFilteredList,
     summary="Фильтрация книг",
-    description="Фильтрация списка книг по названию, авторам и жанрам с пагинацией"
+    description="Фильтрация списка книг по названию, авторам и жанрам с пагинацией",
 )
 def filter_books(
     session: Session = Depends(get_session),
@@ -55,10 +70,14 @@ def filter_books(
         )
 
     if author_ids:
-        statement = statement.join(AuthorBookLink).where(AuthorBookLink.author_id.in_(author_ids))
+        statement = statement.join(AuthorBookLink).where(
+            AuthorBookLink.author_id.in_(author_ids)
+        )  # ty: ignore[unresolved-attribute, unresolved-reference]
 
     if genre_ids:
-        statement = statement.join(GenreBookLink).where(GenreBookLink.genre_id.in_(genre_ids))
+        statement = statement.join(GenreBookLink).where(
+            GenreBookLink.genre_id.in_(genre_ids)
+        )  # ty: ignore[unresolved-attribute, unresolved-reference]
 
     total_statement = select(func.count()).select_from(statement.subquery())
     total = session.exec(total_statement).one()
@@ -73,7 +92,7 @@ def filter_books(
             BookWithAuthorsAndGenres(
                 **db_book.model_dump(),
                 authors=[AuthorRead(**a.model_dump()) for a in db_book.authors],
-                genres=[GenreRead(**g.model_dump()) for g in db_book.genres]
+                genres=[GenreRead(**g.model_dump()) for g in db_book.genres],
             )
         )
 
@@ -89,7 +108,7 @@ def filter_books(
 def create_book(
     book: BookCreate,
     current_user: RequireStaff,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
 ):
     """Создает новую книгу в системе"""
     db_book = Book(**book.model_dump())
@@ -168,7 +187,7 @@ def update_book(
         if book_update.status == BookStatus.BORROWED:
             raise HTTPException(
                 status_code=400,
-                detail="Статус 'borrowed' устанавливается только через выдачу книги"
+                detail="Статус 'borrowed' устанавливается только через выдачу книги",
             )
 
         if db_book.status == BookStatus.BORROWED:
@@ -205,7 +224,10 @@ def delete_book(
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     book_read = BookRead(
-        id=(book.id or 0), title=book.title, description=book.description, status=book.status
+        id=(book.id or 0),
+        title=book.title,
+        description=book.description,
+        status=book.status,
     )
     session.delete(book)
     session.commit()

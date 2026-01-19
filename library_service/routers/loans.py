@@ -1,5 +1,6 @@
 """Модуль работы с выдачей и бронированием книг"""
-from datetime import datetime, timedelta
+
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
@@ -34,7 +35,7 @@ def create_loan(
     if not is_staff and loan.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only create loans for yourself"
+            detail="You can only create loans for yourself",
         )
 
     book = session.get(Book, loan.book_id)
@@ -44,7 +45,7 @@ def create_loan(
     if book.status != BookStatus.ACTIVE:
         raise HTTPException(
             status_code=400,
-            detail=f"Book is not available for loan (status: {book.status})"
+            detail=f"Book is not available for loan (status: {book.status})",
         )
 
     target_user = session.get(User, loan.user_id)
@@ -55,7 +56,7 @@ def create_loan(
         book_id=loan.book_id,
         user_id=loan.user_id,
         due_date=loan.due_date,
-        borrowed_at=datetime.utcnow()
+        borrowed_at=datetime.now(timezone.utc),
     )
 
     book.status = BookStatus.RESERVED
@@ -109,8 +110,7 @@ def read_loans(
     loans = session.exec(statement).all()
 
     return LoanList(
-        loans=[LoanRead(**loan.model_dump()) for loan in loans],
-        total=total
+        loans=[LoanRead(**loan.model_dump()) for loan in loans], total=total
     )
 
 
@@ -125,11 +125,12 @@ def get_loans_analytics(
     session: Session = Depends(get_session),
 ):
     """Возвращает аналитику по выдачам и возвратам книг"""
-    end_date = datetime.utcnow()
+    end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=days)
     total_loans = session.exec(
-        select(func.count(BookUserLink.id))
-        .where(BookUserLink.borrowed_at >= start_date)
+        select(func.count(BookUserLink.id)).where(
+            BookUserLink.borrowed_at >= start_date
+        )
     ).one()
 
     active_loans = session.exec(
@@ -156,7 +157,7 @@ def get_loans_analytics(
     loans_by_date = session.exec(
         select(
             cast(BookUserLink.borrowed_at, Date).label("date"),
-            func.count(BookUserLink.id).label("count")
+            func.count(BookUserLink.id).label("count"),
         )
         .where(BookUserLink.borrowed_at >= start_date)
         .group_by(cast(BookUserLink.borrowed_at, Date))
@@ -166,9 +167,11 @@ def get_loans_analytics(
     returns_by_date = session.exec(
         select(
             cast(BookUserLink.returned_at, Date).label("date"),
-            func.count(BookUserLink.id).label("count")
+            func.count(BookUserLink.id).label("count"),
         )
-        .where(BookUserLink.returned_at >= start_date)
+        .where(
+            BookUserLink.returned_at >= start_date  # ty: ignore[unsupported-operator]
+        )
         .where(BookUserLink.returned_at != None)  # noqa: E711
         .group_by(cast(BookUserLink.returned_at, Date))
         .order_by(cast(BookUserLink.returned_at, Date))
@@ -185,10 +188,7 @@ def get_loans_analytics(
         daily_returns[date_str] = count
 
     top_books = session.exec(
-        select(
-            BookUserLink.book_id,
-            func.count(BookUserLink.id).label("loan_count")
-        )
+        select(BookUserLink.book_id, func.count(BookUserLink.id).label("loan_count"))
         .where(BookUserLink.borrowed_at >= start_date)
         .group_by(BookUserLink.book_id)
         .order_by(func.count(BookUserLink.id).desc())
@@ -201,38 +201,36 @@ def get_loans_analytics(
         loan_count = row[1] if isinstance(row, tuple) else row.loan_count
         book = session.get(Book, book_id)
         if book:
-            top_books_data.append({
-                "book_id": book_id,
-                "title": book.title,
-                "loan_count": loan_count
-            })
+            top_books_data.append(
+                {"book_id": book_id, "title": book.title, "loan_count": loan_count}
+            )
 
     reserved_count = session.exec(
-        select(func.count(Book.id))
-        .where(Book.status == BookStatus.RESERVED)
+        select(func.count(Book.id)).where(Book.status == BookStatus.RESERVED)
     ).one()
 
     borrowed_count = session.exec(
-        select(func.count(Book.id))
-        .where(Book.status == BookStatus.BORROWED)
+        select(func.count(Book.id)).where(Book.status == BookStatus.BORROWED)
     ).one()
 
-    return JSONResponse(content={
-        "summary": {
-            "total_loans": total_loans,
-            "active_loans": active_loans,
-            "returned_loans": returned_loans,
-            "overdue_loans": overdue_loans,
-            "reserved_books": reserved_count,
-            "borrowed_books": borrowed_count,
-        },
-        "daily_loans": daily_loans,
-        "daily_returns": daily_returns,
-        "top_books": top_books_data,
-        "period_days": days,
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-    })
+    return JSONResponse(
+        content={
+            "summary": {
+                "total_loans": total_loans,
+                "active_loans": active_loans,
+                "returned_loans": returned_loans,
+                "overdue_loans": overdue_loans,
+                "reserved_books": reserved_count,
+                "borrowed_books": borrowed_count,
+            },
+            "daily_loans": daily_loans,
+            "daily_returns": daily_returns,
+            "top_books": top_books_data,
+            "period_days": days,
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
+        }
+    )
 
 
 @router.get(
@@ -256,8 +254,7 @@ def get_loan(
 
     if not is_staff and loan.user_id != current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied to this loan"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this loan"
         )
 
     return LoanRead(**loan.model_dump())
@@ -285,7 +282,7 @@ def update_loan(
     if not is_staff and db_loan.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only update your own loans"
+            detail="You can only update your own loans",
         )
 
     book = session.get(Book, db_loan.book_id)
@@ -296,7 +293,7 @@ def update_loan(
         if not is_staff:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only staff can change loan user"
+                detail="Only staff can change loan user",
             )
         new_user = session.get(User, loan_update.user_id)
         if not new_user:
@@ -308,10 +305,7 @@ def update_loan(
 
     if loan_update.returned_at is not None:
         if db_loan.returned_at is not None:
-            raise HTTPException(
-                status_code=400,
-                detail="Loan is already returned"
-            )
+            raise HTTPException(status_code=400, detail="Loan is already returned")
         db_loan.returned_at = loan_update.returned_at
         book.status = BookStatus.ACTIVE
 
@@ -349,7 +343,7 @@ def confirm_loan(
     if book.status not in [BookStatus.RESERVED, BookStatus.ACTIVE]:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot confirm loan for book with status: {book.status}"
+            detail=f"Cannot confirm loan for book with status: {book.status}",
         )
 
     book.status = BookStatus.BORROWED
@@ -381,7 +375,7 @@ def return_loan(
     if loan.returned_at:
         raise HTTPException(status_code=400, detail="Loan is already returned")
 
-    loan.returned_at = datetime.utcnow()
+    loan.returned_at = datetime.now(timezone.utc)
 
     book = session.get(Book, loan.book_id)
     if book:
@@ -416,7 +410,7 @@ def delete_loan(
     if not is_staff and loan.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete your own loans"
+            detail="You can only delete your own loans",
         )
 
     book = session.get(Book, loan.book_id)
@@ -424,7 +418,7 @@ def delete_loan(
     if book and book.status != BookStatus.RESERVED:
         raise HTTPException(
             status_code=400,
-            detail="Can only delete reservations. Use update endpoint to return borrowed books"
+            detail="Can only delete reservations. Use update endpoint to return borrowed books",
         )
 
     loan_read = LoanRead(**loan.model_dump())
@@ -481,8 +475,7 @@ def issue_book_directly(
 
     if book.status != BookStatus.ACTIVE:
         raise HTTPException(
-            status_code=400,
-            detail=f"Book is not available (status: {book.status})"
+            status_code=400, detail=f"Book is not available (status: {book.status})"
         )
 
     target_user = session.get(User, loan.user_id)
@@ -493,7 +486,7 @@ def issue_book_directly(
         book_id=loan.book_id,
         user_id=loan.user_id,
         due_date=loan.due_date,
-        borrowed_at=datetime.utcnow()
+        borrowed_at=datetime.now(timezone.utc),
     )
 
     book.status = BookStatus.BORROWED

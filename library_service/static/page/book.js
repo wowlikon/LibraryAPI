@@ -103,7 +103,7 @@ $(document).ready(() => {
 
     try {
       const data = await Api.get(
-        `/api/loans/?book_id=${bookId}&active_only=true&page=1&size=10`
+        `/api/loans/?book_id=${bookId}&active_only=true&page=1&size=10`,
       );
       activeLoan = data.loans.length > 0 ? data.loans[0] : null;
       renderLoans(data.loans);
@@ -128,7 +128,7 @@ $(document).ready(() => {
 
     loans.forEach((loan) => {
       const borrowedDate = new Date(loan.borrowed_at).toLocaleDateString(
-        "ru-RU"
+        "ru-RU",
       );
       const dueDate = new Date(loan.due_date).toLocaleDateString("ru-RU");
       const isOverdue =
@@ -531,11 +531,9 @@ $(document).ready(() => {
         due_date: new Date(dueDate).toISOString(),
       };
 
-      // Используем прямой эндпоинт выдачи для администраторов
       if (window.isAdmin()) {
         await Api.post("/api/loans/issue", payload);
       } else {
-        // Для библиотекарей создаем бронь, которую потом нужно подтвердить
         await Api.post("/api/loans/", payload);
       }
 

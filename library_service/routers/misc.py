@@ -103,7 +103,7 @@ async def auth(request: Request):
     return templates.TemplateResponse(request, "auth.html")
 
 
-@router.get("/set-2fa", include_in_schema=False)
+@router.get("/2fa", include_in_schema=False)
 async def set2fa(request: Request):
     """Рендерит страницу установки двухфакторной аутентификации"""
     return templates.TemplateResponse(request, "2fa.html")

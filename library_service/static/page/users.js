@@ -544,10 +544,6 @@ $(document).ready(() => {
       updateData.password = password;
     }
 
-    // Note: This uses the /api/auth/me endpoint structure
-    // For admin editing other users, you might need a different endpoint
-    // Here we'll simulate by updating local data
-
     Api.put(`/api/auth/me`, updateData)
       .then((updatedUser) => {
         const userIndex = users.findIndex((u) => u.id === userId);
@@ -601,7 +597,6 @@ $(document).ready(() => {
     Utils.showToast("Удаление пользователей не поддерживается API", "error");
     closeDeleteModal();
 
-    // When API supports deletion:
     // Api.delete(`/api/auth/users/${userToDelete.id}`)
     //     .then(() => {
     //         users = users.filter(u => u.id !== userToDelete.id);

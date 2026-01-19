@@ -1,5 +1,5 @@
-{% extends "base.html" %} {% block title %}LiB - Настройка 2FA{% endblock %} {%
-block content %}
+{% extends "base.html" %} {% block title %}LiB - Настройка 2FA{% endblock %}
+{% block content %}
 <div class="flex flex-1 items-center justify-center p-4 bg-gray-100">
     <div
         class="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden flex flex-col md:flex-row"
@@ -11,7 +11,7 @@ block content %}
                 Настройка 2FA
             </h2>
             <p class="text-sm text-gray-500 text-center mb-6">
-                Отсканируйте код в Google Authenticator
+                Отсканируйте код в приложении Аутентификатора
             </p>
             <div
                 id="qr-container"
@@ -155,5 +155,5 @@ block content %}
     </div>
 </div>
 {% endblock %} {% block scripts %}
-<script src="/static/2fa.js"></script>
+<script src="/static/page/2fa.js"></script>
 {% endblock %}

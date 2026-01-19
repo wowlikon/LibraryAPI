@@ -1,11 +1,11 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block title %}LiB - Мои книги{% endblock %}
+{% block content %}
 <div class="container mx-auto p-4 max-w-6xl">
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Мои книги</h1>
         <p class="text-gray-600">Управление вашими бронированиями и выдачами</p>
     </div>
 
-    <!-- Бронирования -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-900">Мои бронирования</h2>
@@ -18,7 +18,6 @@
         </div>
     </div>
 
-    <!-- Активные выдачи -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-900">Активные выдачи</h2>
@@ -31,7 +30,6 @@
         </div>
     </div>
 
-    <!-- Возвращенные книги -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-gray-900">История возвратов</h2>
@@ -45,6 +43,5 @@
     </div>
 </div>
 {% endblock %} {% block scripts %}
-<script src="/static/my_books.js"></script>
+<script src="/static/page/my_books.js"></script>
 {% endblock %}
-
