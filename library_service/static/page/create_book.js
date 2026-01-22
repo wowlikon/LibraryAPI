@@ -235,9 +235,15 @@ $(document).ready(() => {
 
     const title = $("#book-title").val().trim();
     const description = $("#book-description").val().trim();
+    const pageCount = parseInt($("#book-page-count").val()) || null;
 
     if (!title) {
       Utils.showToast("Введите название книги", "error");
+      return;
+    }
+
+    if (!parseInt(pageCount)) {
+      Utils.showToast("Введите количество страниц", "error");
       return;
     }
 
@@ -247,6 +253,7 @@ $(document).ready(() => {
       const bookPayload = {
         title: title,
         description: description || null,
+        page_count: pageCount ? parseInt(pageCount) : null,
       };
 
       const createdBook = await Api.post("/api/books/", bookPayload);

@@ -37,6 +37,7 @@ class BookWithAuthors(SQLModel):
     id: int
     title: str
     description: str
+    page_count: int
     authors: List[AuthorRead] = Field(default_factory=list)
 
 
@@ -46,6 +47,7 @@ class BookWithGenres(SQLModel):
     id: int
     title: str
     description: str
+    page_count: int
     status: BookStatus | None = None
     genres: List[GenreRead] = Field(default_factory=list)
 
@@ -56,6 +58,7 @@ class BookWithAuthorsAndGenres(SQLModel):
     id: int
     title: str
     description: str
+    page_count: int
     status: BookStatus | None = None
     authors: List[AuthorRead] = Field(default_factory=list)
     genres: List[GenreRead] = Field(default_factory=list)

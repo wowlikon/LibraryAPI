@@ -1,4 +1,4 @@
-"""recovery codes and totp
+"""Recovery codes and totp
 
 Revision ID: a585fd97b88c
 Revises: a8e40ab24138

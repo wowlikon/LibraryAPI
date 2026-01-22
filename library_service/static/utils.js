@@ -19,8 +19,8 @@ const StorageHelper = {
 
 const Utils = {
   escapeHtml: (text) => {
-    if (!text) return "";
-    return text.replace(
+    if (text === null || text === undefined) return "";
+    return String(text).replace(
       /[&<>"']/g,
       (m) =>
         ({

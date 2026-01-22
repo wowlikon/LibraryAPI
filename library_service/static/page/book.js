@@ -234,6 +234,12 @@ $(document).ready(() => {
   function renderBook(book) {
     $("#book-title").text(book.title);
     $("#book-id").text(`ID: ${book.id}`);
+    if (book.page_count && book.page_count > 0) {
+      $("#book-page-count-value").text(book.page_count);
+      $("#book-page-count-text").removeClass("hidden");
+    } else {
+      $("#book-page-count-text").addClass("hidden");
+    }
     $("#book-authors-text").text(
       book.authors.map((a) => a.name).join(", ") || "Автор неизвестен",
     );

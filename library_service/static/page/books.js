@@ -180,6 +180,11 @@ $(document).ready(() => {
       clone.querySelector(".book-title").textContent = book.title;
       clone.querySelector(".book-authors").textContent =
         book.authors.map((a) => a.name).join(", ") || "Автор неизвестен";
+      if (book.page_count && book.page_count > 0) {
+        const pageEl = clone.querySelector(".book-page-count");
+        pageEl.querySelector(".page-count-value").textContent = book.page_count;
+        pageEl.classList.remove("hidden");
+      }
       clone.querySelector(".book-desc").textContent = book.description || "";
 
       const statusConfig = getStatusConfig(book.status);

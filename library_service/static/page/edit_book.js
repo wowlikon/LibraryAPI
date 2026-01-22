@@ -23,6 +23,7 @@ $(document).ready(() => {
   const $titleInput = $("#book-title");
   const $descInput = $("#book-description");
   const $statusSelect = $("#book-status");
+  const $pagesInput = $("#book-page-count");
   const $submitBtn = $("#submit-btn");
   const $submitText = $("#submit-text");
   const $loadingSpinner = $("#loading-spinner");
@@ -69,6 +70,7 @@ $(document).ready(() => {
   function populateForm(book) {
     $titleInput.val(book.title);
     $descInput.val(book.description || "");
+    $pagesInput.val(book.page_count);
     $statusSelect.val(book.status);
     updateCounters();
   }
@@ -329,6 +331,7 @@ $(document).ready(() => {
 
     const title = $titleInput.val().trim();
     const description = $descInput.val().trim();
+    const pages = $pagesInput.val();
     const status = $statusSelect.val();
 
     if (!title) {
@@ -340,6 +343,7 @@ $(document).ready(() => {
     if (title !== originalBook.title) payload.title = title;
     if (description !== (originalBook.description || ""))
       payload.description = description || null;
+    if (pageCount !== originalBook.page_count) payload.page_count = pages;
     if (status !== originalBook.status) payload.status = status;
 
     if (Object.keys(payload).length === 0) {
