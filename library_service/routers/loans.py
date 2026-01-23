@@ -40,17 +40,21 @@ def create_loan(
 
     book = session.get(Book, loan.book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
 
     if book.status != BookStatus.ACTIVE:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Book is not available for loan (status: {book.status})",
         )
 
     target_user = session.get(User, loan.user_id)
     if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     db_loan = BookUserLink(
         book_id=loan.book_id,
@@ -248,7 +252,9 @@ def get_loan(
     loan = session.get(BookUserLink, loan_id)
 
     if not loan:
-        raise HTTPException(status_code=404, detail="Loan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Loan not found"
+        )
 
     is_staff = is_user_staff(current_user)
 
@@ -275,7 +281,9 @@ def update_loan(
     """Обновляет информацию о выдаче"""
     db_loan = session.get(BookUserLink, loan_id)
     if not db_loan:
-        raise HTTPException(status_code=404, detail="Loan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Loan not found"
+        )
 
     is_staff = is_user_staff(current_user)
 
@@ -287,7 +295,9 @@ def update_loan(
 
     book = session.get(Book, db_loan.book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
 
     if loan_update.user_id is not None:
         if not is_staff:
@@ -297,7 +307,9 @@ def update_loan(
             )
         new_user = session.get(User, loan_update.user_id)
         if not new_user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
         db_loan.user_id = loan_update.user_id
 
     if loan_update.due_date is not None:
@@ -305,7 +317,10 @@ def update_loan(
 
     if loan_update.returned_at is not None:
         if db_loan.returned_at is not None:
-            raise HTTPException(status_code=400, detail="Loan is already returned")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Loan is already returned",
+            )
         db_loan.returned_at = loan_update.returned_at
         book.status = BookStatus.ACTIVE
 
@@ -331,18 +346,24 @@ def confirm_loan(
     """Подтверждает бронирование и меняет статус книги на BORROWED"""
     loan = session.get(BookUserLink, loan_id)
     if not loan:
-        raise HTTPException(status_code=404, detail="Loan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Loan not found"
+        )
 
     if loan.returned_at:
-        raise HTTPException(status_code=400, detail="Loan is already returned")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Loan is already returned"
+        )
 
     book = session.get(Book, loan.book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
 
     if book.status not in [BookStatus.RESERVED, BookStatus.ACTIVE]:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot confirm loan for book with status: {book.status}",
         )
 
@@ -370,10 +391,14 @@ def return_loan(
     """Возвращает книгу и закрывает выдачу"""
     loan = session.get(BookUserLink, loan_id)
     if not loan:
-        raise HTTPException(status_code=404, detail="Loan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Loan not found"
+        )
 
     if loan.returned_at:
-        raise HTTPException(status_code=400, detail="Loan is already returned")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Loan is already returned"
+        )
 
     loan.returned_at = datetime.now(timezone.utc)
 
@@ -403,7 +428,9 @@ def delete_loan(
     """Удаляет выдачу или бронирование (только для RESERVED статуса)"""
     loan = session.get(BookUserLink, loan_id)
     if not loan:
-        raise HTTPException(status_code=404, detail="Loan not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Loan not found"
+        )
 
     is_staff = is_user_staff(current_user)
 
@@ -417,7 +444,7 @@ def delete_loan(
 
     if book and book.status != BookStatus.RESERVED:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Can only delete reservations. Use update endpoint to return borrowed books",
         )
 
@@ -471,16 +498,21 @@ def issue_book_directly(
     """Выдает книгу напрямую без бронирования (только для администраторов)"""
     book = session.get(Book, loan.book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
 
     if book.status != BookStatus.ACTIVE:
         raise HTTPException(
-            status_code=400, detail=f"Book is not available (status: {book.status})"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Book is not available (status: {book.status})",
         )
 
     target_user = session.get(User, loan.user_id)
     if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     db_loan = BookUserLink(
         book_id=loan.book_id,

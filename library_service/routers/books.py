@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlmodel import Session, select, col, func
 
 from library_service.auth import RequireStaff
@@ -56,10 +56,16 @@ def close_active_loan(session: Session, book_id: int) -> None:
 def filter_books(
     session: Session = Depends(get_session),
     q: str | None = Query(None, max_length=50, description="Поиск"),
-    author_ids: List[int] | None = Query(None, description="Список ID авторов"),
-    genre_ids: List[int] | None = Query(None, description="Список ID жанров"),
+    min_page_count: int | None = Query(
+        None, ge=0, description="Минимальное количество страниц"
+    ),
+    max_page_count: int | None = Query(
+        None, ge=0, description="Максимальное количество страниц"
+    ),
+    author_ids: List[int] | None = Query(None, gt=0, description="Список ID авторов"),
+    genre_ids: List[int] | None = Query(None, gt=0, description="Список ID жанров"),
     page: int = Query(1, gt=0, description="Номер страницы"),
-    size: int = Query(20, gt=0, lt=101, description="Количество элементов на странице"),
+    size: int = Query(20, gt=0, le=100, description="Количество элементов на странице"),
 ):
     """Возвращает отфильтрованный список книг с пагинацией"""
     statement = select(Book).distinct()
@@ -68,6 +74,12 @@ def filter_books(
         statement = statement.where(
             (col(Book.title).ilike(f"%{q}%")) | (col(Book.description).ilike(f"%{q}%"))
         )
+
+    if min_page_count:
+        statement = statement.where(Book.page_count >= min_page_count)
+
+    if max_page_count:
+        statement = statement.where(Book.page_count <= max_page_count)
 
     if author_ids:
         statement = statement.join(AuthorBookLink).where(
@@ -149,7 +161,9 @@ def get_book(
     """Возвращает информацию о книге с авторами и жанрами"""
     book = session.get(Book, book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
 
     authors = session.exec(
         select(Author).join(AuthorBookLink).where(AuthorBookLink.book_id == book_id)
@@ -185,12 +199,14 @@ def update_book(
     """Обновляет информацию о книге"""
     db_book = session.get(Book, book_id)
     if not db_book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
 
     if book_update.status is not None:
         if book_update.status == BookStatus.BORROWED:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Статус 'borrowed' устанавливается только через выдачу книги",
             )
 
@@ -226,7 +242,9 @@ def delete_book(
     """Удаляет книгу из системы"""
     book = session.get(Book, book_id)
     if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+        )
     book_read = BookRead(
         id=(book.id or 0),
         title=book.title,

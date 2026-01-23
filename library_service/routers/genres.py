@@ -1,10 +1,18 @@
 """Модуль работы с жанрами"""
-from fastapi import APIRouter, Depends, HTTPException, Path
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlmodel import Session, select
 
 from library_service.auth import RequireStaff
 from library_service.models.db import Book, Genre, GenreBookLink
-from library_service.models.dto import BookRead, GenreCreate, GenreList, GenreRead, GenreUpdate, GenreWithBooks
+from library_service.models.dto import (
+    BookRead,
+    GenreCreate,
+    GenreList,
+    GenreRead,
+    GenreUpdate,
+    GenreWithBooks,
+)
 from library_service.settings import get_session
 
 
@@ -57,7 +65,9 @@ def get_genre(
     """Возвращает информацию о жанре и книгах с ним"""
     genre = session.get(Genre, genre_id)
     if not genre:
-        raise HTTPException(status_code=404, detail="Genre not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found"
+        )
 
     books = session.exec(
         select(Book).join(GenreBookLink).where(GenreBookLink.genre_id == genre_id)
@@ -86,7 +96,9 @@ def update_genre(
     """Обновляет информацию о жанре"""
     db_genre = session.get(Genre, genre_id)
     if not db_genre:
-        raise HTTPException(status_code=404, detail="Genre not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found"
+        )
 
     update_data = genre.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -111,7 +123,9 @@ def delete_genre(
     """Удаляет жанр из системы"""
     genre = session.get(Genre, genre_id)
     if not genre:
-        raise HTTPException(status_code=404, detail="Genre not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found"
+        )
 
     genre_read = GenreRead(**genre.model_dump())
     session.delete(genre)

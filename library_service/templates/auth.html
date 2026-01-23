@@ -184,6 +184,27 @@
                     </p>
                 </div>
 
+                <div class="mb-4">
+                		<cap-widget id="cap"
+                        data-cap-api-endpoint="/api/cap/"
+                        style="
+                            --cap-widget-width: 100%;
+                            --cap-background: #fdfdfd;
+                            --cap-border-color: #d1d5db;
+                            --cap-border-radius: 8px;
+                            --cap-widget-height: auto;
+                            --cap-color: #212121;
+                            --cap-checkbox-size: 32px;
+                            --cap-checkbox-border: 1.5px dashed #d1d5db;
+                            --cap-checkbox-border-radius: 6px;
+                            --cap-checkbox-background: #fafafa;
+                            --cap-checkbox-margin: 2px;
+                            --cap-spinner-color: #4b5563;
+                            --cap-spinner-background-color: #eee;
+                            --cap-spinner-thickness: 5px;"
+                    ></cap-widget>
+                </div>
+
                 <button type="submit" id="register-submit"
                     class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition duration-200 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed">
                     Зарегистрироваться
@@ -320,5 +341,6 @@
     </div>
 </div>
 {% endblock %} {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
 <script src="/static/page/auth.js"></script>
 {% endblock %}

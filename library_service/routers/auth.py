@@ -7,6 +7,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
+from library_service.services import require_captcha
 from library_service.models.db import Role, User
 from library_service.models.dto import (
     Token,
@@ -63,7 +64,11 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
     summary="Регистрация нового пользователя",
     description="Создает нового пользователя и возвращает резервные коды",
 )
-def register(user_data: UserCreate, session: Session = Depends(get_session)):
+def register(
+    user_data: UserCreate,
+    _=Depends(require_captcha),
+    session: Session = Depends(get_session),
+):
     """Регистрирует нового пользователя в системе"""
     existing_user = session.exec(
         select(User).where(User.username == user_data.username)

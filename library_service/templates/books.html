@@ -1,5 +1,38 @@
 {% extends "base.html" %} {% block title %}LiB - Книги{% endblock %}
 {% block content %}
+<style>
+.range-double {
+    height: 0;
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.range-double::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 100%;
+    background: #4b5563;
+    border: 1px solid #ffffff;
+    box-shadow: 0 0 0 1px #4b5563;
+    cursor: pointer;
+    pointer-events: auto;
+}
+.range-double::-moz-range-thumb {
+    width: 8px;
+    height: 8px;
+    border-radius: 100%;
+    background: #4b5563;
+    border: 1px solid #ffffff;
+    box-shadow: 0 0 0 1px #4b5563;
+    cursor: pointer;
+    pointer-events: auto;
+}
+.range-double::-moz-range-track {
+    background: transparent;
+}
+</style>
 <div class="container mx-auto p-4 flex flex-col md:flex-row gap-6">
     <aside class="w-full md:w-1/4">
         <div
@@ -88,6 +121,49 @@
                 </svg>
             </div>
         </div>
+
+        <div
+            x-data="pagesSlider(0, 2000, 10)"
+            class="bg-white p-4 rounded-lg shadow-md mb-6"
+        >
+            <h2 class="text-xl font-bold mb-4">Страниц</h2>
+
+            <div class="flex justify-between text-xs text-gray-500 mb-2">
+                <span>От: <span id="pages-min-value" x-text="minValue"></span></span>
+                <span>До: <span id="pages-max-value" x-text="maxValue"></span></span>
+            </div>
+
+            <div class="relative mt-4 mb-6">
+                <div class="absolute top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 rounded-full"></div>
+
+                <div
+                    id="pages-range-progress"
+                    class="absolute top-1/2 -translate-y-1/2 h-1 bg-gray-600 rounded-full"
+                    :style="{ left: leftPercent + '%', right: rightPercent + '%' }"
+                ></div>
+
+                <input
+                    id="pages-min"
+                    type="range"
+                    :min="min"
+                    :max="max"
+                    x-model.number="minValue"
+                    @input="onMinInput()"
+                    class="range-double absolute top-0 left-0 w-full bg-transparent appearance-none pointer-events-none"
+                />
+
+                <input
+                    id="pages-max"
+                    type="range"
+                    :min="min"
+                    :max="max"
+                    x-model.number="maxValue"
+                    @input="onMaxInput()"
+                    class="range-double absolute top-0 left-0 w-full bg-transparent appearance-none pointer-events-none"
+                />
+            </div>
+        </div>
+
         <div class="bg-white p-4 rounded-lg shadow-md mb-6">
             <h2 class="text-xl font-bold mb-4">Авторы</h2>
             <div
@@ -192,4 +268,34 @@
 </template>
 {% endblock %} {% block scripts %}
 <script src="/static/page/books.js"></script>
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('pagesSlider', (min, max, gap) => ({
+        min,
+        max,
+        gap,
+        minValue: min,
+        maxValue: max,
+
+        // проценты для заливки
+        get leftPercent() {
+            return (this.minValue - this.min) * 100 / (this.max - this.min);
+        },
+        get rightPercent() {
+            return 100 - (this.maxValue - this.min) * 100 / (this.max - this.min);
+        },
+
+        onMinInput() {
+            if (this.maxValue - this.minValue < this.gap) {
+                this.minValue = this.maxValue - this.gap;
+            }
+        },
+        onMaxInput() {
+            if (this.maxValue - this.minValue < this.gap) {
+                this.maxValue = this.minValue + this.gap;
+            }
+        }
+    }));
+});
+</script>
 {% endblock %}

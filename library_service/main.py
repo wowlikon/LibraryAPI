@@ -1,4 +1,6 @@
 """Основной модуль"""
+
+import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -7,18 +9,20 @@ from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
-from fastapi import Request, Response
+from fastapi import FastAPI, Depends, Request, Response, status
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 
 from library_service.auth import run_seeds
 from library_service.routers import api_router
+from library_service.services.captcha import limiter, cleanup_task, require_captcha
 from library_service.settings import (
     LOGGING_CONFIG,
     engine,
     get_app,
     get_logger,
 )
+
 
 SKIP_LOGGING_PATHS = frozenset({"/favicon.ico", "/favicon.svg"})
 
@@ -47,6 +51,7 @@ async def lifespan(_):
     except Exception as e:
         logger.error(f"[-] Seeding failed: {e}")
 
+    asyncio.create_task(cleanup_task())
     logger.info("[+] Starting application...")
     yield  # Обработка запросов
     logger.info("[+] Application shutdown")
@@ -113,7 +118,10 @@ async def log_requests(request: Request, call_next):
             },
             exc_info=True,
         )
-        return Response(status_code=500, content="Internal Server Error")
+        return Response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content="Internal Server Error",
+        )
 
 
 # Подключение маршрутов
@@ -127,6 +135,7 @@ app.mount(
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "library_service.main:app",
         host="0.0.0.0",

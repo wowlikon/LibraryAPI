@@ -1,7 +1,8 @@
 """Модуль работы со связями"""
+
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from library_service.auth import RequireStaff
@@ -17,7 +18,9 @@ def check_entity_exists(session, model, entity_id, entity_name):
     """Проверяет существование сущности в базе данных"""
     entity = session.get(model, entity_id)
     if not entity:
-        raise HTTPException(status_code=404, detail=f"{entity_name} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"{entity_name} not found"
+        )
     return entity
 
 
@@ -30,7 +33,7 @@ def add_relationship(session, link_model, id1, field1, id2, field2, detail):
     ).first()
 
     if existing_link:
-        raise HTTPException(status_code=400, detail=detail)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
     link = link_model(**{field1: id1, field2: id2})
     session.add(link)
@@ -48,7 +51,9 @@ def remove_relationship(session, link_model, id1, field1, id2, field2):
     ).first()
 
     if not link:
-        raise HTTPException(status_code=404, detail="Relationship not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Relationship not found"
+        )
 
     session.delete(link)
     session.commit()
@@ -56,21 +61,22 @@ def remove_relationship(session, link_model, id1, field1, id2, field2):
 
 
 def get_related(
-        session,
-        main_model,
-        main_id,
-        main_name,
-        related_model,
-        link_model,
-        link_main_field,
-        link_related_field,
-        read_model
-    ):
+    session,
+    main_model,
+    main_id,
+    main_name,
+    related_model,
+    link_model,
+    link_main_field,
+    link_related_field,
+    read_model,
+):
     """Возвращает список связанных сущностей"""
     check_entity_exists(session, main_model, main_id, main_name)
 
     related = session.exec(
-        select(related_model).join(link_model)
+        select(related_model)
+        .join(link_model)
         .where(getattr(link_model, link_main_field) == main_id)
     ).all()
 
@@ -93,8 +99,15 @@ def add_author_to_book(
     check_entity_exists(session, Author, author_id, "Author")
     check_entity_exists(session, Book, book_id, "Book")
 
-    return add_relationship(session, AuthorBookLink,
-        author_id, "author_id", book_id, "book_id", "Relationship already exists")
+    return add_relationship(
+        session,
+        AuthorBookLink,
+        author_id,
+        "author_id",
+        book_id,
+        "book_id",
+        "Relationship already exists",
+    )
 
 
 @router.delete(
@@ -110,8 +123,9 @@ def remove_author_from_book(
     session: Session = Depends(get_session),
 ):
     """Удаляет связь между автором и книгой"""
-    return remove_relationship(session, AuthorBookLink,
-        author_id, "author_id", book_id, "book_id")
+    return remove_relationship(
+        session, AuthorBookLink, author_id, "author_id", book_id, "book_id"
+    )
 
 
 @router.get(
@@ -122,9 +136,17 @@ def remove_author_from_book(
 )
 def get_books_for_author(author_id: int, session: Session = Depends(get_session)):
     """Возвращает список книг автора"""
-    return get_related(session,
-        Author, author_id, "Author", Book,
-        AuthorBookLink, "author_id", "book_id", BookRead)
+    return get_related(
+        session,
+        Author,
+        author_id,
+        "Author",
+        Book,
+        AuthorBookLink,
+        "author_id",
+        "book_id",
+        BookRead,
+    )
 
 
 @router.get(
@@ -135,9 +157,17 @@ def get_books_for_author(author_id: int, session: Session = Depends(get_session)
 )
 def get_authors_for_book(book_id: int, session: Session = Depends(get_session)):
     """Возвращает список авторов книги"""
-    return get_related(session,
-        Book, book_id, "Book", Author,
-        AuthorBookLink, "book_id", "author_id", AuthorRead)
+    return get_related(
+        session,
+        Book,
+        book_id,
+        "Book",
+        Author,
+        AuthorBookLink,
+        "book_id",
+        "author_id",
+        AuthorRead,
+    )
 
 
 @router.post(
@@ -156,8 +186,15 @@ def add_genre_to_book(
     check_entity_exists(session, Genre, genre_id, "Genre")
     check_entity_exists(session, Book, book_id, "Book")
 
-    return add_relationship(session, GenreBookLink,
-        genre_id, "genre_id", book_id, "book_id", "Relationship already exists")
+    return add_relationship(
+        session,
+        GenreBookLink,
+        genre_id,
+        "genre_id",
+        book_id,
+        "book_id",
+        "Relationship already exists",
+    )
 
 
 @router.delete(
@@ -173,8 +210,9 @@ def remove_genre_from_book(
     session: Session = Depends(get_session),
 ):
     """Удаляет связь между жанром и книгой"""
-    return remove_relationship(session, GenreBookLink,
-        genre_id, "genre_id", book_id, "book_id")
+    return remove_relationship(
+        session, GenreBookLink, genre_id, "genre_id", book_id, "book_id"
+    )
 
 
 @router.get(
@@ -185,9 +223,17 @@ def remove_genre_from_book(
 )
 def get_books_for_genre(genre_id: int, session: Session = Depends(get_session)):
     """Возвращает список книг в жанре"""
-    return get_related(session,
-        Genre, genre_id, "Genre", Book,
-        GenreBookLink, "genre_id", "book_id", BookRead)
+    return get_related(
+        session,
+        Genre,
+        genre_id,
+        "Genre",
+        Book,
+        GenreBookLink,
+        "genre_id",
+        "book_id",
+        BookRead,
+    )
 
 
 @router.get(
@@ -198,6 +244,14 @@ def get_books_for_genre(genre_id: int, session: Session = Depends(get_session)):
 )
 def get_genres_for_book(book_id: int, session: Session = Depends(get_session)):
     """Возвращает список жанров книги"""
-    return get_related(session,
-        Book, book_id, "Book", Genre,
-        GenreBookLink, "book_id", "genre_id", GenreRead)
+    return get_related(
+        session,
+        Book,
+        book_id,
+        "Book",
+        Genre,
+        GenreBookLink,
+        "book_id",
+        "genre_id",
+        GenreRead,
+    )

@@ -61,6 +61,7 @@ OPENAPI_TAGS = [
     {"name": "loans", "description": "Действия с выдачами."},
     {"name": "relations", "description": "Действия со связями."},
     {"name": "users", "description": "Действия с пользователями."},
+    {"name": "captcha", "description": "Создание и проверка cap.js каптчи."},
     {"name": "misc", "description": "Прочие."},
 ]
 

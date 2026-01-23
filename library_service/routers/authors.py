@@ -1,12 +1,19 @@
 """Модуль работы с авторами"""
-from fastapi import APIRouter, Depends, HTTPException, Path
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlmodel import Session, select
 
 from library_service.auth import RequireStaff
 from library_service.settings import get_session
 from library_service.models.db import Author, AuthorBookLink, Book
-from library_service.models.dto import (BookRead, AuthorWithBooks,
-    AuthorCreate, AuthorList, AuthorRead, AuthorUpdate)
+from library_service.models.dto import (
+    BookRead,
+    AuthorWithBooks,
+    AuthorCreate,
+    AuthorList,
+    AuthorRead,
+    AuthorUpdate,
+)
 
 
 router = APIRouter(prefix="/authors", tags=["authors"])
@@ -59,7 +66,9 @@ def get_author(
     """Возвращает информацию об авторе и его книгах"""
     author = session.get(Author, author_id)
     if not author:
-        raise HTTPException(status_code=404, detail="Author not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Author not found"
+        )
 
     books = session.exec(
         select(Book).join(AuthorBookLink).where(AuthorBookLink.author_id == author_id)
@@ -88,7 +97,9 @@ def update_author(
     """Обновляет информацию об авторе"""
     db_author = session.get(Author, author_id)
     if not db_author:
-        raise HTTPException(status_code=404, detail="Author not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Author not found"
+        )
 
     update_data = author.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -113,7 +124,9 @@ def delete_author(
     """Удаляет автора из системы"""
     author = session.get(Author, author_id)
     if not author:
-        raise HTTPException(status_code=404, detail="Author not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Author not found"
+        )
 
     author_read = AuthorRead(**author.model_dump())
     session.delete(author)

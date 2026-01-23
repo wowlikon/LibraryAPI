@@ -1,6 +1,70 @@
 $(() => {
-  const PARTIAL_TOKEN_KEY = "partial_token";
-  const PARTIAL_USERNAME_KEY = "partial_username";
+  const SELECTORS = {
+    loginForm: "#login-form",
+    registerForm: "#register-form",
+    resetForm: "#reset-password-form",
+    loginTab: "#login-tab",
+    registerTab: "#register-tab",
+    forgotBtn: "#forgot-password-btn",
+    backToLoginBtn: "#back-to-login-btn",
+    backToCredentialsBtn: "#back-to-credentials-btn",
+    submitLogin: "#login-submit",
+    submitRegister: "#register-submit",
+    submitReset: "#reset-submit",
+    usernameLogin: "#login-username",
+    passwordLogin: "#login-password",
+    totpInput: "#login-totp",
+    rememberMe: "#remember-me",
+    credentialsSection: "#credentials-section",
+    totpSection: "#totp-section",
+    registerUsername: "#register-username",
+    registerEmail: "#register-email",
+    registerFullname: "#register-fullname",
+    registerPassword: "#register-password",
+    registerConfirm: "#register-password-confirm",
+    passwordStrengthBar: "#password-strength-bar",
+    passwordStrengthText: "#password-strength-text",
+    passwordMatchError: "#password-match-error",
+    resetUsername: "#reset-username",
+    resetCode: "#reset-recovery-code",
+    resetNewPassword: "#reset-new-password",
+    resetConfirmPassword: "#reset-confirm-password",
+    resetMatchError: "#reset-password-match-error",
+    recoveryModal: "#recovery-codes-modal",
+    recoveryList: "#recovery-codes-list",
+    codesSavedCheckbox: "#codes-saved-checkbox",
+    closeRecoveryBtn: "#close-recovery-modal-btn",
+    copyCodesBtn: "#copy-codes-btn",
+    downloadCodesBtn: "#download-codes-btn",
+    gotoLoginAfterReset: "#goto-login-after-reset",
+    capWidget: "#cap",
+    lockProgressCircle: "#lock-progress-circle",
+  };
+
+  const STORAGE_KEYS = {
+    partialToken: "partial_token",
+    partialUsername: "partial_username",
+  };
+
+  const TEXTS = {
+    login: "Войти",
+    confirm: "Подтвердить",
+    checking: "Проверка...",
+    registering: "Регистрация...",
+    resetting: "Сброс...",
+    enterTotp: "Введите код из приложения аутентификатора",
+    sessionExpired: "Время сессии истекло. Пожалуйста, войдите заново.",
+    invalidCode: "Неверный код",
+    passwordsNotMatch: "Пароли не совпадают",
+    captchaRequired: "Пожалуйста, пройдите проверку Captcha",
+    registrationSuccess: "Регистрация успешна! Войдите в систему.",
+    codesCopied: "Коды скопированы в буфер обмена",
+    codesDownloaded: "Файл с кодами скачан",
+    passwordResetSuccess: "Пароль успешно изменён!",
+    invalidRecoveryCode: "Неверный формат резервного кода",
+    passwordTooShort: "Пароль должен содержать минимум 8 символов",
+  };
+
   const TOTP_PERIOD = 30;
   const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 38;
 
@@ -14,96 +78,71 @@ $(() => {
   let registeredRecoveryCodes = [];
   let totpAnimationFrame = null;
 
-  function getTotpProgress() {
+  const getTotpProgress = () => {
     const now = Date.now() / 1000;
     const elapsed = now % TOTP_PERIOD;
     return elapsed / TOTP_PERIOD;
-  }
+  };
 
-  function updateTotpTimer() {
-    const circle = document.getElementById("lock-progress-circle");
+  const updateTotpTimer = () => {
+    const circle = $(SELECTORS.lockProgressCircle).get(0);
     if (!circle) return;
-
     const progress = getTotpProgress();
     const offset = CIRCLE_CIRCUMFERENCE * (1 - progress);
     circle.style.strokeDashoffset = offset;
-
     totpAnimationFrame = requestAnimationFrame(updateTotpTimer);
-  }
+  };
 
-  function startTotpTimer() {
+  const startTotpTimer = () => {
     stopTotpTimer();
     updateTotpTimer();
-  }
+  };
 
-  function stopTotpTimer() {
+  const stopTotpTimer = () => {
     if (totpAnimationFrame) {
       cancelAnimationFrame(totpAnimationFrame);
       totpAnimationFrame = null;
     }
-  }
+  };
 
-  function resetCircle() {
-    const circle = document.getElementById("lock-progress-circle");
-    if (circle) {
-      circle.style.strokeDashoffset = CIRCLE_CIRCUMFERENCE;
-    }
-  }
+  const resetCircle = () => {
+    const circle = $(SELECTORS.lockProgressCircle).get(0);
+    if (circle) circle.style.strokeDashoffset = CIRCLE_CIRCUMFERENCE;
+  };
 
-  function initLoginState() {
-    const savedToken = sessionStorage.getItem(PARTIAL_TOKEN_KEY);
-    const savedUsername = sessionStorage.getItem(PARTIAL_USERNAME_KEY);
+  const savePartialToken = (token, username) => {
+    sessionStorage.setItem(STORAGE_KEYS.partialToken, token);
+    sessionStorage.setItem(STORAGE_KEYS.partialUsername, username);
+  };
 
-    if (savedToken && savedUsername) {
-      loginState.partialToken = savedToken;
-      loginState.username = savedUsername;
-      loginState.step = "2fa";
+  const clearPartialToken = () => {
+    sessionStorage.removeItem(STORAGE_KEYS.partialToken);
+    sessionStorage.removeItem(STORAGE_KEYS.partialUsername);
+  };
 
-      $("#login-username").val(savedUsername);
-      $("#credentials-section").addClass("hidden");
-      $("#totp-section").removeClass("hidden");
-      $("#login-submit").text("Подтвердить");
-
-      startTotpTimer();
-
-      setTimeout(() => {
-        const totpInput = document.getElementById("login-totp");
-        if (totpInput) totpInput.focus();
-      }, 100);
-    }
-  }
-
-  function savePartialToken(token, username) {
-    sessionStorage.setItem(PARTIAL_TOKEN_KEY, token);
-    sessionStorage.setItem(PARTIAL_USERNAME_KEY, username);
-  }
-
-  function clearPartialToken() {
-    sessionStorage.removeItem(PARTIAL_TOKEN_KEY);
-    sessionStorage.removeItem(PARTIAL_USERNAME_KEY);
-  }
-
-  function showForm(formId) {
-    $("#login-form, #register-form, #reset-password-form").addClass("hidden");
+  const showForm = (formId) => {
+    $(
+      `${SELECTORS.loginForm}, ${SELECTORS.registerForm}, ${SELECTORS.resetForm}`,
+    ).addClass("hidden");
     $(formId).removeClass("hidden");
 
-    $("#login-tab, #register-tab")
+    $(`${SELECTORS.loginTab}, ${SELECTORS.registerTab}`)
       .removeClass("text-gray-700 bg-gray-50 border-b-2 border-gray-500")
       .addClass("text-gray-400 hover:text-gray-600");
 
-    if (formId === "#login-form") {
-      $("#login-tab")
+    if (formId === SELECTORS.loginForm) {
+      $(SELECTORS.loginTab)
         .removeClass("text-gray-400 hover:text-gray-600")
         .addClass("text-gray-700 bg-gray-50 border-b-2 border-gray-500");
       resetLoginState();
-    } else if (formId === "#register-form") {
-      $("#register-tab")
+    } else if (formId === SELECTORS.registerForm) {
+      $(SELECTORS.registerTab)
         .removeClass("text-gray-400 hover:text-gray-600")
         .addClass("text-gray-700 bg-gray-50 border-b-2 border-gray-500");
     }
-  }
+  };
 
-  function resetLoginState() {
+  const resetLoginState = () => {
     clearPartialToken();
     stopTotpTimer();
     loginState = {
@@ -112,30 +151,68 @@ $(() => {
       username: "",
       rememberMe: false,
     };
-    $("#totp-section").addClass("hidden");
-    $("#login-totp").val("");
-    $("#credentials-section").removeClass("hidden");
-    $("#login-submit").text("Войти");
+    $(SELECTORS.totpSection).addClass("hidden");
+    $(SELECTORS.totpInput).val("");
+    $(SELECTORS.credentialsSection).removeClass("hidden");
+    $(SELECTORS.submitLogin).text(TEXTS.login);
     resetCircle();
-  }
+  };
 
-  $("#login-tab").on("click", () => showForm("#login-form"));
-  $("#register-tab").on("click", () => showForm("#register-form"));
-  $("#forgot-password-btn").on("click", () => showForm("#reset-password-form"));
-  $("#back-to-login-btn").on("click", () => showForm("#login-form"));
+  const checkPasswordMatch = (passwordId, confirmId, errorId) => {
+    const password = $(passwordId).val();
+    const confirm = $(confirmId).val();
+    const $error = $(errorId);
+    if (confirm && password !== confirm) {
+      $error.removeClass("hidden");
+      return false;
+    }
+    $error.addClass("hidden");
+    return true;
+  };
+
+  const saveTokensAndRedirect = (data, rememberMe) => {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    const otherStorage = rememberMe ? sessionStorage : localStorage;
+    storage.setItem("access_token", data.access_token);
+    if (data.refresh_token)
+      storage.setItem("refresh_token", data.refresh_token);
+    otherStorage.removeItem("access_token");
+    otherStorage.removeItem("refresh_token");
+    window.location.href = "/";
+  };
+
+  const initLoginState = () => {
+    const savedToken = sessionStorage.getItem(STORAGE_KEYS.partialToken);
+    const savedUsername = sessionStorage.getItem(STORAGE_KEYS.partialUsername);
+    if (savedToken && savedUsername) {
+      loginState.partialToken = savedToken;
+      loginState.username = savedUsername;
+      loginState.step = "2fa";
+      $(SELECTORS.usernameLogin).val(savedUsername);
+      $(SELECTORS.credentialsSection).addClass("hidden");
+      $(SELECTORS.totpSection).removeClass("hidden");
+      $(SELECTORS.submitLogin).text(TEXTS.confirm);
+      startTotpTimer();
+      setTimeout(() => $(SELECTORS.totpInput).get(0)?.focus(), 100);
+    }
+  };
+
+  $(SELECTORS.loginTab).on("click", () => showForm(SELECTORS.loginForm));
+  $(SELECTORS.registerTab).on("click", () => showForm(SELECTORS.registerForm));
+  $(SELECTORS.forgotBtn).on("click", () => showForm(SELECTORS.resetForm));
+  $(SELECTORS.backToLoginBtn).on("click", () => showForm(SELECTORS.loginForm));
+  $(SELECTORS.backToCredentialsBtn).on("click", resetLoginState);
 
   $("body").on("click", ".toggle-password", function () {
-    const $btn = $(this);
-    const $input = $btn.siblings("input");
+    const $input = $(this).siblings("input");
     const isPassword = $input.attr("type") === "password";
     $input.attr("type", isPassword ? "text" : "password");
-    $btn.find("svg").toggleClass("hidden");
+    $(this).find("svg").toggleClass("hidden");
   });
 
-  $("#register-password").on("input", function () {
+  $(SELECTORS.registerPassword).on("input", function () {
     const password = $(this).val();
     let strength = 0;
-
     if (password.length >= 8) strength++;
     if (password.length >= 12) strength++;
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
@@ -150,91 +227,64 @@ $(() => {
       { width: "80%", color: "bg-lime-500", text: "Хороший" },
       { width: "100%", color: "bg-green-500", text: "Отличный" },
     ];
-
     const level = levels[strength];
-    $("#password-strength-bar")
+    $(SELECTORS.passwordStrengthBar)
       .css("width", level.width)
-      .attr("class", "h-full transition-all duration-300 " + level.color);
-    $("#password-strength-text").text(level.text);
-
-    checkPasswordMatch();
+      .attr("class", `h-full transition-all duration-300 ${level.color}`);
+    $(SELECTORS.passwordStrengthText).text(level.text);
+    checkPasswordMatch(
+      SELECTORS.registerPassword,
+      SELECTORS.registerConfirm,
+      SELECTORS.passwordMatchError,
+    );
   });
 
-  function checkPasswordMatch() {
-    const password = $("#register-password").val();
-    const confirm = $("#register-password-confirm").val();
-    if (confirm && password !== confirm) {
-      $("#password-match-error").removeClass("hidden");
-      return false;
-    }
-    $("#password-match-error").addClass("hidden");
-    return true;
-  }
+  $(SELECTORS.registerConfirm).on("input", () =>
+    checkPasswordMatch(
+      SELECTORS.registerPassword,
+      SELECTORS.registerConfirm,
+      SELECTORS.passwordMatchError,
+    ),
+  );
 
-  $("#register-password-confirm").on("input", checkPasswordMatch);
-
-  function formatRecoveryCode(input) {
-    let value = input.value.toUpperCase().replace(/[^0-9A-F]/g, "");
+  $(SELECTORS.resetCode).on("input", function () {
+    let value = this.value.toUpperCase().replace(/[^0-9A-F]/g, "");
     let formatted = "";
     for (let i = 0; i < value.length && i < 16; i++) {
       if (i > 0 && i % 4 === 0) formatted += "-";
       formatted += value[i];
     }
-    input.value = formatted;
-  }
-
-  $("#reset-recovery-code").on("input", function () {
-    formatRecoveryCode(this);
+    this.value = formatted;
   });
 
-  $("#login-totp").on("input", function () {
+  $(SELECTORS.totpInput).on("input", function () {
     this.value = this.value.replace(/\D/g, "").slice(0, 6);
-    if (this.value.length === 6) {
-      $("#login-form").trigger("submit");
-    }
+    if (this.value.length === 6) $(SELECTORS.loginForm).trigger("submit");
   });
 
-  $("#back-to-credentials-btn").on("click", function () {
-    resetLoginState();
-  });
-
-  $("#login-form").on("submit", async function (event) {
+  $(SELECTORS.loginForm).on("submit", async function (event) {
     event.preventDefault();
-    const $submitBtn = $("#login-submit");
-
+    const $submitBtn = $(SELECTORS.submitLogin);
     if (loginState.step === "credentials") {
-      const username = $("#login-username").val();
-      const password = $("#login-password").val();
-      const rememberMe = $("#remember-me").prop("checked");
-
+      const username = $(SELECTORS.usernameLogin).val();
+      const password = $(SELECTORS.passwordLogin).val();
+      const rememberMe = $(SELECTORS.rememberMe).prop("checked");
       loginState.username = username;
       loginState.rememberMe = rememberMe;
-
       $submitBtn.prop("disabled", true).text("Вход...");
-
       try {
-        const formData = new URLSearchParams();
-        formData.append("username", username);
-        formData.append("password", password);
-
+        const formData = new URLSearchParams({ username, password });
         const data = await Api.postForm("/api/auth/token", formData);
-
         if (data.requires_2fa && data.partial_token) {
           loginState.partialToken = data.partial_token;
           loginState.step = "2fa";
-
           savePartialToken(data.partial_token, username);
-
-          $("#credentials-section").addClass("hidden");
-          $("#totp-section").removeClass("hidden");
-
+          $(SELECTORS.credentialsSection).addClass("hidden");
+          $(SELECTORS.totpSection).removeClass("hidden");
           startTotpTimer();
-
-          const totpInput = document.getElementById("login-totp");
-          if (totpInput) totpInput.focus();
-
-          $submitBtn.text("Подтвердить");
-          Utils.showToast("Введите код из приложения аутентификатора", "info");
+          $(SELECTORS.totpInput).get(0)?.focus();
+          $submitBtn.text(TEXTS.confirm);
+          Utils.showToast(TEXTS.enterTotp, "info");
         } else if (data.access_token) {
           clearPartialToken();
           saveTokensAndRedirect(data, rememberMe);
@@ -243,20 +293,15 @@ $(() => {
         Utils.showToast(error.message || "Ошибка входа", "error");
       } finally {
         $submitBtn.prop("disabled", false);
-        if (loginState.step === "credentials") {
-          $submitBtn.text("Войти");
-        }
+        if (loginState.step === "credentials") $submitBtn.text(TEXTS.login);
       }
     } else if (loginState.step === "2fa") {
-      const totpCode = $("#login-totp").val();
-
+      const totpCode = $(SELECTORS.totpInput).val();
       if (!totpCode || totpCode.length !== 6) {
         Utils.showToast("Введите 6-значный код", "error");
         return;
       }
-
-      $submitBtn.prop("disabled", true).text("Проверка...");
-
+      $submitBtn.prop("disabled", true).text(TEXTS.checking);
       try {
         const response = await fetch("/api/auth/2fa/verify", {
           method: "POST",
@@ -266,113 +311,93 @@ $(() => {
           },
           body: JSON.stringify({ code: totpCode }),
         });
-
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-
           if (response.status === 401) {
             resetLoginState();
-            throw new Error(
-              "Время сессии истекло. Пожалуйста, войдите заново.",
-            );
+            throw new Error(TEXTS.sessionExpired);
           }
-
-          throw new Error(errorData.detail || "Неверный код");
+          throw new Error(errorData.detail || TEXTS.invalidCode);
         }
-
         const data = await response.json();
         clearPartialToken();
         stopTotpTimer();
         saveTokensAndRedirect(data, loginState.rememberMe);
       } catch (error) {
-        Utils.showToast(error.message || "Неверный код", "error");
-        $("#login-totp").val("");
-        const totpInput = document.getElementById("login-totp");
-        if (totpInput) totpInput.focus();
+        Utils.showToast(error.message || TEXTS.invalidCode, "error");
+        $(SELECTORS.totpInput).val("");
+        $(SELECTORS.totpInput).get(0)?.focus();
       } finally {
-        $submitBtn.prop("disabled", false).text("Подтвердить");
+        $submitBtn.prop("disabled", false).text(TEXTS.confirm);
       }
     }
   });
 
-  function saveTokensAndRedirect(data, rememberMe) {
-    const storage = rememberMe ? localStorage : sessionStorage;
-    const otherStorage = rememberMe ? sessionStorage : localStorage;
-
-    storage.setItem("access_token", data.access_token);
-    if (data.refresh_token) {
-      storage.setItem("refresh_token", data.refresh_token);
-    }
-
-    otherStorage.removeItem("access_token");
-    otherStorage.removeItem("refresh_token");
-
-    window.location.href = "/";
-  }
-
-  $("#register-form").on("submit", async function (event) {
+  $(SELECTORS.registerForm).on("submit", async function (event) {
     event.preventDefault();
-    const $submitBtn = $("#register-submit");
-    const pass = $("#register-password").val();
-    const confirm = $("#register-password-confirm").val();
-
+    const $submitBtn = $(SELECTORS.submitRegister);
+    const pass = $(SELECTORS.registerPassword).val();
+    const confirm = $(SELECTORS.registerConfirm).val();
     if (pass !== confirm) {
-      Utils.showToast("Пароли не совпадают", "error");
+      Utils.showToast(TEXTS.passwordsNotMatch, "error");
       return;
     }
-
     const userData = {
-      username: $("#register-username").val(),
-      email: $("#register-email").val(),
-      full_name: $("#register-fullname").val() || null,
+      username: $(SELECTORS.registerUsername).val(),
+      email: $(SELECTORS.registerEmail).val(),
+      full_name: $(SELECTORS.registerFullname).val() || null,
       password: pass,
     };
-
-    $submitBtn.prop("disabled", true).text("Регистрация...");
-
+    $submitBtn.prop("disabled", true).text(TEXTS.registering);
     try {
       const response = await Api.post("/api/auth/register", userData);
-
       if (response.recovery_codes && response.recovery_codes.codes) {
         registeredRecoveryCodes = response.recovery_codes.codes;
         showRecoveryCodesModal(registeredRecoveryCodes, userData.username);
       } else {
-        Utils.showToast("Регистрация успешна! Войдите в систему.", "success");
+        Utils.showToast(TEXTS.registrationSuccess, "success");
         setTimeout(() => {
-          showForm("#login-form");
-          $("#login-username").val(userData.username);
+          showForm(SELECTORS.loginForm);
+          $(SELECTORS.usernameLogin).val(userData.username);
         }, 1500);
       }
     } catch (error) {
+      if (error.detail && error.detail.error === "captcha_required") {
+        Utils.showToast(TEXTS.captchaRequired, "error");
+        const $capElement = $(SELECTORS.capWidget);
+        const $parent = $capElement.parent();
+        $capElement.remove();
+        $parent.append(
+          `<cap-widget id="cap" data-cap-api-endpoint="/api/cap/" style="--cap-widget-width: 100%;"></cap-widget>`,
+        );
+        return;
+      }
       let msg = error.message;
       if (error.detail && Array.isArray(error.detail)) {
         msg = error.detail.map((e) => e.msg).join(". ");
       }
       Utils.showToast(msg || "Ошибка регистрации", "error");
     } finally {
-      $submitBtn.prop("disabled", false).text("Зарегистрироваться");
+      $submitBtn
+        .prop("disabled", false)
+        .text(TEXTS.registering.replace("...", ""));
     }
   });
 
-  function showRecoveryCodesModal(codes, username) {
-    const $list = $("#recovery-codes-list");
+  const showRecoveryCodesModal = (codes, username) => {
+    const $list = $(SELECTORS.recoveryList);
     $list.empty();
-
     codes.forEach((code, index) => {
-      $list.append(`
-        <div class="py-1 px-2 bg-white rounded border select-all font-mono">
-          ${index + 1}. ${Utils.escapeHtml(code)}
-        </div>
-      `);
+      $list.append(
+        `<div class="py-1 px-2 bg-white rounded border select-all font-mono">${index + 1}. ${Utils.escapeHtml(code)}</div>`,
+      );
     });
+    $(SELECTORS.codesSavedCheckbox).prop("checked", false);
+    $(SELECTORS.closeRecoveryBtn).prop("disabled", true);
+    $(SELECTORS.recoveryModal).data("username", username).removeClass("hidden");
+  };
 
-    $("#codes-saved-checkbox").prop("checked", false);
-    $("#close-recovery-modal-btn").prop("disabled", true);
-    $("#recovery-codes-modal").data("username", username);
-    $("#recovery-codes-modal").removeClass("hidden");
-  }
-
-  function renderRecoveryCodesStatus(usedCodes) {
+  const renderRecoveryCodesStatus = (usedCodes) => {
     return usedCodes
       .map((used, index) => {
         const codeDisplay = "████-████-████-████";
@@ -380,31 +405,25 @@ $(() => {
           ? "text-gray-300 line-through"
           : "text-green-600";
         const statusIcon = used ? "✗" : "✓";
-        return `
-          <div class="flex items-center justify-between py-1 px-2 rounded ${used ? "bg-gray-50" : "bg-green-50"}">
-            <span class="font-mono ${statusClass}">${index + 1}. ${codeDisplay}</span>
-            <span class="${used ? "text-gray-400" : "text-green-600"}">${statusIcon}</span>
-          </div>
-        `;
+        return `<div class="flex items-center justify-between py-1 px-2 rounded ${used ? "bg-gray-50" : "bg-green-50"}"><span class="font-mono ${statusClass}">${index + 1}. ${codeDisplay}</span><span class="${used ? "text-gray-400" : "text-green-600"}">${statusIcon}</span></div>`;
       })
       .join("");
-  }
+  };
 
-  $("#codes-saved-checkbox").on("change", function () {
-    $("#close-recovery-modal-btn").prop("disabled", !this.checked);
+  $(SELECTORS.codesSavedCheckbox).on("change", function () {
+    $(SELECTORS.closeRecoveryBtn).prop("disabled", !this.checked);
   });
 
-  $("#copy-codes-btn").on("click", function () {
+  $(SELECTORS.copyCodesBtn).on("click", function () {
     const codesText = registeredRecoveryCodes.join("\n");
-    navigator.clipboard.writeText(codesText).then(() => {
-      Utils.showToast("Коды скопированы в буфер обмена", "success");
-    });
+    navigator.clipboard
+      .writeText(codesText)
+      .then(() => Utils.showToast(TEXTS.codesCopied, "success"));
   });
 
-  $("#download-codes-btn").on("click", function () {
-    const username = $("#recovery-codes-modal").data("username") || "user";
+  $(SELECTORS.downloadCodesBtn).on("click", function () {
+    const username = $(SELECTORS.recoveryModal).data("username") || "user";
     const codesText = `Резервные коды для аккаунта: ${username}\nДата: ${new Date().toLocaleString()}\n\n${registeredRecoveryCodes.map((c, i) => `${i + 1}. ${c}`).join("\n")}\n\nХраните эти коды в надёжном месте!`;
-
     const blob = new Blob([codesText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -412,69 +431,54 @@ $(() => {
     a.download = `recovery-codes-${username}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-
-    Utils.showToast("Файл с кодами скачан", "success");
+    Utils.showToast(TEXTS.codesDownloaded, "success");
   });
 
-  $("#close-recovery-modal-btn").on("click", function () {
-    const username = $("#recovery-codes-modal").data("username");
-    $("#recovery-codes-modal").addClass("hidden");
-
-    Utils.showToast("Регистрация успешна! Войдите в систему.", "success");
-    showForm("#login-form");
-    $("#login-username").val(username);
+  $(SELECTORS.closeRecoveryBtn).on("click", function () {
+    const username = $(SELECTORS.recoveryModal).data("username");
+    $(SELECTORS.recoveryModal).addClass("hidden");
+    Utils.showToast(TEXTS.registrationSuccess, "success");
+    showForm(SELECTORS.loginForm);
+    $(SELECTORS.usernameLogin).val(username);
   });
 
-  function checkResetPasswordMatch() {
-    const password = $("#reset-new-password").val();
-    const confirm = $("#reset-confirm-password").val();
-    if (confirm && password !== confirm) {
-      $("#reset-password-match-error").removeClass("hidden");
-      return false;
-    }
-    $("#reset-password-match-error").addClass("hidden");
-    return true;
-  }
+  $(SELECTORS.resetConfirmPassword).on("input", () =>
+    checkPasswordMatch(
+      SELECTORS.resetNewPassword,
+      SELECTORS.resetConfirmPassword,
+      SELECTORS.resetMatchError,
+    ),
+  );
 
-  $("#reset-confirm-password").on("input", checkResetPasswordMatch);
-
-  $("#reset-password-form").on("submit", async function (event) {
+  $(SELECTORS.resetForm).on("submit", async function (event) {
     event.preventDefault();
-    const $submitBtn = $("#reset-submit");
-
-    const newPassword = $("#reset-new-password").val();
-    const confirmPassword = $("#reset-confirm-password").val();
-
+    const $submitBtn = $(SELECTORS.submitReset);
+    const newPassword = $(SELECTORS.resetNewPassword).val();
+    const confirmPassword = $(SELECTORS.resetConfirmPassword).val();
     if (newPassword !== confirmPassword) {
-      Utils.showToast("Пароли не совпадают", "error");
+      Utils.showToast(TEXTS.passwordsNotMatch, "error");
       return;
     }
-
     if (newPassword.length < 8) {
-      Utils.showToast("Пароль должен содержать минимум 8 символов", "error");
+      Utils.showToast(TEXTS.passwordTooShort, "error");
       return;
     }
-
     const data = {
-      username: $("#reset-username").val(),
-      recovery_code: $("#reset-recovery-code").val().toUpperCase(),
+      username: $(SELECTORS.resetUsername).val(),
+      recovery_code: $(SELECTORS.resetCode).val().toUpperCase(),
       new_password: newPassword,
     };
-
     if (
       !/^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(
         data.recovery_code,
       )
     ) {
-      Utils.showToast("Неверный формат резервного кода", "error");
+      Utils.showToast(TEXTS.invalidRecoveryCode, "error");
       return;
     }
-
-    $submitBtn.prop("disabled", true).text("Сброс...");
-
+    $submitBtn.prop("disabled", true).text(TEXTS.resetting);
     try {
       const response = await Api.post("/api/auth/password/reset", data);
-
       showPasswordResetResult(response, data.username);
     } catch (error) {
       Utils.showToast(error.message || "Ошибка сброса пароля", "error");
@@ -482,9 +486,8 @@ $(() => {
     }
   });
 
-  function showPasswordResetResult(response, username) {
-    const $form = $("#reset-password-form");
-
+  const showPasswordResetResult = (response, username) => {
+    const $form = $(SELECTORS.resetForm);
     $form.html(`
       <div class="text-center mb-4">
         <div class="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-3">
@@ -492,22 +495,19 @@ $(() => {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
         </div>
-        <h3 class="text-lg font-semibold text-gray-800">Пароль успешно изменён!</h3>
+        <h3 class="text-lg font-semibold text-gray-800">${TEXTS.passwordResetSuccess}</h3>
       </div>
-
       <div class="mb-4">
         <p class="text-sm text-gray-600 mb-2 text-center">
           Осталось резервных кодов: <strong class="${response.remaining <= 2 ? "text-red-600" : "text-green-600"}">${response.remaining}</strong> из ${response.total}
         </p>
-
         ${
           response.should_regenerate
             ? `
           <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
             <p class="text-sm text-yellow-800 flex items-center gap-2">
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
               </svg>
               Рекомендуем сгенерировать новые коды в профиле
             </p>
@@ -515,12 +515,10 @@ $(() => {
         `
             : ""
         }
-
         <div class="bg-gray-50 rounded-lg p-3 space-y-1 max-h-48 overflow-y-auto">
           <p class="text-xs text-gray-500 mb-2 text-center">Статус резервных кодов:</p>
           ${renderRecoveryCodesStatus(response.used_codes)}
         </div>
-
         ${
           response.generated_at
             ? `
@@ -531,23 +529,26 @@ $(() => {
             : ""
         }
       </div>
-
-      <button type="button" id="goto-login-after-reset"
-        class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition duration-200 font-medium">
+      <button type="button" id="goto-login-after-reset" class="w-full bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition duration-200 font-medium">
         Перейти к входу
       </button>
     `);
-
     $form.off("submit");
-
     $("#goto-login-after-reset").on("click", function () {
       location.reload();
       setTimeout(() => {
-        showForm("#login-form");
-        $("#login-username").val(username);
+        showForm(SELECTORS.loginForm);
+        $(SELECTORS.usernameLogin).val(username);
       }, 100);
     });
-  }
+  };
 
   initLoginState();
+
+  const widget = $(SELECTORS.capWidget).get(0);
+  if (widget && widget.shadowRoot) {
+    const style = document.createElement("style");
+    style.textContent = `.credits { right: 20px !important; }`;
+    $(widget.shadowRoot).append(style);
+  }
 });
