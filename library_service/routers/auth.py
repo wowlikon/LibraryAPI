@@ -1,5 +1,7 @@
 """Модуль работы с авторизацией и аутентификацией пользователей"""
 
+import base64
+
 from datetime import timedelta
 from typing import Annotated
 
@@ -51,6 +53,7 @@ from library_service.auth import (
     create_partial_token,
     RequirePartialAuth,
     verify_and_use_code,
+    cipher,
 )
 
 
@@ -250,9 +253,19 @@ def update_user_me(
     summary="Создание QR-кода TOTP 2FA",
     description="Генерирует секрет и QR-код для настройки TOTP",
 )
-def get_totp_qr_bitmap(auth: RequireAuth):
+def get_totp_qr_bitmap(
+    current_user: RequireAuth,
+    session: Session = Depends(get_session),
+):
     """Возвращает данные для настройки TOTP"""
-    return TOTPSetupResponse(**generate_totp_setup(auth.username))
+    totp_data = generate_totp_setup(current_user.username)
+    encrypted = cipher.encrypt(totp_data["secret"].encode())
+
+    current_user.totp_secret = base64.b64encode(encrypted).decode()
+    session.add(current_user)
+    session.commit()
+
+    return TOTPSetupResponse(**totp_data)
 
 
 @router.post(
@@ -273,13 +286,23 @@ def enable_2fa(
             detail="2FA already enabled",
         )
 
+    if not current_user.totp_secret:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Secret key not generated"
+        )
+
     if not verify_totp_code(secret, data.code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid TOTP code",
         )
 
-    current_user.totp_secret = secret
+    decrypted = cipher.decrypt(base64.b64decode(current_user.totp_secret.encode()))
+    if secret != decrypted.decode():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorret secret"
+        )
+
     current_user.is_2fa_enabled = True
     session.add(current_user)
     session.commit()
@@ -339,7 +362,8 @@ def verify_2fa(
     verified = False
 
     if data.code and user.totp_secret:
-        if verify_totp_code(user.totp_secret, data.code):
+        decrypted = cipher.decrypt(base64.b64decode(user.totp_secret.encode()))
+        if verify_totp_code(decrypted.decode(), data.code):
             verified = True
 
     if not verified:

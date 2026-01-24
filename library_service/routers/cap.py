@@ -21,9 +21,10 @@ from library_service.services.captcha import (
 router = APIRouter(prefix="/cap", tags=["captcha"])
 
 
-@router.post("/challenge")
+@router.post("/challenge", summary="Задача capjs")
 @limiter.limit("15/minute")
 async def challenge(request: Request, ip: str = Depends(get_ip)):
+    """Возвращает задачу capjs"""
     if challenges_by_ip[ip] >= MAX_CHALLENGES_PER_IP:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many challenges"
@@ -50,9 +51,10 @@ async def challenge(request: Request, ip: str = Depends(get_ip)):
     return {"challenge": {"c": 50, "s": 32, "d": 4}, "token": token, "expires": expires}
 
 
-@router.post("/redeem")
+@router.post("/redeem", summary="Проверка задачи")
 @limiter.limit("30/minute")
 async def redeem(request: Request, payload: dict, ip: str = Depends(get_ip)):
+    """Возвращает capjs_token"""
     token = payload.get("token")
     solutions = payload.get("solutions", [])
 

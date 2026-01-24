@@ -20,7 +20,11 @@
             }
             ul {
                 list-style: none;
+                list-style-type: none;
+                display: flex;
                 padding: 0;
+                margin: 0;
+                gap: 20px;
             }
             li {
                 margin: 15px 0;
@@ -40,6 +44,46 @@
             p {
                 margin: 5px 0;
             }
+            #erDiagram {
+                position: relative;
+                width: 100%;
+                height: 420px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin-top: 30px;
+                background: #fafafa;
+                overflow: hidden;
+            }
+            .er-table {
+                position: absolute;
+                width: 200px;
+                background: #fff;
+                border: 1px solid #3498db;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                font-size: 13px;
+            }
+            .er-table-header {
+                background: #3498db;
+                color: #fff;
+                padding: 6px 8px;
+                font-weight: bold;
+            }
+            .er-table-body {
+                padding: 6px 8px;
+                line-height: 1.4;
+            }
+            .er-field {
+                padding: 2px 0;
+                position: relative;
+            }
+            .relation-label {
+                font-size: 11px;
+                background: #fff;
+                padding: 1px 3px;
+                border-radius: 3px;
+                border: 1px solid #ccc;
+            }
         </style>
     </head>
     <body>
@@ -51,11 +95,234 @@
         <p>Status: {{ status }}</p>
         <ul>
             <li><a href="/">Home page</a></li>
+            <li><a href="/docs">Swagger UI</a></li>
+            <li><a href="/redoc">ReDoc</a></li>
             <li>
                 <a href="https://github.com/wowlikon/LibraryAPI">Source Code</a>
             </li>
-            <li><a href="/docs">Swagger UI</a></li>
-            <li><a href="/redoc">ReDoc</a></li>
         </ul>
+
+        <h2>ER Diagram</h2>
+        <div id="erDiagram"></div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
+        <script>
+        const diagramData = {
+                            entities: [
+                                          {
+                                              id: "User",
+                                              title: "users",
+                                              fields: [
+                                                  { id: "id", label: "id (PK)" },
+                                                  { id: "username", label: "username" },
+                                                  { id: "email", label: "email" },
+                                                  { id: "full_name", label: "full_name" },
+                                                  { id: "is_active", label: "is_active" },
+                                                  { id: "is_verified", label: "is_verified" },
+                                                  { id: "is_2fa_enabled", label: "is_2fa_enabled" }
+                                              ]
+                                          },
+                                          {
+                                              id: "Role",
+                                              title: "roles",
+                                              fields: [
+                                                  { id: "id", label: "id (PK)" },
+                                                  { id: "name", label: "name" },
+                                                  { id: "description", label: "description" },
+                                                  { id: "payroll", label: "payroll" }
+                                              ]
+                                          },
+                                          {
+                                              id: "UserRole",
+                                              title: "user_roles",
+                                              fields: [
+                                                  { id: "user_id", label: "user_id (FK)" },
+                                                  { id: "role_id", label: "role_id (FK)" }
+                                              ]
+                                          },
+                                          {
+                                              id: "Author",
+                                              title: "authors",
+                                              fields: [
+                                                  { id: "id", label: "id (PK)" },
+                                                  { id: "name", label: "name" }
+                                              ]
+                                          },
+                                          {
+                                              id: "Book",
+                                              title: "books",
+                                              fields: [
+                                                  { id: "id", label: "id (PK)" },
+                                                  { id: "title", label: "title" },
+                                                  { id: "description", label: "description" },
+                                                  { id: "page_count", label: "page_count" },
+                                                  { id: "status", label: "status" }
+                                              ]
+                                          },
+                                          {
+                                              id: "Genre",
+                                              title: "genres",
+                                              fields: [
+                                                  { id: "id", label: "id (PK)" },
+                                                  { id: "name", label: "name" }
+                                              ]
+                                          },
+                                          {
+                                              id: "Loan",
+                                              title: "loans",
+                                              fields: [
+                                                  { id: "id", label: "id (PK)" },
+                                                  { id: "book_id", label: "book_id (FK)" },
+                                                  { id: "user_id", label: "user_id (FK)" },
+                                                  { id: "borrowed_at", label: "borrowed_at" },
+                                                  { id: "due_date", label: "due_date" },
+                                                  { id: "returned_at", label: "returned_at" }
+                                              ]
+                                          },
+                                          {
+                                              id: "AuthorBook",
+                                              title: "authors_books",
+                                              fields: [
+                                                  { id: "author_id", label: "author_id (FK)" },
+                                                  { id: "book_id", label: "book_id (FK)" }
+                                              ]
+                                          },
+                                          {
+                                              id: "GenreBook",
+                                              title: "genres_books",
+                                              fields: [
+                                                  { id: "genre_id", label: "genre_id (FK)" },
+                                                  { id: "book_id", label: "book_id (FK)" }
+                                              ]
+                                          }
+                                      ],
+                                      relations: [
+                                          {
+                                              fromEntity: "Loan",
+                                              fromField: "book_id",
+                                              toEntity: "Book",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          },
+                                          {
+                                              fromEntity: "Loan",
+                                              fromField: "user_id",
+                                              toEntity: "User",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          },
+                                          {
+                                              fromEntity: "AuthorBook",
+                                              fromField: "author_id",
+                                              toEntity: "Author",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          },
+                                          {
+                                              fromEntity: "AuthorBook",
+                                              fromField: "book_id",
+                                              toEntity: "Book",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          },
+                                          {
+                                              fromEntity: "GenreBook",
+                                              fromField: "genre_id",
+                                              toEntity: "Genre",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          },
+                                          {
+                                              fromEntity: "GenreBook",
+                                              fromField: "book_id",
+                                              toEntity: "Book",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          },
+                                          {
+                                              fromEntity: "UserRole",
+                                              fromField: "user_id",
+                                              toEntity: "User",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          },
+                                          {
+                                              fromEntity: "UserRole",
+                                              fromField: "role_id",
+                                              toEntity: "Role",
+                                              toField: "id",
+                                              fromMultiplicity: "N",
+                                              toMultiplicity: "1"
+                                          }
+                                      ]
+                                  };
+
+            jsPlumb.ready(function () {
+                jsPlumb.setContainer("erDiagram");
+
+                const container = document.getElementById("erDiagram");
+                const baseLeft = 40;
+                const baseTop = 80;
+                const spacingX = 240;
+
+                diagramData.entities.forEach((entity, index) => {
+                    const table = document.createElement("div");
+                    table.className = "er-table";
+                    table.id = "table-" + entity.id;
+                    table.style.top = baseTop + "px";
+                    table.style.left = baseLeft + index * spacingX + "px";
+
+                    const header = document.createElement("div");
+                    header.className = "er-table-header";
+                    header.textContent = entity.title || entity.id;
+
+                    const body = document.createElement("div");
+                    body.className = "er-table-body";
+
+                    entity.fields.forEach(field => {
+                        const row = document.createElement("div");
+                        row.className = "er-field";
+                        row.id = "field-" + entity.id + "-" + field.id;
+                        row.textContent = field.label || field.id;
+                        body.appendChild(row);
+                    });
+
+                    table.appendChild(header);
+                    table.appendChild(body);
+                    container.appendChild(table);
+                });
+
+                const common = {
+                    endpoint: "Dot",
+                    endpointStyle: { radius: 4, fill: "#3498db" },
+                    connector: ["Flowchart", { cornerRadius: 5 }],
+                    paintStyle: { stroke: "#3498db", strokeWidth: 2 },
+                    hoverPaintStyle: { stroke: "#2980b9", strokeWidth: 2 },
+                    anchor: ["Continuous", { faces: ["left", "right"] }]
+                };
+
+                const tableIds = diagramData.entities.map(e => "table-" + e.id);
+                jsPlumb.draggable(tableIds, { containment: "parent" });
+
+                diagramData.relations.forEach(rel => {
+                    jsPlumb.connect({
+                        source: "field-" + rel.fromEntity + "-" + rel.fromField,
+                        target: "field-" + rel.toEntity + "-" + rel.toField,
+                        overlays: [
+                            ["Label", { label: rel.fromMultiplicity || "", location: 0.2, cssClass: "relation-label" }],
+                            ["Label", { label: rel.toMultiplicity || "", location: 0.8, cssClass: "relation-label" }]
+                        ],
+                        ...common
+                    });
+                });
+            });
+        </script>
     </body>
 </html>

@@ -20,7 +20,7 @@ class User(UserBase, table=True):
     id: int | None = Field(default=None, primary_key=True, index=True)
     hashed_password: str = Field(nullable=False)
     is_2fa_enabled: bool = Field(default=False)
-    totp_secret: str | None = Field(default=None, max_length=64)
+    totp_secret: str | None = Field(default=None, max_length=80)
     recovery_code_hashes: str | None = Field(default=None, max_length=1500)
     recovery_codes_generated_at: datetime | None = Field(default=None)
     is_active: bool = Field(default=True)
