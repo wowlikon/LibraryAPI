@@ -17,10 +17,13 @@ if TYPE_CHECKING:
 class Book(BookBase, table=True):
     """Модель книги в базе данных"""
 
-    id: int | None = Field(default=None, primary_key=True, index=True)
+    id: int | None = Field(
+        default=None, primary_key=True, index=True, description="Идентификатор"
+    )
     status: BookStatus = Field(
         default=BookStatus.ACTIVE,
         sa_column=Column(String, nullable=False, default="active"),
+        description="Статус",
     )
     authors: List["Author"] = Relationship(
         back_populates="books", link_model=AuthorBookLink

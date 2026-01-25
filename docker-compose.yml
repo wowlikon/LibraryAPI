@@ -40,25 +40,6 @@ services:
       db:
         condition: service_healthy
 
-  tests:
-    container_name: tests
-    build: .
-    command: bash -c "pytest tests"
-    restart: no
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - proxy
-    env_file:
-      - ./.env
-    volumes:
-      - .:/code
-    depends_on:
-        db:
-          condition: service_healthy
-
 networks:
   proxy: # Рекомендуется использовать через реверс-прокси
     name: proxy

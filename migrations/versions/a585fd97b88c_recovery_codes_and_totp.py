@@ -27,7 +27,7 @@ def upgrade() -> None:
     op.add_column(
         "users",
         sa.Column(
-            "totp_secret", sqlmodel.sql.sqltypes.AutoString(length=64), nullable=True
+            "totp_secret", sqlmodel.sql.sqltypes.AutoString(length=80), nullable=True
         ),
     )
     op.add_column(

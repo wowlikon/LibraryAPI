@@ -10,26 +10,28 @@ from sqlmodel import SQLModel, Field
 class RecoveryCodesResponse(SQLModel):
     """Ответ при генерации резервных кодов"""
 
-    codes: list[str]
-    generated_at: datetime
+    codes: list[str] = Field(description="Список кодов восстановления")
+    generated_at: datetime = Field(description="Дата и время генерации")
 
 
 class RecoveryCodesStatus(SQLModel):
     """Статус резервных кодов пользователя"""
 
-    total: int
-    remaining: int
-    used_codes: list[bool]
-    generated_at: datetime | None
-    should_regenerate: bool
+    total: int = Field(description="Общее количество кодов")
+    remaining: int = Field(description="Количество оставшихся кодов")
+    used_codes: list[bool] = Field(description="Количество использованых кодов")
+    generated_at: datetime | None = Field(description="Дата и время генерации")
+    should_regenerate: bool = Field(description="Нужно ли пересоздать коды")
 
 
 class RecoveryCodeUse(SQLModel):
     """Запрос на сброс пароля через резервный код"""
 
-    username: str
-    recovery_code: str = Field(min_length=19, max_length=19)
-    new_password: str = Field(min_length=8, max_length=100)
+    username: str = Field(description="Имя пользователя")
+    recovery_code: str = Field(
+        min_length=19, max_length=19, description="Код восстановления"
+    )
+    new_password: str = Field(min_length=8, max_length=100, description="Новый пароль")
 
     @field_validator("recovery_code")
     @classmethod

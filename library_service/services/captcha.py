@@ -1,3 +1,5 @@
+"""Модуль создания и проверки capjs"""
+
 import os
 import asyncio
 import hashlib

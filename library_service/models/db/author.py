@@ -1,4 +1,5 @@
 """Модуль DB-моделей авторов"""
+
 from typing import TYPE_CHECKING, List
 
 from sqlmodel import Field, Relationship
@@ -12,7 +13,10 @@ if TYPE_CHECKING:
 
 class Author(AuthorBase, table=True):
     """Модель автора в базе данных"""
-    id: int | None = Field(default=None, primary_key=True, index=True)
+
+    id: int | None = Field(
+        default=None, primary_key=True, index=True, description="Идентификатор"
+    )
     books: List["Book"] = Relationship(
         back_populates="authors", link_model=AuthorBookLink
     )

@@ -1,13 +1,15 @@
 """Модуль DTO-моделей авторов"""
+
 from typing import List
 
 from pydantic import ConfigDict
-from sqlmodel import SQLModel
+from sqlmodel import SQLModel, Field
 
 
 class AuthorBase(SQLModel):
     """Базовая модель автора"""
-    name: str
+
+    name: str = Field(description="Псевдоним")
 
     model_config = ConfigDict(  # pyright: ignore
         json_schema_extra={"example": {"name": "author_name"}}
@@ -16,20 +18,24 @@ class AuthorBase(SQLModel):
 
 class AuthorCreate(AuthorBase):
     """Модель автора для создания"""
+
     pass
 
 
 class AuthorUpdate(SQLModel):
     """Модель автора для обновления"""
-    name: str | None = None
+
+    name: str | None = Field(None, description="Псевдоним")
 
 
 class AuthorRead(AuthorBase):
     """Модель автора для чтения"""
-    id: int
+
+    id: int = Field(description="Идентификатор")
 
 
 class AuthorList(SQLModel):
     """Список авторов"""
-    authors: List[AuthorRead]
-    total: int
+
+    authors: List[AuthorRead] = Field(description="Список авторов")
+    total: int = Field(description="Количество авторов")

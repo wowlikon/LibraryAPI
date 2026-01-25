@@ -1,4 +1,5 @@
 """Модуль DB-моделей ролей"""
+
 from typing import TYPE_CHECKING, List
 
 from sqlmodel import Field, Relationship
@@ -12,8 +13,11 @@ if TYPE_CHECKING:
 
 class Role(RoleBase, table=True):
     """Модель роли в базе данных"""
+
     __tablename__ = "roles"
 
-    id: int | None = Field(default=None, primary_key=True, index=True)
+    id: int | None = Field(
+        default=None, primary_key=True, index=True, description="Идентификатор"
+    )
 
     users: List["User"] = Relationship(back_populates="roles", link_model=UserRoleLink)

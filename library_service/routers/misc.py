@@ -1,4 +1,4 @@
-"""Модуль прочих эндпоинтов"""
+"""Модуль прочих эндпоинтов и веб-страниц"""
 
 from datetime import datetime
 from pathlib import Path
@@ -12,9 +12,12 @@ from sqlmodel import Session, select, func
 
 from library_service.settings import get_app, get_session
 from library_service.models.db import Author, Book, Genre, User
+from library_service.services import SchemaGenerator
+from library_service import models
 
 
 router = APIRouter(tags=["misc"])
+generator = SchemaGenerator(models.db, models.dto)
 templates = Jinja2Templates(directory=Path(__file__).parent.parent / "templates")
 
 
@@ -133,12 +136,6 @@ async def analytics(request: Request):
     return templates.TemplateResponse(request, "analytics.html")
 
 
-@router.get("/api", include_in_schema=False)
-async def api(request: Request, app=Depends(lambda: get_app())):
-    """Рендерит страницу с ссылками на документацию API"""
-    return templates.TemplateResponse(request, "api.html", get_info(app))
-
-
 @router.get("/favicon.ico", include_in_schema=False)
 def redirect_favicon():
     """Редиректит на favicon.svg"""
@@ -153,6 +150,12 @@ async def favicon():
     )
 
 
+@router.get("/api", include_in_schema=False)
+async def api(request: Request, app=Depends(lambda: get_app())):
+    """Рендерит страницу с ссылками на документацию API"""
+    return templates.TemplateResponse(request, "api.html", get_info(app))
+
+
 @router.get(
     "/api/info",
     summary="Информация о сервисе",
@@ -161,6 +164,15 @@ async def favicon():
 async def api_info(app=Depends(lambda: get_app())):
     """Возвращает информацию о сервисе"""
     return JSONResponse(content=get_info(app))
+
+
+@router.get(
+    "/api/schema",
+    summary="Информация о таблицах и связях",
+    description="Возвращает схему базы данных с описаниями полей",
+)
+async def api_schema():
+    return generator.generate()
 
 
 @router.get(

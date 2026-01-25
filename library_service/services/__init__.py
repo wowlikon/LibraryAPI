@@ -12,6 +12,7 @@ from .captcha import (
     REDEEM_TTL,
     prng,
 )
+from .describe_er import SchemaGenerator
 
 __all__ = [
     "limiter",
@@ -26,4 +27,5 @@ __all__ = [
     "CHALLENGE_TTL",
     "REDEEM_TTL",
     "prng",
+    "SchemaGenerator",
 ]

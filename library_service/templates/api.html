@@ -2,15 +2,16 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
+        <title id="pageTitle">Loading...</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{{ app_info.title }}</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
         <style>
             body {
-                font-family: Arial, sans-serif;
-                max-width: 800px;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                max-width: 1200px;
                 margin: 0 auto;
                 padding: 20px;
-                line-height: 1.6;
                 color: #333;
             }
             h1 {
@@ -20,15 +21,13 @@
             }
             ul {
                 list-style: none;
-                list-style-type: none;
                 display: flex;
                 padding: 0;
                 margin: 0;
                 gap: 20px;
+                flex-wrap: wrap;
             }
-            li {
-                margin: 15px 0;
-            }
+            li { margin: 10px 0; }
             a {
                 display: inline-block;
                 padding: 8px 15px;
@@ -37,247 +36,164 @@
                 text-decoration: none;
                 border-radius: 4px;
                 transition: background-color 0.3s;
+                font-size: 14px;
             }
-            a:hover {
-                background-color: #2980b9;
-            }
-            p {
-                margin: 5px 0;
-            }
+            a:hover { background-color: #2980b9; }
+            p { margin: 5px 0; }
+            .status-ok { color: #27ae60; }
+            .status-error { color: #e74c3c; }
+            .server-time { color: #7f8c8d; font-size: 12px; }
             #erDiagram {
                 position: relative;
-                width: 100%;
-                height: 420px;
+                width: 100%; height: 700px;
                 border: 1px solid #ddd;
-                border-radius: 4px;
+                border-radius: 8px;
                 margin-top: 30px;
-                background: #fafafa;
+                background: #fcfcfc;
+                background-image:
+                    linear-gradient(#eee 1px, transparent 1px),
+                    linear-gradient(90deg, #eee 1px, transparent 1px);
+                background-size: 20px 20px;
+                background-position: -1px -1px;
                 overflow: hidden;
+                cursor: grab;
             }
+            #erDiagram:active { cursor: grabbing; }
             .er-table {
                 position: absolute;
                 width: 200px;
                 background: #fff;
-                border: 1px solid #3498db;
-                border-radius: 4px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-                font-size: 13px;
+                border: 1px solid #bdc3c7;
+                border-radius: 5px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                font-size: 12px;
+                z-index: 10;
+                display: flex;
+                flex-direction: column;
             }
             .er-table-header {
                 background: #3498db;
-                color: #fff;
-                padding: 6px 8px;
+                color: #ecf0f1;
+                padding: 8px;
                 font-weight: bold;
+                text-align: center;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             .er-table-body {
-                padding: 6px 8px;
-                line-height: 1.4;
+                background: #fff;
+                padding: 4px 0;
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
             }
             .er-field {
-                padding: 2px 0;
+                padding: 4px 10px;
                 position: relative;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                cursor: pointer;
+            }
+            .er-field:hover {
+                background-color: #ecf0f1;
+                color: #2980b9;
             }
             .relation-label {
-                font-size: 11px;
-                background: #fff;
-                padding: 1px 3px;
+                font-size: 10px;
+                font-weight: bold;
+                background: white;
+                padding: 2px 4px;
+                border: 1px solid #bdc3c7;
                 border-radius: 3px;
-                border: 1px solid #ccc;
+                color: #7f8c8d;
+                z-index: 20;
             }
+            .jtk-connector { z-index: 5; }
+            .jtk-endpoint { z-index: 5; }
         </style>
     </head>
     <body>
         <img src="/favicon.ico" />
-        <h1>Welcome to {{ app_info.title }}!</h1>
-        <p>Description: {{ app_info.description }}</p>
-        <p>Version: {{ app_info.version }}</p>
-        <p>Current Time: {{ server_time }}</p>
-        <p>Status: {{ status }}</p>
+        <h1 id="mainTitle">Загрузка...</h1>
+        <p>Версия: <span id="appVersion">-</span></p>
+        <p>Описание: <span id="appDescription">-</span></p>
+        <p>Статус: <span id="appStatus">-</span></p>
+        <p class="server-time">Время сервера: <span id="serverTime">-</span></p>
         <ul>
-            <li><a href="/">Home page</a></li>
+            <li><a href="/">Главная</a></li>
             <li><a href="/docs">Swagger UI</a></li>
             <li><a href="/redoc">ReDoc</a></li>
-            <li>
-                <a href="https://github.com/wowlikon/LibraryAPI">Source Code</a>
-            </li>
+            <li><a href="https://github.com/wowlikon/LiB">Исходный код</a></li>
         </ul>
-
-        <h2>ER Diagram</h2>
+        <h2>Интерактивная ER диаграмма</h2>
         <div id="erDiagram"></div>
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.6/js/jsplumb.min.js"></script>
         <script>
-        const diagramData = {
-                            entities: [
-                                          {
-                                              id: "User",
-                                              title: "users",
-                                              fields: [
-                                                  { id: "id", label: "id (PK)" },
-                                                  { id: "username", label: "username" },
-                                                  { id: "email", label: "email" },
-                                                  { id: "full_name", label: "full_name" },
-                                                  { id: "is_active", label: "is_active" },
-                                                  { id: "is_verified", label: "is_verified" },
-                                                  { id: "is_2fa_enabled", label: "is_2fa_enabled" }
-                                              ]
-                                          },
-                                          {
-                                              id: "Role",
-                                              title: "roles",
-                                              fields: [
-                                                  { id: "id", label: "id (PK)" },
-                                                  { id: "name", label: "name" },
-                                                  { id: "description", label: "description" },
-                                                  { id: "payroll", label: "payroll" }
-                                              ]
-                                          },
-                                          {
-                                              id: "UserRole",
-                                              title: "user_roles",
-                                              fields: [
-                                                  { id: "user_id", label: "user_id (FK)" },
-                                                  { id: "role_id", label: "role_id (FK)" }
-                                              ]
-                                          },
-                                          {
-                                              id: "Author",
-                                              title: "authors",
-                                              fields: [
-                                                  { id: "id", label: "id (PK)" },
-                                                  { id: "name", label: "name" }
-                                              ]
-                                          },
-                                          {
-                                              id: "Book",
-                                              title: "books",
-                                              fields: [
-                                                  { id: "id", label: "id (PK)" },
-                                                  { id: "title", label: "title" },
-                                                  { id: "description", label: "description" },
-                                                  { id: "page_count", label: "page_count" },
-                                                  { id: "status", label: "status" }
-                                              ]
-                                          },
-                                          {
-                                              id: "Genre",
-                                              title: "genres",
-                                              fields: [
-                                                  { id: "id", label: "id (PK)" },
-                                                  { id: "name", label: "name" }
-                                              ]
-                                          },
-                                          {
-                                              id: "Loan",
-                                              title: "loans",
-                                              fields: [
-                                                  { id: "id", label: "id (PK)" },
-                                                  { id: "book_id", label: "book_id (FK)" },
-                                                  { id: "user_id", label: "user_id (FK)" },
-                                                  { id: "borrowed_at", label: "borrowed_at" },
-                                                  { id: "due_date", label: "due_date" },
-                                                  { id: "returned_at", label: "returned_at" }
-                                              ]
-                                          },
-                                          {
-                                              id: "AuthorBook",
-                                              title: "authors_books",
-                                              fields: [
-                                                  { id: "author_id", label: "author_id (FK)" },
-                                                  { id: "book_id", label: "book_id (FK)" }
-                                              ]
-                                          },
-                                          {
-                                              id: "GenreBook",
-                                              title: "genres_books",
-                                              fields: [
-                                                  { id: "genre_id", label: "genre_id (FK)" },
-                                                  { id: "book_id", label: "book_id (FK)" }
-                                              ]
-                                          }
-                                      ],
-                                      relations: [
-                                          {
-                                              fromEntity: "Loan",
-                                              fromField: "book_id",
-                                              toEntity: "Book",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          },
-                                          {
-                                              fromEntity: "Loan",
-                                              fromField: "user_id",
-                                              toEntity: "User",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          },
-                                          {
-                                              fromEntity: "AuthorBook",
-                                              fromField: "author_id",
-                                              toEntity: "Author",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          },
-                                          {
-                                              fromEntity: "AuthorBook",
-                                              fromField: "book_id",
-                                              toEntity: "Book",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          },
-                                          {
-                                              fromEntity: "GenreBook",
-                                              fromField: "genre_id",
-                                              toEntity: "Genre",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          },
-                                          {
-                                              fromEntity: "GenreBook",
-                                              fromField: "book_id",
-                                              toEntity: "Book",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          },
-                                          {
-                                              fromEntity: "UserRole",
-                                              fromField: "user_id",
-                                              toEntity: "User",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          },
-                                          {
-                                              fromEntity: "UserRole",
-                                              fromField: "role_id",
-                                              toEntity: "Role",
-                                              toField: "id",
-                                              fromMultiplicity: "N",
-                                              toMultiplicity: "1"
-                                          }
-                                      ]
-                                  };
+        async function fetchInfo() {
+            try {
+                const response = await fetch('/api/info');
+                const data = await response.json();
 
+                document.getElementById('pageTitle').textContent = data.app_info.title;
+                document.getElementById('mainTitle').textContent = `Добро пожаловать в ${data.app_info.title} API!`;
+                document.getElementById('appVersion').textContent = data.app_info.version;
+                document.getElementById('appDescription').textContent = data.app_info.description;
+
+                const statusEl = document.getElementById('appStatus');
+                statusEl.textContent = data.status;
+                statusEl.className = data.status === 'ok' ? 'status-ok' : 'status-error';
+
+                document.getElementById('serverTime').textContent = new Date(data.server_time).toLocaleString();
+            } catch (error) {
+                console.error('Ошибка загрузки info:', error);
+                document.getElementById('appStatus').textContent = 'Ошибка соединения';
+                document.getElementById('appStatus').className = 'status-error';
+            }
+        }
+
+        async function fetchSchemaAndRender() {
+            try {
+                const response = await fetch('/api/schema');
+                const diagramData = await response.json();
+                renderDiagram(diagramData);
+            } catch (error) {
+                console.error('Ошибка загрузки схемы:', error);
+                document.getElementById('erDiagram').innerHTML = '<p style="padding:20px;color:#e74c3c;">Ошибка загрузки схемы</p>';
+            }
+        }
+
+        function renderDiagram(diagramData) {
             jsPlumb.ready(function () {
-                jsPlumb.setContainer("erDiagram");
+                const instance = jsPlumb.getInstance({
+                    Container: "erDiagram",
+                    Connector: ["Flowchart", { stub: 30, gap: 10, cornerRadius: 5, alwaysRespectStubs: true }],
+                    ConnectionOverlays: [["Arrow", { location: 1, width: 10, length: 10, foldback: 0.8 }]]
+                });
 
                 const container = document.getElementById("erDiagram");
-                const baseLeft = 40;
-                const baseTop = 80;
-                const spacingX = 240;
+                const tableWidth = 200;
 
-                diagramData.entities.forEach((entity, index) => {
+                const g = new dagre.graphlib.Graph();
+                g.setGraph({
+                    nodesep: 60, ranksep: 80,
+                    marginx: 20, marginy: 20,
+                    rankdir: 'LR',
+                });
+                g.setDefaultEdgeLabel(() => ({}));
+
+                const fieldIndexByEntity = {};
+                diagramData.entities.forEach(entity => {
+                    const idxMap = {};
+                    entity.fields.forEach((field, idx) => { idxMap[field.id] = idx; });
+                    fieldIndexByEntity[entity.id] = idxMap;
+                });
+
+                diagramData.entities.forEach(entity => {
                     const table = document.createElement("div");
                     table.className = "er-table";
                     table.id = "table-" + entity.id;
-                    table.style.top = baseTop + "px";
-                    table.style.left = baseLeft + index * spacingX + "px";
 
                     const header = document.createElement("div");
                     header.className = "er-table-header";
@@ -289,40 +205,98 @@
                     entity.fields.forEach(field => {
                         const row = document.createElement("div");
                         row.className = "er-field";
-                        row.id = "field-" + entity.id + "-" + field.id;
-                        row.textContent = field.label || field.id;
+                        row.id = `field-${entity.id}-${field.id}`;
+                        row.style.display = "flex";
+                        row.style.alignItems = "center";
+
+                        const labelSpan = document.createElement("span");
+                        labelSpan.textContent = field.label || field.id;
+                        row.appendChild(labelSpan);
+
+                        if (field.tooltip) {
+                            row.title = field.tooltip;
+
+                            const tip = document.createElement("span");
+                            tip.textContent = "ⓘ";
+                            tip.title = field.tooltip;
+                            tip.style.marginLeft = "4px";
+                            tip.style.marginRight = "0";
+                            tip.style.fontSize = "10px";
+                            tip.style.cursor = "help";
+                            tip.style.marginLeft = "auto";
+                            row.appendChild(tip);
+                        }
+
                         body.appendChild(row);
                     });
 
                     table.appendChild(header);
                     table.appendChild(body);
                     container.appendChild(table);
+
+                    const estimatedHeight = 20 + (entity.fields.length * 26);
+                    g.setNode(entity.id, { width: tableWidth, height: estimatedHeight });
                 });
 
-                const common = {
-                    endpoint: "Dot",
-                    endpointStyle: { radius: 4, fill: "#3498db" },
-                    connector: ["Flowchart", { cornerRadius: 5 }],
-                    paintStyle: { stroke: "#3498db", strokeWidth: 2 },
-                    hoverPaintStyle: { stroke: "#2980b9", strokeWidth: 2 },
-                    anchor: ["Continuous", { faces: ["left", "right"] }]
-                };
-
-                const tableIds = diagramData.entities.map(e => "table-" + e.id);
-                jsPlumb.draggable(tableIds, { containment: "parent" });
+                const layoutEdges = [];
+                const m2oGroups = {};
 
                 diagramData.relations.forEach(rel => {
-                    jsPlumb.connect({
-                        source: "field-" + rel.fromEntity + "-" + rel.fromField,
-                        target: "field-" + rel.toEntity + "-" + rel.toField,
-                        overlays: [
-                            ["Label", { label: rel.fromMultiplicity || "", location: 0.2, cssClass: "relation-label" }],
-                            ["Label", { label: rel.toMultiplicity || "", location: 0.8, cssClass: "relation-label" }]
-                        ],
-                        ...common
+                    const isManyToOne = (rel.fromMultiplicity === 'N' || rel.fromMultiplicity === '*') && (rel.toMultiplicity === '1');
+
+                    if (isManyToOne) {
+                        const fi = (fieldIndexByEntity[rel.fromEntity] || {})[rel.fromField] ?? 0;
+                        if (!m2oGroups[rel.fromEntity]) m2oGroups[rel.fromEntity] = [];
+                        m2oGroups[rel.fromEntity].push({ rel, fieldIndex: fi });
+                    } else {
+                        layoutEdges.push({ source: rel.fromEntity, target: rel.toEntity });
+                    }
+                });
+
+                Object.keys(m2oGroups).forEach(fromEntity => {
+                    const arr = m2oGroups[fromEntity];
+                    arr.sort((a, b) => a.fieldIndex - b.fieldIndex);
+
+                    arr.forEach((item, idx) => {
+                        const rel = item.rel;
+                        if (idx % 2 === 0) { layoutEdges.push({ source: rel.toEntity, target: rel.fromEntity });
+                        } else { layoutEdges.push({ source: rel.fromEntity, target: rel.toEntity }); }
                     });
                 });
+
+                layoutEdges.forEach(e => g.setEdge(e.source, e.target));
+                dagre.layout(g);
+
+                g.nodes().forEach(function(v) {
+                    const node = g.node(v);
+                    const el = document.getElementById("table-" + v);
+                    el.style.left = (node.x - (tableWidth / 2)) + "px";
+                    el.style.top = (node.y - (node.height / 2)) + "px";
+                });
+
+                diagramData.relations.forEach(rel => {
+                    instance.connect({
+                        source: `field-${rel.fromEntity}-${rel.fromField}`,
+                        target: `field-${rel.toEntity}-${rel.toField}`,
+                        anchor: ["Continuous", { faces: ["left", "right"] }],
+                        paintStyle: { stroke: "#7f8c8d", strokeWidth: 2 },
+                        hoverPaintStyle: { stroke: "#3498db", strokeWidth: 3 },
+                        overlays: [
+                            ["Label", { label: rel.fromMultiplicity || "", location: 0.1, cssClass: "relation-label" }],
+                            ["Label", { label: rel.toMultiplicity || "", location: 0.9, cssClass: "relation-label" }]
+                        ]
+                    });
+                });
+
+                const tableIds = diagramData.entities.map(e => "table-" + e.id);
+                instance.draggable(tableIds, {containment: "parent", stop: instance.repaintEverything});
             });
+        }
+
+        fetchInfo();
+        setInterval(fetchInfo, 60000);
+
+        fetchSchemaAndRender();
         </script>
     </body>
 </html>

@@ -17,17 +17,32 @@ class User(UserBase, table=True):
 
     __tablename__ = "users"
 
-    id: int | None = Field(default=None, primary_key=True, index=True)
-    hashed_password: str = Field(nullable=False)
-    is_2fa_enabled: bool = Field(default=False)
-    totp_secret: str | None = Field(default=None, max_length=80)
-    recovery_code_hashes: str | None = Field(default=None, max_length=1500)
-    recovery_codes_generated_at: datetime | None = Field(default=None)
-    is_active: bool = Field(default=True)
-    is_verified: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    id: int | None = Field(
+        default=None, primary_key=True, index=True, description="Идентификатор"
+    )
+    hashed_password: str = Field(nullable=False, description="Argon2id хэш пароля")
+    is_2fa_enabled: bool = Field(default=False, description="Включен TOTP 2FA")
+    totp_secret: str | None = Field(
+        default=None, max_length=80, description="Зашифрованный секрет TOTP"
+    )
+    recovery_code_hashes: str | None = Field(
+        default=None,
+        max_length=1500,
+        description="Argon2id хэши одноразовыхкодов восстановления",
+    )
+    recovery_codes_generated_at: datetime | None = Field(
+        default=None, description="Дата и время создания кодов восстановления"
+    )
+    is_active: bool = Field(default=True, description="Не является ли заблокированым")
+    is_verified: bool = Field(default=False, description="Является ли верифицированным")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Дата и время создания",
+    )
     updated_at: datetime | None = Field(
-        default=None, sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)}
+        default=None,
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+        description="Дата и время последнего обновления",
     )
 
     roles: List["Role"] = Relationship(back_populates="users", link_model=UserRoleLink)

@@ -1,4 +1,5 @@
 """Модуль DB-моделей жанров"""
+
 from typing import TYPE_CHECKING, List
 
 from sqlmodel import Field, Relationship
@@ -12,7 +13,10 @@ if TYPE_CHECKING:
 
 class Genre(GenreBase, table=True):
     """Модель жанра в базе данных"""
-    id: int | None = Field(default=None, primary_key=True, index=True)
+
+    id: int | None = Field(
+        default=None, primary_key=True, index=True, description="Идентификатор"
+    )
     books: List["Book"] = Relationship(
         back_populates="genres", link_model=GenreBookLink
     )
