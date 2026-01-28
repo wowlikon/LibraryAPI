@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, List
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, String
 from sqlmodel import Field, Relationship
 
@@ -25,6 +26,7 @@ class Book(BookBase, table=True):
         sa_column=Column(String, nullable=False, default="active"),
         description="Статус",
     )
+    embedding: list[float] | None = Field(sa_column=Column(Vector(1024)))
     authors: List["Author"] = Relationship(
         back_populates="books", link_model=AuthorBookLink
     )

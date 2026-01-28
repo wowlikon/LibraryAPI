@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:17
+    image: pgvector/pgvector:pg17
     container_name: db
     restart: unless-stopped
     logging:
@@ -9,8 +9,10 @@ services:
         max-file: "3"
     volumes:
       - ./data/db:/var/lib/postgresql/data
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
+    ports:
+      - 5432:5432
     env_file:
       - ./.env
     healthcheck:
@@ -18,6 +20,49 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+    replication-setup:
+        image: postgres:17-alpine
+        container_name: replication-setup
+        restart: "no"
+        networks:
+            - proxy
+        env_file:
+            - ./.env
+        volumes:
+            - ./setup-replication.sh:/setup-replication.sh
+        entrypoint: ["/bin/sh", "/setup-replication.sh"]
+        depends_on:
+            api:
+                condition: service_started
+            db:
+                condition: service_healthy
+
+  llm:
+      image: ollama/ollama:latest
+      container_name: llm
+      restart: unless-stopped
+      logging:
+        options:
+          max-size: "10m"
+          max-file: "3"
+      volumes:
+        - ./data/llm:/root/.ollama
+      # networks:
+      #   - proxy
+      ports:
+        - 11434:11434
+      env_file:
+        - ./.env
+      healthcheck:
+        test: ["CMD-SHELL", "curl http://localhost:11434"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      deploy:
+        resources:
+          limits:
+            memory: 5g
 
   api:
     build: .
@@ -28,8 +73,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    networks:
-      - proxy
+    # networks:
+    #   - proxy
     ports:
       - 8000:8000
     env_file:
@@ -38,6 +83,8 @@ services:
       - .:/code
     depends_on:
       db:
+        condition: service_healthy
+      llm:
         condition: service_healthy
 
 networks:

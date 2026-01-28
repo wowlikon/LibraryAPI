@@ -168,8 +168,7 @@
             jsPlumb.ready(function () {
                 const instance = jsPlumb.getInstance({
                     Container: "erDiagram",
-                    Connector: ["Flowchart", { stub: 30, gap: 10, cornerRadius: 5, alwaysRespectStubs: true }],
-                    ConnectionOverlays: [["Arrow", { location: 1, width: 10, length: 10, foldback: 0.8 }]]
+                    Connector: ["Flowchart", { stub: 30, gap: 10, cornerRadius: 5, alwaysRespectStubs: true }]
                 });
 
                 const container = document.getElementById("erDiagram");

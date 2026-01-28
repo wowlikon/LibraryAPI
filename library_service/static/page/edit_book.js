@@ -331,7 +331,7 @@ $(document).ready(() => {
 
     const title = $titleInput.val().trim();
     const description = $descInput.val().trim();
-    const pages = $pagesInput.val();
+    const pages = parseInt($("#book-page-count").val()) || null;
     const status = $statusSelect.val();
 
     if (!title) {
@@ -343,7 +343,7 @@ $(document).ready(() => {
     if (title !== originalBook.title) payload.title = title;
     if (description !== (originalBook.description || ""))
       payload.description = description || null;
-    if (pageCount !== originalBook.page_count) payload.page_count = pages;
+    if (pages !== originalBook.page_count) payload.page_count = pages;
     if (status !== originalBook.status) payload.status = status;
 
     if (Object.keys(payload).length === 0) {

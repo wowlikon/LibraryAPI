@@ -1,13 +1,21 @@
 """Модуль работы с книгами"""
 
+from pydantic import Field
+from typing_extensions import Annotated
+
+from sqlalchemy.orm import selectinload, defer
+
+from sqlalchemy import text, case, distinct
+
 from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from ollama import Client
 from sqlmodel import Session, select, col, func
 
 from library_service.auth import RequireStaff
-from library_service.settings import get_session
+from library_service.settings import get_session, OLLAMA_URL
 from library_service.models.enums import BookStatus
 from library_service.models.db import (
     Author,
@@ -32,6 +40,7 @@ from library_service.models.dto.misc import (
 
 
 router = APIRouter(prefix="/books", tags=["books"])
+ollama_client = Client(host=OLLAMA_URL)
 
 
 def close_active_loan(session: Session, book_id: int) -> None:
@@ -47,72 +56,64 @@ def close_active_loan(session: Session, book_id: int) -> None:
         session.add(active_loan)
 
 
-@router.get(
-    "/filter",
-    response_model=BookFilteredList,
-    summary="Фильтрация книг",
-    description="Фильтрация списка книг по названию, авторам и жанрам с пагинацией",
-)
+from sqlalchemy import select, func, distinct, case, exists
+from sqlalchemy.orm import selectinload
+
+
+@router.get("/filter", response_model=BookFilteredList)
 def filter_books(
     session: Session = Depends(get_session),
     q: str | None = Query(None, max_length=50, description="Поиск"),
-    min_page_count: int | None = Query(
-        None, ge=0, description="Минимальное количество страниц"
-    ),
-    max_page_count: int | None = Query(
-        None, ge=0, description="Максимальное количество страниц"
-    ),
-    author_ids: List[int] | None = Query(None, gt=0, description="Список ID авторов"),
-    genre_ids: List[int] | None = Query(None, gt=0, description="Список ID жанров"),
-    page: int = Query(1, gt=0, description="Номер страницы"),
-    size: int = Query(20, gt=0, le=100, description="Количество элементов на странице"),
+    min_page_count: int | None = Query(None, ge=0),
+    max_page_count: int | None = Query(None, ge=0),
+    author_ids: List[Annotated[int, Field(gt=0)]] | None = Query(None),
+    genre_ids: List[Annotated[int, Field(gt=0)]] | None = Query(None),
+    page: int = Query(1, gt=0),
+    size: int = Query(20, gt=0, le=100),
 ):
-    """Возвращает отфильтрованный список книг с пагинацией"""
-    statement = select(Book).distinct()
-
-    if q:
-        statement = statement.where(
-            (col(Book.title).ilike(f"%{q}%")) | (col(Book.description).ilike(f"%{q}%"))
-        )
+    statement = select(Book).options(
+        selectinload(Book.authors), selectinload(Book.genres), defer(Book.embedding)
+    )
 
     if min_page_count:
         statement = statement.where(Book.page_count >= min_page_count)
-
     if max_page_count:
         statement = statement.where(Book.page_count <= max_page_count)
 
     if author_ids:
-        statement = statement.join(AuthorBookLink).where(
-            AuthorBookLink.author_id.in_(  # ty: ignore[unresolved-attribute, unresolved-reference]
-                author_ids
+        statement = statement.where(
+            exists().where(
+                AuthorBookLink.book_id == Book.id,
+                AuthorBookLink.author_id.in_(author_ids),
             )
         )
 
     if genre_ids:
-        statement = statement.join(GenreBookLink).where(
-            GenreBookLink.genre_id.in_(  # ty: ignore[unresolved-attribute, unresolved-reference]
-                genre_ids
+        for genre_id in genre_ids:
+            statement = statement.where(
+                exists().where(
+                    GenreBookLink.book_id == Book.id, GenreBookLink.genre_id == genre_id
+                )
             )
-        )
 
-    total_statement = select(func.count()).select_from(statement.subquery())
-    total = session.exec(total_statement).one()
+    count_statement = select(func.count()).select_from(statement.subquery())
+    total = session.scalar(count_statement)
+
+    if q:
+        emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=q)["embedding"]
+        distance_col = Book.embedding.cosine_distance(emb)
+        statement = statement.where(Book.embedding.is_not(None))
+
+        keyword_match = case((Book.title.ilike(f"%{q}%"), 0), else_=1)
+        statement = statement.order_by(keyword_match, distance_col)
+    else:
+        statement = statement.order_by(Book.id)
 
     offset = (page - 1) * size
     statement = statement.offset(offset).limit(size)
-    results = session.exec(statement).all()
+    results = session.scalars(statement).unique().all()
 
-    books_with_data = []
-    for db_book in results:
-        books_with_data.append(
-            BookWithAuthorsAndGenres(
-                **db_book.model_dump(),
-                authors=[AuthorRead(**a.model_dump()) for a in db_book.authors],
-                genres=[GenreRead(**g.model_dump()) for g in db_book.genres],
-            )
-        )
-
-    return BookFilteredList(books=books_with_data, total=total)
+    return BookFilteredList(books=results, total=total)
 
 
 @router.post(
@@ -127,11 +128,13 @@ def create_book(
     session: Session = Depends(get_session),
 ):
     """Создает новую книгу в системе"""
-    db_book = Book(**book.model_dump())
+    full_text = book.title + " " + book.description
+    emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=full_text)
+    db_book = Book(**book.model_dump(), embedding=emb["embedding"])
     session.add(db_book)
     session.commit()
     session.refresh(db_book)
-    return BookRead(**db_book.model_dump())
+    return BookRead(**db_book.model_dump(exclude={"embedding"}))
 
 
 @router.get(
@@ -144,7 +147,8 @@ def read_books(session: Session = Depends(get_session)):
     """Возвращает список всех книг"""
     books = session.exec(select(Book)).all()
     return BookList(
-        books=[BookRead(**book.model_dump()) for book in books], total=len(books)
+        books=[BookRead(**book.model_dump(exclude={"embedding"})) for book in books],
+        total=len(books),
     )
 
 
@@ -165,19 +169,19 @@ def get_book(
             status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
         )
 
-    authors = session.exec(
+    authors = session.scalars(
         select(Author).join(AuthorBookLink).where(AuthorBookLink.book_id == book_id)
     ).all()
 
     author_reads = [AuthorRead(**author.model_dump()) for author in authors]
 
-    genres = session.exec(
+    genres = session.scalars(
         select(Genre).join(GenreBookLink).where(GenreBookLink.book_id == book_id)
     ).all()
 
     genre_reads = [GenreRead(**genre.model_dump()) for genre in genres]
 
-    book_data = book.model_dump()
+    book_data = book.model_dump(exclude={"embedding"})
     book_data["authors"] = author_reads
     book_data["genres"] = genre_reads
 
@@ -186,7 +190,7 @@ def get_book(
 
 @router.put(
     "/{book_id}",
-    response_model=Book,
+    response_model=BookRead,
     summary="Обновить информацию о книге",
     description="Обновляет информацию о книге в системе",
 )
@@ -221,11 +225,19 @@ def update_book(
         if book_update.description is not None:
             db_book.description = book_update.description
 
+        full_text = (
+            (book_update.title or db_book.title)
+            + " "
+            + (book_update.description or db_book.description)
+        )
+        emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=full_text)
+        db_book.embedding = emb["embedding"]
+
     session.add(db_book)
     session.commit()
     session.refresh(db_book)
 
-    return BookRead(**db_book.model_dump())
+    return BookRead(**db_book.model_dump(exclude={"embedding"}))
 
 
 @router.delete(
@@ -249,6 +261,7 @@ def delete_book(
         id=(book.id or 0),
         title=book.title,
         description=book.description,
+        page_count=book.page_count,
         status=book.status,
     )
     session.delete(book)

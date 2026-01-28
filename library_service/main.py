@@ -11,6 +11,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI, Depends, Request, Response, status
 from fastapi.staticfiles import StaticFiles
+from ollama import Client, ResponseError
 from sqlmodel import Session
 
 from library_service.auth import run_seeds
@@ -21,6 +22,7 @@ from library_service.settings import (
     engine,
     get_app,
     get_logger,
+    OLLAMA_URL,
 )
 
 
@@ -51,6 +53,13 @@ async def lifespan(_):
     except Exception as e:
         logger.error(f"[-] Seeding failed: {e}")
 
+    logger.info("[+] Loading ollama models...")
+    ollama_client = Client(host=OLLAMA_URL)
+    try:
+        ollama_client.pull("mxbai-embed-large")
+        ollama_client.pull("llama3.2")
+    except ResponseError as e:
+        logger.error(f"[-] Failed to pull models {e}")
     asyncio.create_task(cleanup_task())
     logger.info("[+] Starting application...")
     yield  # Обработка запросов

@@ -95,7 +95,9 @@ USER = os.getenv("POSTGRES_USER")
 PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DATABASE = os.getenv("POSTGRES_DB")
 
-if not all([HOST, PORT, USER, PASSWORD, DATABASE]):
+OLLAMA_URL = os.getenv("OLLAMA_URL")
+
+if not all([HOST, PORT, USER, PASSWORD, DATABASE, OLLAMA_URL]):
     raise ValueError("Missing required POSTGRES environment variables")
 
 POSTGRES_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
