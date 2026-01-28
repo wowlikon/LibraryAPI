@@ -242,7 +242,7 @@ $(document).ready(() => {
       return;
     }
 
-    if (!parseInt(pageCount)) {
+    if (!pageCount) {
       Utils.showToast("Введите количество страниц", "error");
       return;
     }
@@ -253,7 +253,7 @@ $(document).ready(() => {
       const bookPayload = {
         title: title,
         description: description || null,
-        page_count: pageCount ? parseInt(pageCount) : null,
+        page_count: pageCount,
       };
 
       const createdBook = await Api.post("/api/books/", bookPayload);

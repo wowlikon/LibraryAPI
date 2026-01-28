@@ -19,7 +19,6 @@ RUN uv sync --group dev --no-install-project
 
 COPY ./library_service /code/library_service
 COPY ./alembic.ini /code/
-COPY ./data.py /code/
 
 RUN useradd app && \
     chown -R app:app /code && \

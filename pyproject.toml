@@ -1,6 +1,6 @@
 [project]
 name = "LiB"
-version = "0.7.0"
+version = "0.8.0"
 description = "Это простое API для управления авторами, книгами и их жанрами."
 authors = [{ name = "wowlikon" }]
 readme = "README.md"
@@ -23,6 +23,8 @@ dependencies = [
     "pyotp>=2.9.0",
     "slowapi>=0.1.9",
     "limits>=5.6.0",
+    "ollama>=0.6.1",
+    "pgvector>=0.4.2",
 ]
 
 [dependency-groups]
