@@ -36,6 +36,20 @@ BEGIN
 END \$\$;
 EOF
 
+echo "Проверяем/создаем публикацию..."
+
+PUB_EXISTS=$(PGPASSWORD="${POSTGRES_PASSWORD}" psql -h db -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -tAc "SELECT COUNT(*) FROM pg_publication WHERE pubname = 'all_tables_pub';")
+
+if [ "$PUB_EXISTS" -gt 0 ]; then
+    echo "Публикация уже существует"
+else
+    echo "Создаем публикацию..."
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql -h db -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" <<EOF
+CREATE PUBLICATION all_tables_pub FOR ALL TABLES;
+EOF
+    echo "Публикация создана!"
+fi
+
 echo "Ждем удаленный хост ${REMOTE_HOST}:${REMOTE_PORT}..."
 TIMEOUT=300
 ELAPSED=0
@@ -44,14 +58,23 @@ while ! PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${REMOTE_HOST}" -p ${REMOTE_P
     sleep 5
     ELAPSED=$((ELAPSED + 5))
     if [ $ELAPSED -ge $TIMEOUT ]; then
-        echo "Таймаут ожидания удаленного хоста. Репликация НЕ настроена."
-        echo "Вы можете запустить этот скрипт вручную позже:"
+        echo "Таймаут ожидания удаленного хоста. Подписка НЕ настроена."
+        echo "Публикация создана - удаленный хост сможет подписаться на нас."
+        echo "Для создания подписки запустите позже:"
         echo "docker compose restart replication-setup"
         exit 0
     fi
     echo "Удаленный хост недоступен, ждем... (${ELAPSED}s/${TIMEOUT}s)"
 done
 echo "Удаленный хост доступен"
+
+REMOTE_PUB=$(PGPASSWORD="${POSTGRES_PASSWORD}" psql -h "${REMOTE_HOST}" -p ${REMOTE_PORT} -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -tAc "SELECT COUNT(*) FROM pg_publication WHERE pubname = 'all_tables_pub';" 2>/dev/null || echo "0")
+
+if [ "$REMOTE_PUB" -eq 0 ]; then
+    echo "ВНИМАНИЕ: На удалённом хосте нет публикации 'all_tables_pub'!"
+    echo "Подписка не будет создана. Сначала запустите скрипт на удалённом хосте."
+    exit 0
+fi
 
 EXISTING=$(PGPASSWORD="${POSTGRES_PASSWORD}" psql -h db -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -tAc "SELECT COUNT(*) FROM pg_subscription WHERE subname = 'sub_from_remote';")
 
@@ -73,5 +96,6 @@ EOF
 fi
 
 echo ""
-echo "Репликация настроена!"
-echo "Этот узел (${NODE_ID}) теперь синхронизирован с ${REMOTE_HOST}"
+echo "=== Репликация настроена! ==="
+echo "Публикация: all_tables_pub (другие могут подписаться на нас)"
+echo "Подписка: sub_from_remote (мы получаем данные от ${REMOTE_HOST})"
