@@ -11,7 +11,7 @@ services:
       - ./data/db:/var/lib/postgresql/data
     networks:
       - proxy
-    ports:
+    ports: # !сменить внешний порт перед использованием!
       - 5432:5432
     env_file:
       - ./.env
@@ -60,7 +60,7 @@ services:
         - ./data/llm:/root/.ollama
       networks:
        - proxy
-      ports:
+      ports: # !только локальный тест!
         - 11434:11434
       env_file:
         - ./.env
@@ -85,8 +85,8 @@ services:
         max-file: "3"
     networks:
       - proxy
-    # ports:
-    #   - 8000:8000
+    ports: # !только локальный тест!
+      - 8000:8000
     env_file:
       - ./.env
     volumes:
