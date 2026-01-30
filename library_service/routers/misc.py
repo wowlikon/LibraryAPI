@@ -40,6 +40,12 @@ async def root(request: Request):
     return templates.TemplateResponse(request, "index.html")
 
 
+@router.get("/unknown", include_in_schema=False)
+async def unknown(request: Request):
+    """Рендерит страницу 404 ошибки"""
+    return templates.TemplateResponse(request, "unknown.html")
+
+
 @router.get("/genre/create", include_in_schema=False)
 async def create_genre(request: Request):
     """Рендерит страницу создания жанра"""

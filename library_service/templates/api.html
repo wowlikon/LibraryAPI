@@ -168,7 +168,8 @@
             jsPlumb.ready(function () {
                 const instance = jsPlumb.getInstance({
                     Container: "erDiagram",
-                    Connector: ["Flowchart", { stub: 30, gap: 10, cornerRadius: 5, alwaysRespectStubs: true }]
+                    Endpoint: "Blank",
+                    Connector: ["Flowchart", { stub: 30, gap: 0, cornerRadius: 5, alwaysRespectStubs: true }]
                 });
 
                 const container = document.getElementById("erDiagram");
@@ -274,16 +275,55 @@
                 });
 
                 diagramData.relations.forEach(rel => {
+                    const overlays = [];
+
+                    if (rel.fromMultiplicity === '1') {
+                        overlays.push(["Arrow", {
+                            location: 8, width: 14, length: 1, foldback: 1, direction: 1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                        overlays.push(["Arrow", {
+                            location: 14, width: 14, length: 1, foldback: 1, direction: 1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                    } else if (rel.fromMultiplicity === 'N' || rel.fromMultiplicity === '*') {
+                        overlays.push(["Arrow", {
+                            location: 8, width: 14, length: 1, foldback: 1, direction: 1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                        overlays.push(["Arrow", {
+                            location: 10, width: 14, length: 10, foldback: 0.1, direction: 1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                    }
+
+                    if (rel.toMultiplicity === '1') {
+                        overlays.push(["Arrow", {
+                            location: -8, width: 14, length: 1, foldback: 1, direction: -1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                        overlays.push(["Arrow", {
+                            location: -14, width: 14, length: 1, foldback: 1, direction: -1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                    } else if (rel.toMultiplicity === 'N' || rel.toMultiplicity === '*') {
+                        overlays.push(["Arrow", {
+                            location: -8, width: 14, length: 1, foldback: 1, direction: -1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                        overlays.push(["Arrow", {
+                            location: -10, width: 14, length: 10, foldback: 0.1, direction: -1,
+                            paintStyle: { stroke: "#7f8c8d", strokeWidth: 2, fill: "transparent" }
+                        }]);
+                    }
+
                     instance.connect({
                         source: `field-${rel.fromEntity}-${rel.fromField}`,
                         target: `field-${rel.toEntity}-${rel.toField}`,
                         anchor: ["Continuous", { faces: ["left", "right"] }],
                         paintStyle: { stroke: "#7f8c8d", strokeWidth: 2 },
                         hoverPaintStyle: { stroke: "#3498db", strokeWidth: 3 },
-                        overlays: [
-                            ["Label", { label: rel.fromMultiplicity || "", location: 0.1, cssClass: "relation-label" }],
-                            ["Label", { label: rel.toMultiplicity || "", location: 0.9, cssClass: "relation-label" }]
-                        ]
+                        overlays: overlays
                     });
                 });
 

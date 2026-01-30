@@ -112,11 +112,18 @@ const Api = {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.detail ||
-            errorData.error_description ||
-            `Ошибка ${response.status}`,
-        );
+        const error = new Error("API Error");
+        Object.assign(error, errorData);
+
+        if (typeof errorData.detail === "string") {
+          error.message = errorData.detail;
+        } else if (errorData.error_description) {
+          error.message = errorData.error_description;
+        } else if (!errorData.detail) {
+          error.message = `Ошибка ${response.status}`;
+        }
+
+        throw error;
       }
       return response.json();
     } catch (error) {

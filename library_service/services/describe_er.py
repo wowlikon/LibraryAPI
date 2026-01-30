@@ -1,9 +1,21 @@
 """Модуль генерации описания схемы БД"""
 
+import enum
 import inspect
-from typing import List, Dict, Any, Set, Type, Tuple
+from typing import (
+    List,
+    Dict,
+    Any,
+    Set,
+    Type,
+    Tuple,
+    Optional,
+    Union,
+    get_origin,
+    get_args,
+)
 
-from pydantic.fields import FieldInfo
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.inspection import inspect as sa_inspect
 from sqlmodel import SQLModel
 
@@ -184,6 +196,41 @@ class SchemaGenerator:
 
         return relations
 
+    def _extract_enum_from_annotation(self, annotation) -> Optional[Type[enum.Enum]]:
+        if isinstance(annotation, type) and issubclass(annotation, enum.Enum):
+            return annotation
+
+        origin = get_origin(annotation)
+        if origin is Union:
+            for arg in get_args(annotation):
+                if isinstance(arg, type) and issubclass(arg, enum.Enum):
+                    return arg
+
+        return None
+
+    def _get_enum_values(self, model: Type[SQLModel], col) -> Optional[List[str]]:
+        if isinstance(col.type, SAEnum):
+            if col.type.enum_class is not None:
+                return [e.value for e in col.type.enum_class]
+            if col.type.enums:
+                return list(col.type.enums)
+
+        try:
+            annotations = {}
+            for cls in model.__mro__:
+                if hasattr(cls, "__annotations__"):
+                    annotations.update(cls.__annotations__)
+
+            if col.name in annotations:
+                annotation = annotations[col.name]
+                enum_class = self._extract_enum_from_annotation(annotation)
+                if enum_class:
+                    return [e.value for e in enum_class]
+        except Exception:
+            pass
+
+        return None
+
     def generate(self) -> Dict[str, Any]:
         entities = []
 
@@ -212,8 +259,19 @@ class SchemaGenerator:
 
                 field_obj = {"id": col.name, "label": label}
 
+                tooltip_parts = []
+
                 if col.name in descriptions:
-                    field_obj["tooltip"] = descriptions[col.name]
+                    tooltip_parts.append(descriptions[col.name])
+
+                enum_values = self._get_enum_values(model, col)
+                if enum_values:
+                    tooltip_parts.append(
+                        "Варианты:\n" + "\n".join(f"• {v}" for v in enum_values)
+                    )
+
+                if tooltip_parts:
+                    field_obj["tooltip"] = "\n\n".join(tooltip_parts)
 
                 entity_fields.append(field_obj)
 

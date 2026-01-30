@@ -1,6 +1,6 @@
 """Основной модуль"""
 
-import asyncio
+import asyncio, sys, traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -9,13 +9,15 @@ from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
-from fastapi import FastAPI, Depends, Request, Response, status
+from fastapi import FastAPI, Depends, Request, Response, status, HTTPException
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from ollama import Client, ResponseError
 from sqlmodel import Session
 
 from library_service.auth import run_seeds
 from library_service.routers import api_router
+from library_service.routers.misc import unknown
 from library_service.services.captcha import limiter, cleanup_task, require_captcha
 from library_service.settings import (
     LOGGING_CONFIG,
@@ -69,7 +71,40 @@ async def lifespan(_):
 app = get_app(lifespan)
 
 
-# Улучшеное логгирование
+@app.exception_handler(status.HTTP_404_NOT_FOUND)
+async def custom_not_found_handler(request: Request, exc: HTTPException):
+    path = request.url.path
+
+    if path.startswith("/api"):
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"detail": "API endpoint not found", "path": path},
+        )
+
+    return await unknown(request)
+
+
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    """Middleware для подробного json-описания Internal error"""
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        logger = get_logger()
+        logger.exception(exc)
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "message": str(exc),
+                "type": exc_type.__name__ if exc_type else "Unknown",
+                "path": str(request.url),
+                "method": request.method,
+            },
+        )
+
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Middleware для логирования HTTP-запросов"""
@@ -149,6 +184,7 @@ if __name__ == "__main__":
         "library_service.main:app",
         host="0.0.0.0",
         port=8000,
+        forwarded_allow_ips="*",
         log_config=LOGGING_CONFIG,
         access_log=False,
     )

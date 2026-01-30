@@ -1,0 +1,79 @@
+{% extends "base.html" %} {% block title %}LiB - Страница не найдена{% endblock %}
+{% block content %}
+<div class="flex flex-1 items-center justify-center p-4 min-h-[70vh]">
+    <div class="w-full max-w-2xl">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-8 text-center">
+                <div class="mb-6 relative">
+                  <svg id="canvas" viewBox="-250 -50 500 100" style="width: 70vmin; height: 25vmin; max-width: 600px; max-height: 600px"></svg>
+                </div>
+
+                <h1 class="text-3xl font-bold text-gray-800 mb-3">
+                    Страница не найдена
+                </h1>
+
+                <p class="text-gray-500 mb-2">
+                    К сожалению, запрашиваемая страница не существует.
+                </p>
+                <p class="text-gray-400 text-sm mb-8">
+                    Возможно, она была удалена или вы ввели неверный адрес.
+                </p>
+
+                <div class="bg-gray-100 rounded-lg px-4 py-3 mb-8 inline-block">
+                    <code id="pathh" class="text-gray-600 text-sm">
+                        <span class="text-gray-400">Путь:</span>
+                        {{ request.url.path }}
+                    </code>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                        onclick="history.back()"
+                        class="inline-flex items-center justify-center px-6 py-3 bg-white text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200 font-medium shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Назад
+                    </button>
+                    <a
+                        href="/"
+                        class="inline-flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition duration-200 font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    >
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        На главную
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-8 py-6 border-t border-gray-200">
+                <p class="text-gray-500 text-sm text-center mb-4">Возможно, вы искали:</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <a href="/books" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 transition text-sm">
+                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        Книги
+                    </a>
+                    <a href="/authors" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 transition text-sm">
+                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Авторы
+                    </a>
+                    <a href="/api" class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-800 transition text-sm">
+                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        API
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="/static/page/unknown.js"></script>
+{% endblock %}

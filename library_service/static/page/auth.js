@@ -3,6 +3,7 @@ $(() => {
     loginForm: "#login-form",
     registerForm: "#register-form",
     resetForm: "#reset-password-form",
+    authTabs: "#auth-tabs",
     loginTab: "#login-tab",
     registerTab: "#register-tab",
     forgotBtn: "#forgot-password-btn",
@@ -121,6 +122,13 @@ $(() => {
   };
 
   const showForm = (formId) => {
+    let newHash = "";
+    if (formId === SELECTORS.loginForm) newHash = "login";
+    else if (formId === SELECTORS.registerForm) newHash = "register";
+    else if (formId === SELECTORS.resetForm) newHash = "reset";
+    if (newHash && window.location.hash !== "#" + newHash) {
+      window.history.pushState(null, null, "#" + newHash);
+    }
     $(
       `${SELECTORS.loginForm}, ${SELECTORS.registerForm}, ${SELECTORS.resetForm}`,
     ).addClass("hidden");
@@ -142,6 +150,17 @@ $(() => {
     }
   };
 
+  const handleHash = () => {
+    const hash = window.location.hash.toLowerCase();
+    if (hash === "#register" || hash === "#signup") {
+      showForm(SELECTORS.registerForm);
+      $(SELECTORS.registerTab).trigger("click");
+    } else if (hash === "#login" || hash === "#signin") {
+      showForm(SELECTORS.loginForm);
+      $(SELECTORS.loginTab).trigger("click");
+    }
+  };
+
   const resetLoginState = () => {
     clearPartialToken();
     stopTotpTimer();
@@ -151,6 +170,7 @@ $(() => {
       username: "",
       rememberMe: false,
     };
+    $(SELECTORS.authTabs).removeClass("hide-animated");
     $(SELECTORS.totpSection).addClass("hidden");
     $(SELECTORS.totpInput).val("");
     $(SELECTORS.credentialsSection).removeClass("hidden");
@@ -185,6 +205,7 @@ $(() => {
     const savedToken = sessionStorage.getItem(STORAGE_KEYS.partialToken);
     const savedUsername = sessionStorage.getItem(STORAGE_KEYS.partialUsername);
     if (savedToken && savedUsername) {
+      $(SELECTORS.authTabs).addClass("hide-animated");
       loginState.partialToken = savedToken;
       loginState.username = savedUsername;
       loginState.step = "2fa";
@@ -279,6 +300,7 @@ $(() => {
           loginState.partialToken = data.partial_token;
           loginState.step = "2fa";
           savePartialToken(data.partial_token, username);
+          $(SELECTORS.authTabs).addClass("hide-animated");
           $(SELECTORS.credentialsSection).addClass("hidden");
           $(SELECTORS.totpSection).removeClass("hidden");
           startTotpTimer();
@@ -362,6 +384,19 @@ $(() => {
         }, 1500);
       }
     } catch (error) {
+      console.log("Debug error object:", error);
+
+      const cleanMsg = (text) => {
+        if (!text) return "";
+        if (text.includes("value is not a valid email address")) {
+          return "Некорректный адрес электронной почты";
+        }
+
+        text = text.replace(/^Value error,\s*/i, "");
+        return text.charAt(0).toUpperCase() + text.slice(1);
+      };
+
+      let msg = "Ошибка регистрации";
       if (error.detail && error.detail.error === "captcha_required") {
         Utils.showToast(TEXTS.captchaRequired, "error");
         const $capElement = $(SELECTORS.capWidget);
@@ -372,11 +407,19 @@ $(() => {
         );
         return;
       }
-      let msg = error.message;
+
       if (error.detail && Array.isArray(error.detail)) {
-        msg = error.detail.map((e) => e.msg).join(". ");
+        msg = error.detail.map((e) => cleanMsg(e.msg)).join(". ");
+      } else if (Array.isArray(error)) {
+        msg = error.map((e) => cleanMsg(e.msg || e.message)).join(". ");
+      } else if (typeof error.detail === "string") {
+        msg = cleanMsg(error.detail);
+      } else if (error.message && !error.message.includes("[object Object]")) {
+        msg = cleanMsg(error.message);
       }
-      Utils.showToast(msg || "Ошибка регистрации", "error");
+
+      console.log("Resulting msg:", msg);
+      Utils.showToast(msg, "error");
     } finally {
       $submitBtn
         .prop("disabled", false)
@@ -544,6 +587,7 @@ $(() => {
   };
 
   initLoginState();
+  handleHash();
 
   const widget = $(SELECTORS.capWidget).get(0);
   if (widget && widget.shadowRoot) {
