@@ -11,8 +11,8 @@ class AuthorBase(SQLModel):
 
     name: str = Field(description="Псевдоним")
 
-    model_config = ConfigDict(  # pyright: ignore
-        json_schema_extra={"example": {"name": "author_name"}}
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"name": "John Doe"}}
     )
 
 

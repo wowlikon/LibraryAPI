@@ -7,7 +7,7 @@ from .role import RoleBase, RoleCreate, RoleList, RoleRead, RoleUpdate
 from .user import UserBase, UserCreate, UserList, UserRead, UserUpdate, UserLogin
 from .loan import LoanBase, LoanCreate, LoanList, LoanRead, LoanUpdate
 from .recovery import RecoveryCodesResponse, RecoveryCodesStatus, RecoveryCodeUse
-from .token import Token, TokenData, PartialToken
+from .token import TokenData
 from .misc import (
     AuthorWithBooks,
     GenreWithBooks,
@@ -62,9 +62,7 @@ __all__ = [
     "RoleUpdate",
     "RoleRead",
     "RoleList",
-    "Token",
     "TokenData",
-    "PartialToken",
     "TOTPSetupResponse",
     "TOTPVerifyRequest",
     "TOTPDisableRequest",

@@ -12,15 +12,12 @@ from sqlmodel import Session, select
 from library_service.services import require_captcha
 from library_service.models.db import Role, User
 from library_service.models.dto import (
-    Token,
     UserCreate,
     UserRead,
     UserUpdate,
     UserList,
     RoleRead,
     RoleList,
-    Token,
-    PartialToken,
     LoginResponse,
     RecoveryCodeUse,
     RegisterResponse,
@@ -147,11 +144,14 @@ def login(
         )
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access_token = create_access_token(
+        data=token_data, expires_delta=access_token_expires
+    )
+    new_refresh_token = create_refresh_token(data=token_data)
+
     return LoginResponse(
-        access_token=create_access_token(
-            data=token_data, expires_delta=access_token_expires
-        ),
-        refresh_token=create_refresh_token(data=token_data),
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
         token_type="bearer",
         requires_2fa=False,
     )
@@ -159,7 +159,7 @@ def login(
 
 @router.post(
     "/refresh",
-    response_model=Token,
+    response_model=LoginResponse,
     summary="Обновление токена",
     description="Получение новой пары токенов, используя действующий Refresh токен",
 )
@@ -190,19 +190,18 @@ def refresh_token(
             detail="User is inactive",
         )
 
+    token_data = {"sub": user.username, "user_id": user.id}
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     new_access_token = create_access_token(
-        data={"sub": user.username, "user_id": user.id},
-        expires_delta=access_token_expires,
+        data=token_data, expires_delta=access_token_expires
     )
-    new_refresh_token = create_refresh_token(
-        data={"sub": user.username, "user_id": user.id}
-    )
+    new_refresh_token = create_refresh_token(data=token_data)
 
-    return Token(
+    return LoginResponse(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
         token_type="bearer",
+        requires_2fa=False,
     )
 
 
@@ -343,7 +342,7 @@ def disable_2fa(
 
 @router.post(
     "/2fa/verify",
-    response_model=Token,
+    response_model=LoginResponse,
     summary="Верификация 2FA",
     description="Завершает аутентификацию с помощью TOTP кода или резервного кода",
 )
@@ -374,12 +373,16 @@ def verify_2fa(
 
     token_data = {"sub": user.username, "user_id": user.id}
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    new_access_token = create_access_token(
+        data=token_data, expires_delta=access_token_expires
+    )
+    new_refresh_token = create_refresh_token(data=token_data)
 
-    return Token(
-        access_token=create_access_token(
-            data=token_data, expires_delta=access_token_expires
-        ),
-        refresh_token=create_refresh_token(data=token_data),
+    return LoginResponse(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
+        token_type="bearer",
+        requires_2fa=False,
     )
 
 

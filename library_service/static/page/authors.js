@@ -6,6 +6,11 @@ $(document).ready(() => {
   let currentSort = "name_asc";
 
   loadAuthors();
+  const USER_CAN_MANAGE =
+    typeof window.canManage === "function" && window.canManage();
+  if (USER_CAN_MANAGE) {
+    $("#add-author-btn").removeClass("hidden");
+  }
 
   function loadAuthors() {
     showLoadingState();
