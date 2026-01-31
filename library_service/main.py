@@ -81,7 +81,7 @@ async def custom_not_found_handler(request: Request, exc: HTTPException):
             content={"detail": "API endpoint not found", "path": path},
         )
 
-    return await unknown(request)
+    return await unknown(request, app)
 
 
 @app.middleware("http")

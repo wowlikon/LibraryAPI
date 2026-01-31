@@ -1,9 +1,15 @@
 <!doctype html>
 <html lang="ru">
     <head>
-        <title>{% block title %}LiB{% endblock %}</title>
+        <title>{{ title }}</title>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta property="og:title" content="{{ title }}" />
+        <meta property="og:type" content="website" />
+        <meta property="og:description" content="Ваша персональная библиотека книг" />
+        <meta property="og:url" content="//{{ domain }}/" />
+        <!--<meta property="og:image" content="//{{ domain }}/img/{{ img }}.png" />-->
+
         <script
             defer
             src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"

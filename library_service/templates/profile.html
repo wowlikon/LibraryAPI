@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}LiB - Профиль{% endblock %}
-{% block content %}
+{% extends "base.html" %}{% block content %}
 <div class="container mx-auto p-4 max-w-2xl"
     x-data="{ showPasswordModal: false, showDisable2FAModal: false, showRecoveryCodesModal: false, is2FAEnabled: false, recoveryCodesRemaining: null }"
     @update-2fa.window="is2FAEnabled = $event.detail"
