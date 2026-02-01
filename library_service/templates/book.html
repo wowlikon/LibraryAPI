@@ -303,3 +303,8 @@
 {% endblock %} {% block scripts %}
 <script src="/static/page/book.js"></script>
 {% endblock %}
+{% block extra_head %}
+{% if img %}
+<meta property="og:image" content="{{ request.url.scheme }}://{{ domain }}/static/books/{{ img }}.jpg" />
+{% endif %}
+{% endblock %}

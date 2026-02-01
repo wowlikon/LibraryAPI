@@ -40,109 +40,110 @@ def get_info(app) -> Dict:
 @router.get("/", include_in_schema=False)
 async def root(request: Request, app=Depends(lambda: get_app())):
     """Рендерит главную страницу"""
-    return templates.TemplateResponse(request, "index.html", get_info(app) | {"title": "LiB - Библиотека"})
+    return templates.TemplateResponse(request, "index.html", get_info(app) | {"request": request, "title": "LiB - Библиотека"})
 
 
 @router.get("/unknown", include_in_schema=False)
 async def unknown(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу 404 ошибки"""
-    return templates.TemplateResponse(request, "unknown.html", get_info(app) | {"title": "LiB - Страница не найдена"})
+    return templates.TemplateResponse(request, "unknown.html", get_info(app) | {"request": request, "title": "LiB - Страница не найдена"})
 
 
 @router.get("/genre/create", include_in_schema=False)
 async def create_genre(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу создания жанра"""
-    return templates.TemplateResponse(request, "create_genre.html", get_info(app) | {"title": "LiB - Создать жанр"})
+    return templates.TemplateResponse(request, "create_genre.html", get_info(app) | {"request": request, "title": "LiB - Создать жанр"})
 
 
 @router.get("/genre/{genre_id}/edit", include_in_schema=False)
 async def edit_genre(request: Request, genre_id: int, app=Depends(lambda: get_app())):
     """Рендерит страницу редактирования жанра"""
-    return templates.TemplateResponse(request, "edit_genre.html", get_info(app) | {"id": genre_id} | {"id": genre_id, "title": "LiB - Редактировать жанр"})
+    return templates.TemplateResponse(request, "edit_genre.html", get_info(app) | {"request": request, "title": "LiB - Редактировать жанр", "id": genre_id})
 
 
 @router.get("/authors", include_in_schema=False)
 async def authors(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу списка авторов"""
-    return templates.TemplateResponse(request, "authors.html", get_info(app) | {"title": "LiB - Авторы"})
+    return templates.TemplateResponse(request, "authors.html", get_info(app) | {"request": request, "title": "LiB - Авторы"})
 
 
 @router.get("/author/create", include_in_schema=False)
 async def create_author(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу создания автора"""
-    return templates.TemplateResponse(request, "create_author.html", get_info(app) | {"title": "LiB - Создать автора"})
+    return templates.TemplateResponse(request, "create_author.html", get_info(app) | {"request": request, "title": "LiB - Создать автора"})
 
 
 @router.get("/author/{author_id}/edit", include_in_schema=False)
 async def edit_author(request: Request, author_id: int, app=Depends(lambda: get_app())):
     """Рендерит страницу редактирования автора"""
-    return templates.TemplateResponse(request, "edit_author.html", get_info(app) | {"id": author_id, "title": "LiB - Редактировать автора"})
+    return templates.TemplateResponse(request, "edit_author.html", get_info(app) | {"request": request, "title": "LiB - Редактировать автора", "id": author_id})
 
 
 @router.get("/author/{author_id}", include_in_schema=False)
 async def author(request: Request, author_id: int, app=Depends(lambda: get_app())):
     """Рендерит страницу просмотра автора"""
-    return templates.TemplateResponse(request, "author.html", get_info(app) | {"id": author_id, "title": "LiB - Автор"})
+    return templates.TemplateResponse(request, "author.html", get_info(app) | {"request": request, "title": "LiB - Автор", "id": author_id})
 
 
 @router.get("/books", include_in_schema=False)
 async def books(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу списка книг"""
-    return templates.TemplateResponse(request, "books.html", get_info(app) | {"title": "LiB - Книги"})
+    return templates.TemplateResponse(request, "books.html", get_info(app) | {"request": request, "title": "LiB - Книги"})
 
 
 @router.get("/book/create", include_in_schema=False)
 async def create_book(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу создания книги"""
-    return templates.TemplateResponse(request, "create_book.html", get_info(app) | {"title": "LiB - Создать книгу"})
+    return templates.TemplateResponse(request, "create_book.html", get_info(app) | {"request": request, "title": "LiB - Создать книгу"})
 
 
 @router.get("/book/{book_id}/edit", include_in_schema=False)
 async def edit_book(request: Request, book_id: int, app=Depends(lambda: get_app())):
     """Рендерит страницу редактирования книги"""
-    return templates.TemplateResponse(request, "edit_book.html", get_info(app) | {"id": book_id, "title": "LiB - Редактировать книгу"})
+    return templates.TemplateResponse(request, "edit_book.html", get_info(app) | {"request": request, "title": "LiB - Редактировать книгу", "id": book_id})
 
 
 @router.get("/book/{book_id}", include_in_schema=False)
-async def book(request: Request, book_id: int, app=Depends(lambda: get_app())):
+async def book(request: Request, book_id: int, app=Depends(lambda: get_app()), session=Depends(get_session)):
     """Рендерит страницу просмотра книги"""
-    return templates.TemplateResponse(request, "book.html", get_info(app) | {"id": book_id, "title": "LiB - Книга"})
+    book = session.get(Book, book_id)
+    return templates.TemplateResponse(request, "book.html", get_info(app) | {"request": request, "title": "LiB - Книга", "id": book_id, "img": book.preview_id})
 
 
 @router.get("/auth", include_in_schema=False)
 async def auth(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу авторизации"""
-    return templates.TemplateResponse(request, "auth.html", get_info(app) | {"title": "LiB - Авторизация"})
+    return templates.TemplateResponse(request, "auth.html", get_info(app) | {"request": request, "title": "LiB - Авторизация"})
 
 
 @router.get("/2fa", include_in_schema=False)
 async def set2fa(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу установки двухфакторной аутентификации"""
-    return templates.TemplateResponse(request, "2fa.html", get_info(app) | {"title": "LiB - Двухфакторная аутентификация"})
+    return templates.TemplateResponse(request, "2fa.html", get_info(app) | {"request": request, "title": "LiB - Двухфакторная аутентификация"})
 
 
 @router.get("/profile", include_in_schema=False)
 async def profile(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу профиля пользователя"""
-    return templates.TemplateResponse(request, "profile.html", get_info(app) | {"title": "LiB - Профиль"})
+    return templates.TemplateResponse(request, "profile.html", get_info(app) | {"request": request, "title": "LiB - Профиль"})
 
 
 @router.get("/users", include_in_schema=False)
 async def users(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу управления пользователями"""
-    return templates.TemplateResponse(request, "users.html", get_info(app) | {"title": "LiB - Пользователи"})
+    return templates.TemplateResponse(request, "users.html", get_info(app) | {"request": request, "title": "LiB - Пользователи"})
 
 
 @router.get("/my-books", include_in_schema=False)
 async def my_books(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу моих книг пользователя"""
-    return templates.TemplateResponse(request, "my_books.html", get_info(app) | {"title": "LiB - Мои книги"})
+    return templates.TemplateResponse(request, "my_books.html", get_info(app) | {"request": request, "title": "LiB - Мои книги"})
 
 
 @router.get("/analytics", include_in_schema=False)
 async def analytics(request: Request, app=Depends(lambda: get_app())):
     """Рендерит страницу аналитики выдач"""
-    return templates.TemplateResponse(request, "analytics.html", get_info(app) | {"title": "LiB - Аналитика"})
+    return templates.TemplateResponse(request, "analytics.html", get_info(app) | {"request": request, "title": "LiB - Аналитика"})
 
 
 @router.get("/favicon.ico", include_in_schema=False)
@@ -190,7 +191,7 @@ async def api_schema():
     summary="Статистика сервиса",
     description="Возвращает статистическую информацию о системе",
 )
-async def api_stats(session: Session = Depends(get_session)):
+async def api_stats(session=Depends(get_session)):
     """Возвращает статистику системы"""
     authors = select(func.count()).select_from(Author)
     books = select(func.count()).select_from(Book)

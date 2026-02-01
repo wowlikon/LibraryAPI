@@ -184,6 +184,7 @@ if __name__ == "__main__":
         "library_service.main:app",
         host="0.0.0.0",
         port=8000,
+        proxy_headers=True,
         forwarded_allow_ips="*",
         log_config=LOGGING_CONFIG,
         access_log=False,
