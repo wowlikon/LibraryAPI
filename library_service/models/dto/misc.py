@@ -39,6 +39,7 @@ class BookWithAuthors(SQLModel):
     description: str = Field(description="Описание")
     page_count: int = Field(description="Количество страниц")
     status: BookStatus | None = Field(None, description="Статус")
+    preview_url: str | None = Field(default=None, description="URL изображения")
     authors: List[AuthorRead] = Field(
         default_factory=list, description="Список авторов"
     )
@@ -52,6 +53,7 @@ class BookWithGenres(SQLModel):
     description: str = Field(description="Описание")
     page_count: int = Field(description="Количество страниц")
     status: BookStatus | None = Field(None, description="Статус")
+    preview_url: str | None = Field(default=None, description="URL изображения")
     genres: List[GenreRead] = Field(default_factory=list, description="Список жанров")
 
 
@@ -63,6 +65,7 @@ class BookWithAuthorsAndGenres(SQLModel):
     description: str = Field(description="Описание")
     page_count: int = Field(description="Количество страниц")
     status: BookStatus | None = Field(None, description="Статус")
+    preview_url: str | None = Field(default=None, description="URL изображения")
     authors: List[AuthorRead] = Field(
         default_factory=list, description="Список авторов"
     )

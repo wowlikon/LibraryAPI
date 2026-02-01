@@ -234,6 +234,7 @@ $(document).ready(() => {
   function renderBook(book) {
     $("#book-title").text(book.title);
     $("#book-id").text(`ID: ${book.id}`);
+    const $coverContainer = $("#book-cover-container");
     if (book.page_count && book.page_count > 0) {
       $("#book-page-count-value").text(book.page_count);
       $("#book-page-count-text").removeClass("hidden");
@@ -251,6 +252,30 @@ $(document).ready(() => {
       renderReserveButton();
     } else {
       $("#book-actions-container").empty();
+    }
+
+    if (book.preview_url) {
+      $coverContainer.html(`
+        <img
+            src="${Utils.escapeHtml(book.preview_url)}"
+            alt="Обложка книги ${Utils.escapeHtml(book.title)}"
+            class="w-full h-full object-cover"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="hidden w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+              <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+        </div>
+      `);
+    } else {
+      $coverContainer.html(`
+        <div class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+            <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+        </div>
+      `);
     }
 
     if (book.genres && book.genres.length > 0) {

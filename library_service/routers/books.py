@@ -1,4 +1,6 @@
 """Модуль работы с книгами"""
+import shutil
+from uuid import uuid4
 
 from pydantic import Field
 from typing_extensions import Annotated
@@ -10,12 +12,12 @@ from sqlalchemy import text, case, distinct
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status, UploadFile, File
 from ollama import Client
 from sqlmodel import Session, select, col, func
 
 from library_service.auth import RequireStaff
-from library_service.settings import get_session, OLLAMA_URL
+from library_service.settings import get_session, OLLAMA_URL, BOOKS_PREVIEW_DIR
 from library_service.models.enums import BookStatus
 from library_service.models.db import (
     Author,
@@ -47,9 +49,9 @@ def close_active_loan(session: Session, book_id: int) -> None:
     """Закрывает активную выдачу книги при изменении статуса"""
     active_loan = session.exec(
         select(BookUserLink)
-        .where(BookUserLink.book_id == book_id)
-        .where(BookUserLink.returned_at == None)  # noqa: E711
-    ).first()
+        .where(BookUserLink.book_id == book_id) # ty: ignore
+        .where(BookUserLink.returned_at == None) # ty: ignore
+    ).first() # ty: ignore
 
     if active_loan:
         active_loan.returned_at = datetime.now(timezone.utc)
@@ -72,19 +74,19 @@ def filter_books(
     size: int = Query(20, gt=0, le=100),
 ):
     statement = select(Book).options(
-        selectinload(Book.authors), selectinload(Book.genres), defer(Book.embedding)
+        selectinload(Book.authors), selectinload(Book.genres), defer(Book.embedding) # ty: ignore
     )
 
     if min_page_count:
-        statement = statement.where(Book.page_count >= min_page_count)
+        statement = statement.where(Book.page_count >= min_page_count) # ty: ignore
     if max_page_count:
-        statement = statement.where(Book.page_count <= max_page_count)
+        statement = statement.where(Book.page_count <= max_page_count) # ty: ignore
 
     if author_ids:
         statement = statement.where(
             exists().where(
-                AuthorBookLink.book_id == Book.id,
-                AuthorBookLink.author_id.in_(author_ids),
+                AuthorBookLink.book_id == Book.id, # ty: ignore
+                AuthorBookLink.author_id.in_(author_ids), # ty: ignore
             )
         )
 
@@ -92,7 +94,7 @@ def filter_books(
         for genre_id in genre_ids:
             statement = statement.where(
                 exists().where(
-                    GenreBookLink.book_id == Book.id, GenreBookLink.genre_id == genre_id
+                    GenreBookLink.book_id == Book.id, GenreBookLink.genre_id == genre_id # ty: ignore
                 )
             )
 
@@ -101,13 +103,13 @@ def filter_books(
 
     if q:
         emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=q)["embedding"]
-        distance_col = Book.embedding.cosine_distance(emb)
-        statement = statement.where(Book.embedding.is_not(None))
+        distance_col = Book.embedding.cosine_distance(emb) # ty: ignore
+        statement = statement.where(Book.embedding.is_not(None)) # ty: ignore
 
-        keyword_match = case((Book.title.ilike(f"%{q}%"), 0), else_=1)
+        keyword_match = case((Book.title.ilike(f"%{q}%"), 0), else_=1) # ty: ignore
         statement = statement.order_by(keyword_match, distance_col)
     else:
-        statement = statement.order_by(Book.id)
+        statement = statement.order_by(Book.id) # ty: ignore
 
     offset = (page - 1) * size
     statement = statement.offset(offset).limit(size)
@@ -131,10 +133,16 @@ def create_book(
     full_text = book.title + " " + book.description
     emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=full_text)
     db_book = Book(**book.model_dump(), embedding=emb["embedding"])
+
     session.add(db_book)
     session.commit()
     session.refresh(db_book)
-    return BookRead(**db_book.model_dump(exclude={"embedding"}))
+
+    book_data = db_book.model_dump(exclude={"embedding", "preview_id"})
+    if db_book.preview_id:
+        book_data["preview_url"] = f"/static/books/{db_book.preview_id}.png"
+
+    return BookRead(**book_data)
 
 
 @router.get(
@@ -145,9 +153,17 @@ def create_book(
 )
 def read_books(session: Session = Depends(get_session)):
     """Возвращает список всех книг"""
-    books = session.exec(select(Book)).all()
+    books = session.exec(select(Book)).all() # ty: ignore
+
+    books_data = []
+    for book in books:
+        book_data = book.model_dump(exclude={"embedding", "preview_id"})
+        if book.preview_id:
+            book_data["preview_url"] = f"/static/books/{book.preview_id}.png"
+        books_data.append(book_data)
+
     return BookList(
-        books=[BookRead(**book.model_dump(exclude={"embedding"})) for book in books],
+        books=[BookRead(**book_data) for book_data in books_data],
         total=len(books),
     )
 
@@ -170,18 +186,20 @@ def get_book(
         )
 
     authors = session.scalars(
-        select(Author).join(AuthorBookLink).where(AuthorBookLink.book_id == book_id)
+        select(Author).join(AuthorBookLink).where(AuthorBookLink.book_id == book_id) # ty: ignore
     ).all()
 
     author_reads = [AuthorRead(**author.model_dump()) for author in authors]
 
     genres = session.scalars(
-        select(Genre).join(GenreBookLink).where(GenreBookLink.book_id == book_id)
+        select(Genre).join(GenreBookLink).where(GenreBookLink.book_id == book_id) # ty: ignore
     ).all()
 
     genre_reads = [GenreRead(**genre.model_dump()) for genre in genres]
 
-    book_data = book.model_dump(exclude={"embedding"})
+    book_data = book.model_dump(exclude={"embedding", "preview_id"})
+    if book.preview_id:
+        book_data["preview_url"] = f"/static/books/{book.preview_id}.png"
     book_data["authors"] = author_reads
     book_data["genres"] = genre_reads
 
@@ -233,11 +251,18 @@ def update_book(
         emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=full_text)
         db_book.embedding = emb["embedding"]
 
+    if book_update.page_count is not None:
+        db_book.page_count = book_update.page_count
+
     session.add(db_book)
     session.commit()
     session.refresh(db_book)
 
-    return BookRead(**db_book.model_dump(exclude={"embedding"}))
+    book_data = db_book.model_dump(exclude={"embedding", "preview_id"})
+    if db_book.preview_id:
+        book_data["preview_url"] = f"/static/books/{db_book.preview_id}.png"
+
+    return BookRead(**book_data)
 
 
 @router.delete(
@@ -267,3 +292,61 @@ def delete_book(
     session.delete(book)
     session.commit()
     return book_read
+
+@router.post("/{book_id}/preview")
+async def upload_book_preview(
+    current_user: RequireStaff,
+    file: UploadFile = File(...),
+    book_id: int = Path(..., gt=0),
+    session: Session = Depends(get_session)
+):
+    if not file.content_type == "image/png":
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "PNG required")
+
+    if (file.size or 0) > 10 * 1024 * 1024:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File larger than 10 MB")
+
+    file_uuid= uuid4()
+    filename = f"{file_uuid}.png"
+    file_path = BOOKS_PREVIEW_DIR / filename
+
+    with open(file_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    book = session.get(Book, book_id)
+    if not book:
+        file_path.unlink()
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not found")
+
+    if book.preview_id:
+        old_path = BOOKS_PREVIEW_DIR / f"{book.preview_id}.png"
+        if old_path.exists():
+            old_path.unlink()
+
+    book.preview_id = file_uuid
+    session.add(book)
+    session.commit()
+
+    return {"preview_url": f"/static/books/{filename}"}
+
+
+@router.delete("/{book_id}/preview")
+async def remove_book_preview(
+    current_user: RequireStaff,
+    book_id: int = Path(..., gt=0),
+    session: Session = Depends(get_session)
+):
+    book = session.get(Book, book_id)
+    if not book:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not found")
+
+    if book.preview_id:
+        old_path = BOOKS_PREVIEW_DIR / f"{book.preview_id}.png"
+        if old_path.exists():
+            old_path.unlink()
+
+    book.preview_id = None
+    session.add(book)
+    session.commit()
+
+    return {"preview_url": None}

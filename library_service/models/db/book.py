@@ -1,6 +1,7 @@
 """Модуль DB-моделей книг"""
 
 from typing import TYPE_CHECKING, List
+from uuid import UUID
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, String
@@ -26,7 +27,8 @@ class Book(BookBase, table=True):
         sa_column=Column(String, nullable=False, default="active"),
         description="Статус",
     )
-    embedding: list[float] | None = Field(sa_column=Column(Vector(1024)))
+    embedding: list[float] | None = Field(sa_column=Column(Vector(1024)), description="Эмбэдинг для векторного поиска")
+    preview_id: UUID | None = Field(default=None, unique=True, index=True, description="UUID файла изображения")
     authors: List["Author"] = Relationship(
         back_populates="books", link_model=AuthorBookLink
     )

@@ -181,6 +181,7 @@ async def api_info(app=Depends(lambda: get_app())):
     description="Возвращает схему базы данных с описаниями полей",
 )
 async def api_schema():
+    """Возвращает информацию для создания er-диаграммы"""
     return generator.generate()
 
 

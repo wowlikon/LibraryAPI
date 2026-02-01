@@ -1,4 +1,5 @@
 .env
+library_service/static/books/
 *.log
 
 # Byte-compiled / optimized / DLL files

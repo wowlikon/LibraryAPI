@@ -10,6 +10,9 @@ from toml import load
 
 load_dotenv()
 
+BOOKS_PREVIEW_DIR = Path(__file__).parent / "static" / "books"
+BOOKS_PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
+
 with open("pyproject.toml", "r", encoding="utf-8") as f:
     _pyproject = load(f)
 
