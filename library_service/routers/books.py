@@ -324,12 +324,13 @@ async def upload_book_preview(
     with open(tmp_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    transcode_image(tmp_path)
-
     book = session.get(Book, book_id)
     if not book:
         tmp_path.unlink()
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not found")
+
+    transcode_image(tmp_path)
+    tmp_path.unlink()
 
     if book.preview_id:
         for path in BOOKS_PREVIEW_DIR.glob(f"{book.preview_id}.*"):
