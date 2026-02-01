@@ -1,4 +1,5 @@
 """Модуль работы с книгами"""
+from library_service.services import transcode_image
 import shutil
 from uuid import uuid4
 
@@ -139,9 +140,11 @@ def create_book(
     session.refresh(db_book)
 
     book_data = db_book.model_dump(exclude={"embedding", "preview_id"})
-    if db_book.preview_id:
-        book_data["preview_url"] = f"/static/books/{db_book.preview_id}.png"
-
+    book_data["preview_urls"] = {
+        "png": f"/static/books/{db_book.preview_id}.png",
+        "jpeg": f"/static/books/{db_book.preview_id}.jpg",
+        "webp": f"/static/books/{db_book.preview_id}.webp",
+    } if db_book.preview_id else {}
     return BookRead(**book_data)
 
 
@@ -158,8 +161,11 @@ def read_books(session: Session = Depends(get_session)):
     books_data = []
     for book in books:
         book_data = book.model_dump(exclude={"embedding", "preview_id"})
-        if book.preview_id:
-            book_data["preview_url"] = f"/static/books/{book.preview_id}.png"
+        book_data["preview_urls"] = {
+            "png": f"/static/books/{book.preview_id}.png",
+            "jpeg": f"/static/books/{book.preview_id}.jpg",
+            "webp": f"/static/books/{book.preview_id}.webp",
+        } if book.preview_id else {}
         books_data.append(book_data)
 
     return BookList(
@@ -198,8 +204,11 @@ def get_book(
     genre_reads = [GenreRead(**genre.model_dump()) for genre in genres]
 
     book_data = book.model_dump(exclude={"embedding", "preview_id"})
-    if book.preview_id:
-        book_data["preview_url"] = f"/static/books/{book.preview_id}.png"
+    book_data["preview_urls"] = {
+        "png": f"/static/books/{book.preview_id}.png",
+        "jpeg": f"/static/books/{book.preview_id}.jpg",
+        "webp": f"/static/books/{book.preview_id}.webp",
+    } if book.preview_id else {}
     book_data["authors"] = author_reads
     book_data["genres"] = genre_reads
 
@@ -259,8 +268,11 @@ def update_book(
     session.refresh(db_book)
 
     book_data = db_book.model_dump(exclude={"embedding", "preview_id"})
-    if db_book.preview_id:
-        book_data["preview_url"] = f"/static/books/{db_book.preview_id}.png"
+    book_data["preview_urls"] = {
+        "png": f"/static/books/{db_book.preview_id}.png",
+        "jpeg": f"/static/books/{db_book.preview_id}.jpg",
+        "webp": f"/static/books/{db_book.preview_id}.webp",
+    } if db_book.preview_id else {}
 
     return BookRead(**book_data)
 
@@ -300,34 +312,41 @@ async def upload_book_preview(
     book_id: int = Path(..., gt=0),
     session: Session = Depends(get_session)
 ):
-    if not file.content_type == "image/png":
-        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "PNG required")
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Image required")
 
-    if (file.size or 0) > 10 * 1024 * 1024:
+    if (file.size or 0) > 32 * 1024 * 1024:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File larger than 10 MB")
 
     file_uuid= uuid4()
-    filename = f"{file_uuid}.png"
-    file_path = BOOKS_PREVIEW_DIR / filename
+    tmp_path = BOOKS_PREVIEW_DIR / f"{file_uuid}.upload"
 
-    with open(file_path, "wb") as f:
+    with open(tmp_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
+
+    transcode_image(tmp_path)
 
     book = session.get(Book, book_id)
     if not book:
-        file_path.unlink()
+        tmp_path.unlink()
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not found")
 
     if book.preview_id:
-        old_path = BOOKS_PREVIEW_DIR / f"{book.preview_id}.png"
-        if old_path.exists():
-            old_path.unlink()
+        for path in BOOKS_PREVIEW_DIR.glob(f"{book.preview_id}.*"):
+            if path.exists():
+                path.unlink(missing_ok=True)
 
     book.preview_id = file_uuid
     session.add(book)
     session.commit()
 
-    return {"preview_url": f"/static/books/{filename}"}
+    return {
+            "preview": {
+                "png": f"/static/books/{file_uuid}.png",
+                "jpeg": f"/static/books/{file_uuid}.jpg",
+                "webp": f"/static/books/{file_uuid}.webp",
+            }
+        }
 
 
 @router.delete("/{book_id}/preview")
@@ -341,12 +360,12 @@ async def remove_book_preview(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not found")
 
     if book.preview_id:
-        old_path = BOOKS_PREVIEW_DIR / f"{book.preview_id}.png"
-        if old_path.exists():
-            old_path.unlink()
+        for path in BOOKS_PREVIEW_DIR.glob(f"{book.preview_id}.*"):
+            if path.exists():
+                path.unlink(missing_ok=True)
 
     book.preview_id = None
     session.add(book)
     session.commit()
 
-    return {"preview_url": None}
+    return {"preview_urls": []}

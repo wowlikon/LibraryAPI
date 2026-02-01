@@ -13,6 +13,7 @@ from .captcha import (
     prng,
 )
 from .describe_er import SchemaGenerator
+from .image_processing import transcode_image
 
 __all__ = [
     "limiter",
@@ -28,4 +29,5 @@ __all__ = [
     "REDEEM_TTL",
     "prng",
     "SchemaGenerator",
+    "transcode_image",
 ]

@@ -627,7 +627,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/e8/ef/324f4a28ed0152a32
 
 [[package]]
 name = "lib"
-version = "0.8.1"
+version = "0.9.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },

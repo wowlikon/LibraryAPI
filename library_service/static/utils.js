@@ -160,6 +160,67 @@ const Api = {
       body: formData.toString(),
     });
   },
+
+  async uploadFile(endpoint, formData) {
+    const fullUrl = this.getBaseUrl() + endpoint;
+    const token = StorageHelper.get("access_token");
+
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(fullUrl, {
+        method: "POST",
+        headers: headers,
+        body: formData,
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        const refreshed = await Auth.tryRefresh();
+        if (refreshed) {
+          headers["Authorization"] =
+            `Bearer ${StorageHelper.get("access_token")}`;
+          const retryResponse = await fetch(fullUrl, {
+            method: "POST",
+            headers: headers,
+            body: formData,
+            credentials: "include",
+          });
+          if (retryResponse.ok) {
+            return retryResponse.json();
+          }
+        }
+        Auth.logout();
+        return null;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        let errorMessage = `Ошибка ${response.status}`;
+
+        if (typeof errorData.detail === "string") {
+          errorMessage = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          errorMessage = errorData.detail.map((e) => e.msg || e).join(", ");
+        } else if (errorData.detail?.message) {
+          errorMessage = errorData.detail.message;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+
+        const error = new Error(errorMessage);
+        error.status = response.status;
+        throw error;
+      }
+
+      return response.json();
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 const Auth = {

@@ -34,6 +34,7 @@ $(document).ready(() => {
 
   const pathParts = window.location.pathname.split("/");
   const bookId = parseInt(pathParts[pathParts.length - 1]);
+  let isDraggingOver = false;
   let currentBook = null;
   let cachedUsers = null;
   let selectedLoanUserId = null;
@@ -48,6 +49,28 @@ $(document).ready(() => {
     }
     loadBookData();
     setupEventHandlers();
+    setupCoverUpload();
+  }
+
+  function getPreviewUrl(book) {
+    if (!book.preview_urls) {
+      return null;
+    }
+
+    const priorities = ["webp", "jpeg", "jpg", "png"];
+
+    for (const format of priorities) {
+      if (book.preview_urls[format]) {
+        return book.preview_urls[format];
+      }
+    }
+
+    const availableFormats = Object.keys(book.preview_urls);
+    if (availableFormats.length > 0) {
+      return book.preview_urls[availableFormats[0]];
+    }
+
+    return null;
   }
 
   function setupEventHandlers() {
@@ -73,6 +96,270 @@ $(document).ready(() => {
     const future = new Date();
     future.setDate(future.getDate() + 14);
     $("#loan-due-date").val(future.toISOString().split("T")[0]);
+  }
+
+  function setupCoverUpload() {
+    const $container = $("#book-cover-container");
+    const $fileInput = $("#cover-file-input");
+
+    $fileInput.on("change", function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        uploadCover(file);
+      }
+      $(this).val("");
+    });
+
+    $container.on("dragenter", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!window.canManage()) return;
+      isDraggingOver = true;
+      showDropOverlay();
+    });
+
+    $container.on("dragover", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!window.canManage()) return;
+      isDraggingOver = true;
+    });
+
+    $container.on("dragleave", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!window.canManage()) return;
+
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX;
+      const y = e.clientY;
+
+      if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+        isDraggingOver = false;
+        hideDropOverlay();
+      }
+    });
+
+    $container.on("drop", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!window.canManage()) return;
+
+      isDraggingOver = false;
+      hideDropOverlay();
+
+      const files = e.dataTransfer?.files || [];
+      if (files.length > 0) {
+        const file = files[0];
+
+        if (!file.type.startsWith("image/")) {
+          Utils.showToast("Пожалуйста, загрузите изображение", "error");
+          return;
+        }
+
+        uploadCover(file);
+      }
+    });
+  }
+
+  function showDropOverlay() {
+    const $container = $("#book-cover-container");
+    $container.find(".drop-overlay").remove();
+
+    const $overlay = $(`
+      <div class="drop-overlay absolute inset-0 flex flex-col items-center justify-center z-20 pointer-events-none">
+        <div class="absolute inset-2 border-2 border-dashed border-gray-600 rounded-lg"></div>
+        <svg class="w-10 h-10 text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+        <span class="text-gray-700 text-sm font-medium text-center px-4">Отпустите для загрузки</span>
+      </div>
+    `);
+
+    $container.append($overlay);
+  }
+
+  function hideDropOverlay() {
+    $("#book-cover-container .drop-overlay").remove();
+  }
+
+  async function uploadCover(file) {
+    const $container = $("#book-cover-container");
+
+    const maxSize = 32 * 1024 * 1024;
+    if (file.size > maxSize) {
+      Utils.showToast("Файл слишком большой. Максимум 32 MB", "error");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      Utils.showToast("Пожалуйста, загрузите изображение", "error");
+      return;
+    }
+
+    const $loader = $(`
+      <div class="upload-loader absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center z-20">
+        <svg class="animate-spin w-8 h-8 text-white mb-2" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-white text-sm">Загрузка...</span>
+      </div>
+    `);
+
+    $container.find(".upload-loader").remove();
+    $container.append($loader);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await Api.uploadFile(
+        `/api/books/${bookId}/preview`,
+        formData,
+      );
+
+      if (!response) {
+        return;
+      }
+
+      if (response.preview) {
+        currentBook.preview_urls = response.preview;
+      } else if (response.preview_urls) {
+        currentBook.preview_urls = response.preview_urls;
+      } else {
+        currentBook = response;
+      }
+
+      Utils.showToast("Обложка успешно загружена", "success");
+      renderBookCover(currentBook);
+    } catch (error) {
+      console.error("Upload error:", error);
+      Utils.showToast(error.message || "Ошибка загрузки обложки", "error");
+    } finally {
+      $container.find(".upload-loader").remove();
+    }
+  }
+
+  async function deleteCover() {
+    if (!confirm("Удалить обложку книги?")) {
+      return;
+    }
+
+    const $container = $("#book-cover-container");
+
+    const $loader = $(`
+      <div class="upload-loader absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+        <svg class="animate-spin w-8 h-8 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+    `);
+
+    $container.find(".upload-loader").remove();
+    $container.append($loader);
+
+    try {
+      await Api.delete(`/api/books/${bookId}/preview`);
+
+      currentBook.preview_urls = null;
+      Utils.showToast("Обложка удалена", "success");
+      renderBookCover(currentBook);
+    } catch (error) {
+      console.error("Delete error:", error);
+      Utils.showToast(error.message || "Ошибка удаления обложки", "error");
+    } finally {
+      $container.find(".upload-loader").remove();
+    }
+  }
+
+  function renderBookCover(book) {
+    const $container = $("#book-cover-container");
+    const canManage = window.canManage();
+    const previewUrl = getPreviewUrl(book);
+
+    if (previewUrl) {
+      $container.html(`
+        <img
+          src="${Utils.escapeHtml(previewUrl)}"
+          alt="Обложка книги ${Utils.escapeHtml(book.title)}"
+          class="w-full h-full object-cover"
+          onerror="this.onerror=null; this.parentElement.querySelector('.cover-fallback').classList.remove('hidden'); this.classList.add('hidden');"
+        />
+        <div class="cover-fallback hidden w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center absolute inset-0">
+          <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+        </div>
+        ${
+          canManage
+            ? `
+          <button
+            id="delete-cover-btn"
+            class="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            title="Удалить обложку"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex flex-col items-center justify-center cursor-pointer z-0" id="cover-replace-overlay">
+            <svg class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+            </svg>
+            <span class="text-white text-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-medium pointer-events-none px-2">
+              Заменить
+            </span>
+          </div>
+        `
+            : ""
+        }
+      `);
+
+      if (canManage) {
+        $("#delete-cover-btn").on("click", function (e) {
+          e.stopPropagation();
+          deleteCover();
+        });
+
+        $("#cover-replace-overlay").on("click", function () {
+          $("#cover-file-input").trigger("click");
+        });
+      }
+    } else {
+      if (canManage) {
+        $container.html(`
+          <div
+            id="cover-upload-zone"
+            class="w-full h-full bg-gray-100 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200 transition-all text-center relative"
+          >
+            <div class="absolute inset-2 border-2 border-dashed border-gray-300 rounded-lg pointer-events-none"></div>
+            <svg class="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+            </svg>
+            <span class="text-gray-500 text-xs font-medium px-2">
+              Добавить обложку
+            </span>
+            <span class="text-gray-400 text-xs mt-1 px-2">
+              или перетащите
+            </span>
+          </div>
+        `);
+
+        $("#cover-upload-zone").on("click", function () {
+          $("#cover-file-input").trigger("click");
+        });
+      } else {
+        $container.html(`
+          <div class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+            <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+          </div>
+        `);
+      }
+    }
   }
 
   function loadBookData() {
@@ -234,13 +521,16 @@ $(document).ready(() => {
   function renderBook(book) {
     $("#book-title").text(book.title);
     $("#book-id").text(`ID: ${book.id}`);
-    const $coverContainer = $("#book-cover-container");
+
+    renderBookCover(book);
+
     if (book.page_count && book.page_count > 0) {
       $("#book-page-count-value").text(book.page_count);
       $("#book-page-count-text").removeClass("hidden");
     } else {
       $("#book-page-count-text").addClass("hidden");
     }
+
     $("#book-authors-text").text(
       book.authors.map((a) => a.name).join(", ") || "Автор неизвестен",
     );
@@ -254,39 +544,15 @@ $(document).ready(() => {
       $("#book-actions-container").empty();
     }
 
-    if (book.preview_url) {
-      $coverContainer.html(`
-        <img
-            src="${Utils.escapeHtml(book.preview_url)}"
-            alt="Обложка книги ${Utils.escapeHtml(book.title)}"
-            class="w-full h-full object-cover"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-        />
-        <div class="hidden w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
-              <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-            </svg>
-        </div>
-      `);
-    } else {
-      $coverContainer.html(`
-        <div class="w-full h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
-            <svg class="w-20 h-20 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-            </svg>
-        </div>
-      `);
-    }
-
     if (book.genres && book.genres.length > 0) {
       $("#genres-section").removeClass("hidden");
       const $genres = $("#genres-container");
       $genres.empty();
       book.genres.forEach((g) => {
         $genres.append(`
-            <a href="/books?genre_id=${g.id}" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm transition-colors border border-gray-200">
-                ${Utils.escapeHtml(g.name)}
-            </a>
+          <a href="/books?genre_id=${g.id}" class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm transition-colors border border-gray-200">
+            ${Utils.escapeHtml(g.name)}
+          </a>
         `);
       });
     }
@@ -297,12 +563,12 @@ $(document).ready(() => {
       $authors.empty();
       book.authors.forEach((a) => {
         $authors.append(`
-            <a href="/author/${a.id}" class="flex items-center bg-white hover:bg-gray-50 rounded-lg p-2 border border-gray-200 shadow-sm transition-colors group">
-                <div class="w-8 h-8 bg-gray-200 text-gray-600 group-hover:bg-gray-300 rounded-full flex items-center justify-center text-sm font-bold mr-2 transition-colors">
-                    ${a.name.charAt(0).toUpperCase()}
-                </div>
-                <span class="text-gray-800 font-medium text-sm">${Utils.escapeHtml(a.name)}</span>
-            </a>
+          <a href="/author/${a.id}" class="flex items-center bg-white hover:bg-gray-50 rounded-lg p-2 border border-gray-200 shadow-sm transition-colors group">
+            <div class="w-8 h-8 bg-gray-200 text-gray-600 group-hover:bg-gray-300 rounded-full flex items-center justify-center text-sm font-bold mr-2 transition-colors">
+              ${a.name.charAt(0).toUpperCase()}
+            </div>
+            <span class="text-gray-800 font-medium text-sm">${Utils.escapeHtml(a.name)}</span>
+          </a>
         `);
       });
     }

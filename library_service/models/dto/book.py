@@ -46,7 +46,7 @@ class BookRead(BookBase):
 
     id: int = Field(description="Идентификатор")
     status: BookStatus = Field(description="Статус")
-    preview_url: str | None = Field(None, description="URL изображения")
+    preview_urls: dict[str, str] = Field(default_factory=dict, description="URL изображений")
 
 
 class BookList(SQLModel):
