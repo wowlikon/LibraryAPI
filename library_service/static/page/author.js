@@ -9,7 +9,6 @@ $(document).ready(() => {
 
   Api.get(`/api/authors/${authorId}`)
     .then((author) => {
-      document.title = `LiB - ${author.name}`;
       renderAuthor(author);
       renderBooks(author.books);
       if (window.canManage()) {

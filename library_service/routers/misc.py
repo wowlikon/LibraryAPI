@@ -56,8 +56,14 @@ async def create_genre(request: Request, app=Depends(lambda: get_app())):
 
 
 @router.get("/genre/{genre_id}/edit", include_in_schema=False)
-async def edit_genre(request: Request, genre_id: int, app=Depends(lambda: get_app())):
+async def edit_genre(request: Request, genre_id: str, app=Depends(lambda: get_app())):
     """Рендерит страницу редактирования жанра"""
+
+    try:
+        assert int(genre_id) > 0
+    except:
+        return await unknown(request, app)
+
     return templates.TemplateResponse(request, "edit_genre.html", get_info(app) | {"request": request, "title": "LiB - Редактировать жанр", "id": genre_id})
 
 
@@ -74,15 +80,32 @@ async def create_author(request: Request, app=Depends(lambda: get_app())):
 
 
 @router.get("/author/{author_id}/edit", include_in_schema=False)
-async def edit_author(request: Request, author_id: int, app=Depends(lambda: get_app())):
+async def edit_author(request: Request, author_id: str, app=Depends(lambda: get_app()), session=Depends(get_session)):
     """Рендерит страницу редактирования автора"""
-    return templates.TemplateResponse(request, "edit_author.html", get_info(app) | {"request": request, "title": "LiB - Редактировать автора", "id": author_id})
+
+    try:
+        author = session.get(Author, int(author_id))
+        assert author is not None
+    except:
+        return await unknown(request, app)
+
+    return templates.TemplateResponse(request, "edit_author.html", get_info(app) | {"request": request, "title": f"LiB - Редактировать автора \"{author.name}\"", "id": author_id})
 
 
 @router.get("/author/{author_id}", include_in_schema=False)
-async def author(request: Request, author_id: int, app=Depends(lambda: get_app())):
+async def author(request: Request, author_id: str, app=Depends(lambda: get_app()), session=Depends(get_session)):
     """Рендерит страницу просмотра автора"""
-    return templates.TemplateResponse(request, "author.html", get_info(app) | {"request": request, "title": "LiB - Автор", "id": author_id})
+
+    if author_id == "":
+        return RedirectResponse("/authors")
+
+    try:
+        author = session.get(Author, int(author_id))
+        assert author is not None
+    except:
+        return await unknown(request, app)
+
+    return templates.TemplateResponse(request, "author.html", get_info(app) | {"request": request, "title": f"LiB - Автор \"{author.name}\"", "id": author_id})
 
 
 @router.get("/books", include_in_schema=False)
@@ -98,16 +121,32 @@ async def create_book(request: Request, app=Depends(lambda: get_app())):
 
 
 @router.get("/book/{book_id}/edit", include_in_schema=False)
-async def edit_book(request: Request, book_id: int, app=Depends(lambda: get_app())):
+async def edit_book(request: Request, book_id: str, app=Depends(lambda: get_app()), session=Depends(get_session)):
     """Рендерит страницу редактирования книги"""
-    return templates.TemplateResponse(request, "edit_book.html", get_info(app) | {"request": request, "title": "LiB - Редактировать книгу", "id": book_id})
+
+    try:
+        book = session.get(Book, int(book_id))
+        assert book is not None
+    except:
+        return await unknown(request, app)
+
+    return templates.TemplateResponse(request, "edit_book.html", get_info(app) | {"request": request, "title": f"LiB - Редактировать книгу \"{book.title}\"", "id": book_id})
 
 
 @router.get("/book/{book_id}", include_in_schema=False)
-async def book(request: Request, book_id: int, app=Depends(lambda: get_app()), session=Depends(get_session)):
+async def book(request: Request, book_id: str, app=Depends(lambda: get_app()), session=Depends(get_session)):
     """Рендерит страницу просмотра книги"""
-    book = session.get(Book, book_id)
-    return templates.TemplateResponse(request, "book.html", get_info(app) | {"request": request, "title": "LiB - Книга", "id": book_id, "img": book.preview_id})
+
+    if book_id == "":
+        return RedirectResponse("/books")
+
+    try:
+        book = session.get(Book, int(book_id))
+        assert book is not None
+    except:
+        return await unknown(request, app)
+
+    return templates.TemplateResponse(request, "book.html", get_info(app) | {"request": request, "title": f"LiB - Книга \"{book.title}\"", "id": book_id, "img": book.preview_id})
 
 
 @router.get("/auth", include_in_schema=False)

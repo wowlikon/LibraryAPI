@@ -67,7 +67,8 @@ def get_author(
     author = session.get(Author, author_id)
     if not author:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Author not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Author not found",
         )
 
     books = session.exec(
@@ -98,7 +99,8 @@ def update_author(
     db_author = session.get(Author, author_id)
     if not db_author:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Author not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Author not found",
         )
 
     update_data = author.model_dump(exclude_unset=True)
@@ -125,7 +127,8 @@ def delete_author(
     author = session.get(Author, author_id)
     if not author:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Author not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Author not found",
         )
 
     author_read = AuthorRead(**author.model_dump())

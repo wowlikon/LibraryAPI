@@ -1,23 +1,20 @@
 """Модуль работы с книгами"""
-from library_service.services import transcode_image
-import shutil
-from uuid import uuid4
-
-from pydantic import Field
 from typing_extensions import Annotated
-
-from sqlalchemy.orm import selectinload, defer
-
-from sqlalchemy import text, case, distinct
+from uuid import uuid4
+import shutil
 
 from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status, UploadFile, File
 from ollama import Client
+from pydantic import Field
+from sqlalchemy import text, case, distinct
+from sqlalchemy.orm import selectinload, defer
 from sqlmodel import Session, select, col, func
 
 from library_service.auth import RequireStaff
+from library_service.services import transcode_image
 from library_service.settings import get_session, OLLAMA_URL, BOOKS_PREVIEW_DIR
 from library_service.models.enums import BookStatus
 from library_service.models.db import (
@@ -139,7 +136,8 @@ def create_book(
     session.commit()
     session.refresh(db_book)
 
-    book_data = db_book.model_dump(exclude={"embedding", "preview_id"})
+    book_dict = {k: v for k, v in db_book.__dict__.items() if not k.startswith('_')}
+    book_data = {k: v for k, v in book_dict.items() if k not in {"embedding", "preview_id"}}
     book_data["preview_urls"] = {
         "png": f"/static/books/{db_book.preview_id}.png",
         "jpeg": f"/static/books/{db_book.preview_id}.jpg",
@@ -160,12 +158,17 @@ def read_books(session: Session = Depends(get_session)):
 
     books_data = []
     for book in books:
-        book_data = book.model_dump(exclude={"embedding", "preview_id"})
+        book = book[0]
+        book_dict = dict(book)
+
+        book_data = {k: v for k, v in book_dict.items() if k not in {"embedding", "preview_id"}}
+
         book_data["preview_urls"] = {
             "png": f"/static/books/{book.preview_id}.png",
             "jpeg": f"/static/books/{book.preview_id}.jpg",
             "webp": f"/static/books/{book.preview_id}.webp",
         } if book.preview_id else {}
+
         books_data.append(book_data)
 
     return BookList(
@@ -188,7 +191,8 @@ def get_book(
     book = session.get(Book, book_id)
     if not book:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found",
         )
 
     authors = session.scalars(
@@ -203,7 +207,8 @@ def get_book(
 
     genre_reads = [GenreRead(**genre.model_dump()) for genre in genres]
 
-    book_data = book.model_dump(exclude={"embedding", "preview_id"})
+    book_dict = {k: v for k, v in book.__dict__.items() if not k.startswith('_')}
+    book_data = {k: v for k, v in book_dict.items() if k not in {"embedding", "preview_id"}}
     book_data["preview_urls"] = {
         "png": f"/static/books/{book.preview_id}.png",
         "jpeg": f"/static/books/{book.preview_id}.jpg",
@@ -231,7 +236,8 @@ def update_book(
     db_book = session.get(Book, book_id)
     if not db_book:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found",
         )
 
     if book_update.status is not None:
@@ -292,7 +298,8 @@ def delete_book(
     book = session.get(Book, book_id)
     if not book:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Book not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found",
         )
     book_read = BookRead(
         id=(book.id or 0),
@@ -313,10 +320,16 @@ async def upload_book_preview(
     session: Session = Depends(get_session)
 ):
     if not (file.content_type or "").startswith("image/"):
-        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Image required")
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Image required",
+        )
 
     if (file.size or 0) > 32 * 1024 * 1024:
-        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File larger than 10 MB")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File larger than 10 MB",
+        )
 
     file_uuid= uuid4()
     tmp_path = BOOKS_PREVIEW_DIR / f"{file_uuid}.upload"
@@ -327,7 +340,10 @@ async def upload_book_preview(
     book = session.get(Book, book_id)
     if not book:
         tmp_path.unlink()
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Book not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found",
+        )
 
     transcode_image(tmp_path)
     tmp_path.unlink()

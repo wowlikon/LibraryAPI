@@ -49,7 +49,6 @@ $(document).ready(() => {
         currentGenres.set(g.id, g.name),
       );
 
-      document.title = `Редактирование: ${book.title} | LiB`;
       populateForm(book);
       initAuthorsDropdown();
       initGenresDropdown();

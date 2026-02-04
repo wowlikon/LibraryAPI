@@ -73,15 +73,20 @@ app = get_app(lifespan)
 
 @app.exception_handler(status.HTTP_404_NOT_FOUND)
 async def custom_not_found_handler(request: Request, exc: HTTPException):
-    path = request.url.path
+    if exc.detail == "Not Found":
+        path = request.url.path
 
-    if path.startswith("/api"):
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"detail": "API endpoint not found", "path": path},
-        )
+        if path.startswith("/api/"):
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={"detail": "API endpoint not found", "path": path},
+            )
+        return await unknown(request, app)
 
-    return await unknown(request, app)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
 
 
 @app.middleware("http")

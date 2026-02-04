@@ -32,7 +32,6 @@ $(document).ready(() => {
       originalAuthor = author;
       authorBooks = booksData.books || booksData || [];
 
-      document.title = `Редактирование: ${author.name} | LiB`;
       populateForm(author);
       renderAuthorBooks(authorBooks);
 

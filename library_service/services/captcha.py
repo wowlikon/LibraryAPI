@@ -72,6 +72,7 @@ async def require_captcha(request: Request):
     token = request.cookies.get("capjs_token")
     if not token or token not in redeem_tokens or redeem_tokens[token] < now_ms():
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail={"error": "captcha_required"}
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "captcha_required"},
         )
     del redeem_tokens[token]

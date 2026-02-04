@@ -366,7 +366,6 @@ $(document).ready(() => {
     Api.get(`/api/books/${bookId}`)
       .then((book) => {
         currentBook = book;
-        document.title = `LiB - ${book.title}`;
         renderBook(book);
         if (window.canManage()) {
           $("#edit-book-btn")

@@ -19,7 +19,8 @@ def check_entity_exists(session, model, entity_id, entity_name):
     entity = session.get(model, entity_id)
     if not entity:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"{entity_name} not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{entity_name} not found",
         )
     return entity
 
@@ -33,7 +34,10 @@ def add_relationship(session, link_model, id1, field1, id2, field2, detail):
     ).first()
 
     if existing_link:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail,
+        )
 
     link = link_model(**{field1: id1, field2: id2})
     session.add(link)
@@ -52,7 +56,8 @@ def remove_relationship(session, link_model, id1, field1, id2, field2):
 
     if not link:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Relationship not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Relationship not found",
         )
 
     session.delete(link)

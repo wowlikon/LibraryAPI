@@ -287,7 +287,8 @@ def enable_2fa(
 
     if not current_user.totp_secret:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Secret key not generated"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Secret key not generated",
         )
 
     if not verify_totp_code(secret, data.code):
@@ -299,7 +300,8 @@ def enable_2fa(
     decrypted = cipher.decrypt(base64.b64decode(current_user.totp_secret.encode()))
     if secret != decrypted.decode():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorret secret"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorret secret",
         )
 
     current_user.is_2fa_enabled = True

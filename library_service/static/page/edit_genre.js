@@ -35,7 +35,6 @@ $(document).ready(() => {
       originalGenre = genre;
       genreBooks = booksData.books || booksData || [];
 
-      document.title = `Редактирование: ${genre.name} | LiB`;
       populateForm(genre);
       renderGenreBooks(genreBooks);
 

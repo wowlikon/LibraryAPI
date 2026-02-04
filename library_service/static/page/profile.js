@@ -17,7 +17,7 @@ $(document).ready(() => {
       Api.get("/api/auth/recovery-codes/status").catch(() => null),
     ])
       .then(async ([user, rolesData, recoveryStatus]) => {
-        document.title = `LiB - ${user.full_name || user.username}`;
+        document.title = `LiB - Профиль ${user.full_name || user.username}`;
         currentUsername = user.username;
 
         await renderProfileHeader(user);

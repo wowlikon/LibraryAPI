@@ -11,7 +11,7 @@ services:
       - ./data/db:/var/lib/postgresql/data
     networks:
       - proxy
-    ports: # !сменить внешний порт перед использованием!
+    ports: # !только локальный тест!
       - 5432:5432
     env_file:
       - ./.env
@@ -30,23 +30,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  replication-setup:
-      image: postgres:17-alpine
-      container_name: replication-setup
-      restart: "no"
-      networks:
-          - proxy
-      env_file:
-          - ./.env
-      volumes:
-          - ./setup-replication.sh:/setup-replication.sh
-      entrypoint: ["/bin/sh", "/setup-replication.sh"]
-      depends_on:
-          api:
-              condition: service_started
-          db:
-              condition: service_healthy
 
   llm:
       image: ollama/ollama:latest

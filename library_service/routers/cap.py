@@ -27,11 +27,13 @@ async def challenge(request: Request, ip: str = Depends(get_ip)):
     """Возвращает задачу capjs"""
     if challenges_by_ip[ip] >= MAX_CHALLENGES_PER_IP:
         raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many challenges"
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many challenges",
         )
     if len(active_challenges) >= MAX_TOTAL_CHALLENGES:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Server busy"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Server busy",
         )
 
     token = secrets.token_hex(25)
@@ -60,17 +62,22 @@ async def redeem(request: Request, payload: dict, ip: str = Depends(get_ip)):
 
     if token not in active_challenges:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Invalid challenge"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid challenge",
         )
 
     ch = active_challenges.pop(token)
     challenges_by_ip[ch["ip"]] -= 1
 
     if now_ms() > ch["expires"]:
-        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Expired")
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Expired"
+        )
     if len(solutions) < ch["c"]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Bad solutions"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bad solutions",
         )
 
     def verify(i: int) -> bool:
@@ -84,7 +91,8 @@ async def redeem(request: Request, payload: dict, ip: str = Depends(get_ip)):
     )
     if not all(results):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid solution"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid solution",
         )
 
     r_token = ch["redeem_token"]

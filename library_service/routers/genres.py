@@ -66,7 +66,8 @@ def get_genre(
     genre = session.get(Genre, genre_id)
     if not genre:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Genre not found",
         )
 
     books = session.exec(
@@ -97,7 +98,8 @@ def update_genre(
     db_genre = session.get(Genre, genre_id)
     if not db_genre:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Genre not found",
         )
 
     update_data = genre.model_dump(exclude_unset=True)
@@ -124,7 +126,8 @@ def delete_genre(
     genre = session.get(Genre, genre_id)
     if not genre:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Genre not found",
         )
 
     genre_read = GenreRead(**genre.model_dump())
