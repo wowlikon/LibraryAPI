@@ -1,6 +1,6 @@
 """Основной модуль"""
 
-import asyncio, sys, traceback
+import asyncio, psutil, sys, traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -56,12 +56,18 @@ async def lifespan(_):
         logger.error(f"[-] Seeding failed: {e}")
 
     logger.info("[+] Loading ollama models...")
-    ollama_client = Client(host=OLLAMA_URL)
     try:
+        ollama_client = Client(host=OLLAMA_URL)
         ollama_client.pull("mxbai-embed-large")
-        ollama_client.pull("llama3.2")
+
+        total_memory_bytes = psutil.virtual_memory().total
+        total_memory_gb = total_memory_bytes / (1024 ** 3)
+        if total_memory_gb > 5:
+            ollama_client.pull("qwen3:4b")
+
     except ResponseError as e:
         logger.error(f"[-] Failed to pull models {e}")
+
     asyncio.create_task(cleanup_task())
     logger.info("[+] Starting application...")
     yield  # Обработка запросов

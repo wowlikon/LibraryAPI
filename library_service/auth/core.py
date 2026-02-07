@@ -46,7 +46,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 logger = get_logger()
 
 # OAuth2 схема
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token", auto_error=False)
 
 
 class KeyDeriver:
@@ -217,6 +217,23 @@ def authenticate_user(session: Session, username: str, password: str) -> User | 
     return user
 
 
+def get_optional_user(
+    token: Annotated[str | None, Depends(oauth2_scheme)],
+    session: Session = Depends(get_session),
+) -> User | None:
+    """Возвращает текущего пользователя или None, если не авторизован"""
+    if not token:
+        return None
+    try:
+        token_data = decode_token(token)
+        user = session.get(User, token_data.user_id)
+        if user and user.is_active:
+            return user
+    except HTTPException:
+        pass
+    return None
+
+
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     session: Session = Depends(get_session),
@@ -299,6 +316,7 @@ def require_any_role(allowed_roles: list[str]):
 
 
 # Создание dependencies
+OptionalAuth = Annotated[User | None, Depends(get_optional_user)]
 RequireAuth = Annotated[User, Depends(get_current_active_user)]
 RequireAdmin = Annotated[User, Depends(require_role("admin"))]
 RequireMember = Annotated[User, Depends(require_role("member"))]

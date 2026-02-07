@@ -504,7 +504,7 @@ $(() => {
     $(SELECTORS.adminActions).removeClass("hidden");
   }
 
-  Promise.all([Api.get("/api/authors"), Api.get("/api/genres")])
+  Promise.all([Api.get("/api/authors/"), Api.get("/api/genres/")])
     .then(([authorsData, genresData]) => {
       initAuthors(authorsData.authors || []);
       initGenres(genresData.genres || []);

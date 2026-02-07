@@ -731,7 +731,7 @@ $(document).ready(() => {
     }
 
     try {
-      const data = await Api.get("/api/users?skip=0&limit=500");
+      const data = await Api.get("/api/users/?skip=0&limit=500");
       cachedUsers = data.users;
       renderUsersList(cachedUsers);
     } catch (error) {

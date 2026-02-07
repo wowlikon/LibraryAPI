@@ -13,7 +13,7 @@ from sqlalchemy import text, case, distinct
 from sqlalchemy.orm import selectinload, defer
 from sqlmodel import Session, select, col, func
 
-from library_service.auth import RequireStaff
+from library_service.auth import RequireStaff, OptionalAuth
 from library_service.services import transcode_image
 from library_service.settings import get_session, OLLAMA_URL, BOOKS_PREVIEW_DIR
 from library_service.models.enums import BookStatus
@@ -62,6 +62,7 @@ from sqlalchemy.orm import selectinload
 
 @router.get("/filter", response_model=BookFilteredList)
 def filter_books(
+    current_user: OptionalAuth,
     session: Session = Depends(get_session),
     q: str | None = Query(None, max_length=50, description="Поиск"),
     min_page_count: int | None = Query(None, ge=0),
@@ -100,12 +101,16 @@ def filter_books(
     total = session.scalar(count_statement)
 
     if q:
-        emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=q)["embedding"]
-        distance_col = Book.embedding.cosine_distance(emb) # ty: ignore
-        statement = statement.where(Book.embedding.is_not(None)) # ty: ignore
+        if current_user:
+            emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=q)["embedding"]
+            distance_col = Book.embedding.cosine_distance(emb) # ty: ignore
+            statement = statement.where(Book.embedding.is_not(None)) # ty: ignore
 
-        keyword_match = case((Book.title.ilike(f"%{q}%"), 0), else_=1) # ty: ignore
-        statement = statement.order_by(keyword_match, distance_col)
+            keyword_match = case((Book.title.ilike(f"%{q}%"), 0), else_=1) # ty: ignore
+            statement = statement.order_by(keyword_match, distance_col)
+        else:
+            statement = statement.where(Book.title.ilike(f"%{q}%")) # ty: ignore
+            statement = statement.order_by(Book.id) # ty: ignore
     else:
         statement = statement.order_by(Book.id) # ty: ignore
 

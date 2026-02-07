@@ -21,7 +21,7 @@ $(document).ready(() => {
   showLoadingState();
 
   Promise.all([
-    Api.get("/api/users?skip=0&limit=100"),
+    Api.get("/api/users/?skip=0&limit=100"),
     Api.get("/api/users/roles"),
   ])
     .then(([usersData, rolesData]) => {

@@ -11,20 +11,10 @@ services:
       - ./data/db:/var/lib/postgresql/data
     networks:
       - proxy
-    ports: # !только локальный тест!
-      - 5432:5432
+    #ports: # !только локальный тест!
+    # - 5432:5432
     env_file:
       - ./.env
-    command:
-      - "postgres"
-      - "-c"
-      - "wal_level=logical"
-      - "-c"
-      - "max_replication_slots=10"
-      - "-c"
-      - "max_wal_senders=10"
-      - "-c"
-      - "listen_addresses=*"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -43,19 +33,20 @@ services:
         - ./data/llm:/root/.ollama
       networks:
        - proxy
-      ports: # !только локальный тест!
-        - 11434:11434
+      #ports: # !только локальный тест!
+      # - 11434:11434
       env_file:
         - ./.env
       healthcheck:
         test: ["CMD", "ollama", "list"]
+        start_period: 10s
         interval: 10s
         timeout: 5s
         retries: 5
       deploy:
         resources:
           limits:
-            memory: 5g
+            memory: 6g
 
   api:
     build: .
@@ -68,8 +59,8 @@ services:
         max-file: "3"
     networks:
       - proxy
-    ports: # !только локальный тест!
-      - 8000:8000
+    #ports: # !только локальный тест!
+    # - 8000:8000
     env_file:
       - ./.env
     volumes:
