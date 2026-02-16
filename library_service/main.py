@@ -1,4 +1,5 @@
 """Основной модуль"""
+from library_service.services.embeddings import ensure_embeddings
 from starlette.middleware.base import BaseHTTPMiddleware
 
 import asyncio, sys, traceback
@@ -22,7 +23,7 @@ from library_service.settings import (
     get_app,
     get_logger,
     OLLAMA_URL,
-    ASSISTANT_LLM,
+    ASSISTANT_LLM, EMBEDDINGS_MODEL, REGENERATE_EMBEDDINGS_FORCE, SKIP_REGENERATE_EMBEDDINGS,
 )
 
 
@@ -53,7 +54,7 @@ async def lifespan(_):
     logger.info("[+] Loading ollama models...")
     try:
         ollama_client = Client(host=OLLAMA_URL)
-        ollama_client.pull("mxbai-embed-large")
+        ollama_client.pull(EMBEDDINGS_MODEL)
 
         if ASSISTANT_LLM:
             ollama_client.pull(ASSISTANT_LLM)
@@ -62,6 +63,8 @@ async def lifespan(_):
 
     except ResponseError as e:
         logger.error(f"[-] Failed to pull models {e}")
+
+    ensure_embeddings(REGENERATE_EMBEDDINGS_FORCE, SKIP_REGENERATE_EMBEDDINGS)
 
     asyncio.create_task(cleanup_task())
     logger.info("[+] Starting application...")

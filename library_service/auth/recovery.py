@@ -20,6 +20,7 @@ from .core import (
 )
 from library_service.settings import get_logger
 
+# Получение логгера
 logger = get_logger()
 
 

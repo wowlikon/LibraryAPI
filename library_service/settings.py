@@ -100,6 +100,9 @@ PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DATABASE = os.getenv("POSTGRES_DB")
 
 OLLAMA_URL = os.getenv("OLLAMA_URL")
+EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL", "bge-m3")
+REGENERATE_EMBEDDINGS_FORCE = os.getenv("REGENERATE_EMBEDDINGS", "").lower() in ("1", "true", "yes")
+SKIP_REGENERATE_EMBEDDINGS = os.getenv("SKIP_EMBEDDINGS", "").lower() in ("1", "true", "yes")
 
 ASSISTANT_LLM = ""
 logger = get_logger()

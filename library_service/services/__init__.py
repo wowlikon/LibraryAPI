@@ -14,6 +14,12 @@ from .captcha import (
 )
 from .describe_er import SchemaGenerator
 from .image_processing import transcode_image
+from .embeddings import (
+    get_ollama_client,
+    generate_embedding,
+    generate_book_embedding,
+    generate_search_embedding,
+)
 
 __all__ = [
     "limiter",
@@ -30,4 +36,8 @@ __all__ = [
     "prng",
     "SchemaGenerator",
     "transcode_image",
+    "get_ollama_client",
+    "generate_embedding",
+    "generate_book_embedding",
+    "generate_search_embedding",
 ]

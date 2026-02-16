@@ -7,15 +7,13 @@ from datetime import datetime, timezone
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status, UploadFile, File
-from ollama import Client
 from pydantic import Field
 from sqlalchemy import text, case, distinct
 from sqlalchemy.orm import selectinload, defer
 from sqlmodel import Session, select, col, func
 
 from library_service.auth import RequireStaff, OptionalAuth
-from library_service.services import transcode_image
-from library_service.settings import get_session, OLLAMA_URL, BOOKS_PREVIEW_DIR
+from library_service.settings import get_session, BOOKS_PREVIEW_DIR
 from library_service.models.enums import BookStatus
 from library_service.models.db import (
     Author,
@@ -37,10 +35,14 @@ from library_service.models.dto.misc import (
     BookWithAuthorsAndGenres,
     BookFilteredList,
 )
+from library_service.services import (
+    transcode_image,
+    generate_book_embedding,
+    generate_search_embedding
+)
 
 
 router = APIRouter(prefix="/books", tags=["books"])
-ollama_client = Client(host=OLLAMA_URL)
 
 
 def close_active_loan(session: Session, book_id: int) -> None:
@@ -102,7 +104,7 @@ def filter_books(
 
     if q:
         if current_user:
-            emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=q)["embedding"]
+            emb = generate_search_embedding(q)
             distance_col = Book.embedding.cosine_distance(emb) # ty: ignore
             statement = statement.where(Book.embedding.is_not(None)) # ty: ignore
 
@@ -133,9 +135,8 @@ def create_book(
     session: Session = Depends(get_session),
 ):
     """Создает новую книгу в системе"""
-    full_text = book.title + " " + book.description
-    emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=full_text)
-    db_book = Book(**book.model_dump(), embedding=emb["embedding"])
+    emb = generate_book_embedding(book.title, book.description)
+    db_book = Book(**book.model_dump(), embedding=emb)
 
     session.add(db_book)
     session.commit()
@@ -263,13 +264,10 @@ def update_book(
         if book_update.description is not None:
             db_book.description = book_update.description
 
-        full_text = (
-            (book_update.title or db_book.title)
-            + " "
-            + (book_update.description or db_book.description)
+        db_book.embedding = generate_book_embedding(
+            book_update.title or db_book.title,
+            book_update.description or db_book.description,
         )
-        emb = ollama_client.embeddings(model="mxbai-embed-large", prompt=full_text)
-        db_book.embedding = emb["embedding"]
 
     if book_update.page_count is not None:
         db_book.page_count = book_update.page_count
