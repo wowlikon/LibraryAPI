@@ -84,7 +84,7 @@ async def edit_author(request: Request, author_id: str, app=Depends(lambda: get_
     """Рендерит страницу редактирования автора"""
 
     try:
-        author = session.get(Author, int(author_id))
+        author = session.get(Author, int(author_id)) # ty: ignore
         assert author is not None
     except:
         return await unknown(request, app)
@@ -100,7 +100,7 @@ async def author(request: Request, author_id: str, app=Depends(lambda: get_app()
         return RedirectResponse("/authors")
 
     try:
-        author = session.get(Author, int(author_id))
+        author = session.get(Author, int(author_id)) # ty: ignore
         assert author is not None
     except:
         return await unknown(request, app)
@@ -125,7 +125,7 @@ async def edit_book(request: Request, book_id: str, app=Depends(lambda: get_app(
     """Рендерит страницу редактирования книги"""
 
     try:
-        book = session.get(Book, int(book_id))
+        book = session.get(Book, int(book_id)) # ty: ignore
         assert book is not None
     except:
         return await unknown(request, app)
@@ -141,7 +141,7 @@ async def book(request: Request, book_id: str, app=Depends(lambda: get_app()), s
         return RedirectResponse("/books")
 
     try:
-        book = session.get(Book, int(book_id))
+        book = session.get(Book, int(book_id)) # ty: ignore
         assert book is not None
     except:
         return await unknown(request, app)
@@ -238,9 +238,9 @@ async def api_stats(session=Depends(get_session)):
     users = select(func.count()).select_from(User)
     return JSONResponse(
         content={
-            "authors": session.exec(authors).one(),
-            "books": session.exec(books).one(),
-            "genres": session.exec(genres).one(),
-            "users": session.exec(users).one(),
+            "authors": session.exec(authors).one(), # ty: ignore
+            "books":   session.exec(books).one(),   # ty: ignore
+            "genres":  session.exec(genres).one(),  # ty: ignore
+            "users":   session.exec(users).one(),   # ty: ignore
         }
     )

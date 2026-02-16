@@ -37,11 +37,13 @@ from .core import (
     is_user_admin,
     OptionalAuth,
     RequireAuth,
+    RequireAuthWS,
     RequireAdmin,
     RequireMember,
     RequireLibrarian,
     RequirePartialAuth,
     RequireStaff,
+    RequireStaffWS,
 )
 
 from .seed import (
@@ -100,10 +102,12 @@ __all__ = [
     "is_user_admin",
     "OptionalAuth",
     "RequireAuth",
+    "RequireAuthWS",
     "RequireAdmin",
     "RequireMember",
     "RequireLibrarian",
     "RequireStaff",
+    "RequireStaffWS",
     "seed_roles",
     "seed_admin",
     "run_seeds",

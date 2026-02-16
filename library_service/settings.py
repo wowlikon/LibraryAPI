@@ -3,6 +3,7 @@
 import os, logging
 from pathlib import Path
 
+import psutil
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from sqlmodel import Session, create_engine
@@ -99,6 +100,17 @@ PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DATABASE = os.getenv("POSTGRES_DB")
 
 OLLAMA_URL = os.getenv("OLLAMA_URL")
+
+ASSISTANT_LLM = ""
+logger = get_logger()
+total_memory_bytes = psutil.virtual_memory().total
+total_memory_gb = total_memory_bytes / (1024 ** 3)
+if total_memory_gb > 5:
+    ASSISTANT_LLM = os.getenv("ASSISTANT_LLM", "")
+    if not ASSISTANT_LLM:
+        logger.info("[=] Assistant model not set")
+else:
+    logger.info("[=] Not enough RAM for LLM")
 
 if not all([HOST, PORT, USER, PASSWORD, DATABASE, OLLAMA_URL]):
     raise ValueError("Missing required POSTGRES environment variables")

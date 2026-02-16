@@ -11,6 +11,7 @@ from .relationships import router as relationships_router
 from .cap import router as cap_router
 from .users import router as users_router
 from .misc import router as misc_router
+from .llm import router as llm_router
 
 
 api_router = APIRouter()
@@ -26,3 +27,4 @@ api_router.include_router(loans_router, prefix="/api")
 api_router.include_router(cap_router, prefix="/api")
 api_router.include_router(users_router, prefix="/api")
 api_router.include_router(relationships_router, prefix="/api")
+api_router.include_router(llm_router, prefix="/api")
