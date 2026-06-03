@@ -21,92 +21,111 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Всего выдач</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="total-loans">—</p>
+    <!-- Два столбца: слева 4 метрики выдач, справа 2 метрики книг -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Левая колонка: 4 метрики из выдач (период) -->
+        <div class="lg:col-span-2 space-y-4">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide px-1 mb-3">Метрики выдач (период)</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Всего выдач -->
+                <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Всего выдач</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="total-loans">—</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
-                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
+
+                <!-- Активные выдачи -->
+                <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Активные выдачи</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="active-loans">—</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Возвращено -->
+                <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Возвращено</p>
+                            <p class="text-2xl font-semibold text-gray-900" id="returned-loans">—</p>
+                        </div>
+                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Просрочено -->
+                <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Просрочено</p>
+                            <p class="text-2xl font-semibold text-red-600" id="overdue-loans">—</p>
+                        </div>
+                        <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Активные выдачи</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="active-loans">—</p>
-                </div>
-                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Возвращено</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="returned-loans">—</p>
-                </div>
-                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path>
-                    </svg>
+        <!-- Правая колонка: 2 метрики из книг (сейчас) -->
+        <div class="space-y-4">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide px-1 mb-3">Статус книг (сейчас)</h3>
+            
+            <!-- Забронировано -->
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Забронировано</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="reserved-books">—</p>
+                    </div>
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Просрочено</p>
-                    <p class="text-2xl font-semibold text-red-600" id="overdue-loans">—</p>
-                </div>
-                <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Забронировано</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="reserved-books">—</p>
-                </div>
-                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Выдано сейчас</p>
-                    <p class="text-2xl font-semibold text-gray-900" id="borrowed-books">—</p>
-                </div>
-                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
+            <!-- Выдано сейчас -->
+            <div class="bg-white rounded-xl shadow-sm p-5 border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1.5 uppercase tracking-wide">Выдано сейчас</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="borrowed-books">—</p>
+                    </div>
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Графики -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <h2 class="text-base font-medium text-gray-700 mb-6">Выдачи по дням</h2>
@@ -123,6 +142,7 @@
         </div>
     </div>
 
+    <!-- Топ книг -->
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
         <h2 class="text-base font-medium text-gray-700 mb-6">Топ книг по выдачам</h2>
         <div id="top-books-container" class="space-y-2">
@@ -135,3 +155,4 @@
 {% endblock %} {% block scripts %}
 <script src="/static/page/analytics.js"></script>
 {% endblock %}
+""""""""
