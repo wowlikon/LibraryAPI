@@ -5,19 +5,17 @@ import base64
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
+from library_service.settings import get_session, limiter
 from library_service.services import require_captcha
 from library_service.models.db import Role, User
 from library_service.models.dto import (
     UserCreate,
     UserRead,
     UserUpdate,
-    UserList,
-    RoleRead,
-    RoleList,
     LoginResponse,
     RecoveryCodeUse,
     RegisterResponse,
@@ -29,12 +27,9 @@ from library_service.models.dto import (
     TOTPDisableRequest,
 )
 
-from library_service.settings import get_session
 from library_service.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     RequireAuth,
-    RequireAdmin,
-    RequireStaff,
     authenticate_user,
     get_password_hash,
     decode_token,
@@ -46,7 +41,6 @@ from library_service.auth import (
     get_codes_status,
     verify_totp_code,
     verify_password,
-    qr_to_bitmap_b64,
     create_partial_token,
     RequirePartialAuth,
     verify_and_use_code,
@@ -121,7 +115,9 @@ def register(
     summary="Получение токена",
     description="Аутентификация и получение токенов",
 )
+@limiter.limit("5/minute")
 def login(
+    request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Session = Depends(get_session),
 ):

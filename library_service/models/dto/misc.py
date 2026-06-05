@@ -3,16 +3,15 @@
 from datetime import datetime
 from typing import List
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import Field, SQLModel
 
-from .author import AuthorRead
-from .genre import GenreRead
-from .book import BookRead
-from .loan import LoanRead
 from ..enums import BookStatus
-
-from .user import UserCreate, UserRead, UserUpdate
+from .author import AuthorRead
+from .book import BookRead
+from .genre import GenreRead
+from .loan import LoanRead
 from .recovery import RecoveryCodesResponse
+from .user import UserCreate, UserRead, UserUpdate
 
 
 class AuthorWithBooks(SQLModel):
@@ -39,7 +38,17 @@ class BookWithAuthors(SQLModel):
     description: str = Field(description="Описание")
     page_count: int = Field(description="Количество страниц")
     status: BookStatus | None = Field(None, description="Статус")
-    preview_urls: dict[str, str] = Field(default_factory=dict, description="URL изображений")
+    preview_urls: dict[str, str] = Field(
+        default_factory=dict,
+        description="URL обложек в разных форматах",
+        schema_extra={
+            "example": {
+                "png": "/static/books/00000000-0000-4000-8000-000000000000.png",
+                "jpeg": "/static/books/00000000-0000-4000-8000-000000000000.jpg",
+                "webp": "/static/books/00000000-0000-4000-8000-000000000000.webp",
+            }
+        },
+    )
     authors: List[AuthorRead] = Field(
         default_factory=list, description="Список авторов"
     )
@@ -53,7 +62,17 @@ class BookWithGenres(SQLModel):
     description: str = Field(description="Описание")
     page_count: int = Field(description="Количество страниц")
     status: BookStatus | None = Field(None, description="Статус")
-    preview_urls: dict[str, str] | None = Field(default=None, description="URL изображений")
+    preview_urls: dict[str, str] = Field(
+        default_factory=dict,
+        description="URL обложек в разных форматах",
+        schema_extra={
+            "example": {
+                "png": "/static/books/00000000-0000-4000-8000-000000000000.png",
+                "jpeg": "/static/books/00000000-0000-4000-8000-000000000000.jpg",
+                "webp": "/static/books/00000000-0000-4000-8000-000000000000.webp",
+            }
+        },
+    )
     genres: List[GenreRead] = Field(default_factory=list, description="Список жанров")
 
 
@@ -65,7 +84,17 @@ class BookWithAuthorsAndGenres(SQLModel):
     description: str = Field(description="Описание")
     page_count: int = Field(description="Количество страниц")
     status: BookStatus | None = Field(None, description="Статус")
-    preview_urls: dict[str, str] | None = Field(default=None, description="URL изображений")
+    preview_urls: dict[str, str] = Field(
+        default_factory=dict,
+        description="URL обложек в разных форматах",
+        schema_extra={
+            "example": {
+                "png": "/static/books/00000000-0000-4000-8000-000000000000.png",
+                "jpeg": "/static/books/00000000-0000-4000-8000-000000000000.jpg",
+                "webp": "/static/books/00000000-0000-4000-8000-000000000000.webp",
+            }
+        },
+    )
     authors: List[AuthorRead] = Field(
         default_factory=list, description="Список авторов"
     )
@@ -104,7 +133,9 @@ class UserUpdateByAdmin(UserUpdate):
     """Обновление пользователя администратором"""
 
     is_active: bool = Field(True, description="Не является ли заблокированным")
-    roles: list[str] | None = Field(None, description="Роли", schema_extra={"examples": [None]})
+    roles: list[str] | None = Field(
+        None, description="Роли", schema_extra={"examples": [None]}
+    )
 
 
 class LoginResponse(SQLModel):

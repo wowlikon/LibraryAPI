@@ -1,10 +1,10 @@
 """Модуль работы с векторными эмбеддингами"""
+
 from typing import List, Optional
 
 from ollama import Client
 
-from library_service.settings import OLLAMA_URL, EMBEDDINGS_MODEL, get_logger
-
+from library_service.settings import EMBEDDINGS_MODEL, OLLAMA_URL, get_logger
 
 _client: Optional[Client] = None
 logger = get_logger()
@@ -40,8 +40,9 @@ def generate_search_embedding(query: str) -> List[float]:
 def regenerate_embeddings(force: bool = False) -> int:
     """Генерирует эмбеддинги для книг в БД."""
     from sqlmodel import Session, select
-    from library_service.settings import engine
+
     from library_service.models.db import Book
+    from library_service.settings import engine
 
     with Session(engine) as session:
         statement = select(Book)
@@ -61,8 +62,7 @@ def regenerate_embeddings(force: bool = False) -> int:
         for book in books:
             try:
                 book.embedding = generate_book_embedding(
-                    book.title,
-                    book.description or ""
+                    book.title, book.description or ""
                 )
                 session.add(book)
                 logger.debug(f"  [+] Book {book.id}: {book.title[:50]}")

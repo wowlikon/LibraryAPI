@@ -127,7 +127,7 @@ def read_loans(
 )
 def get_loans_analytics(
     current_user: RequireAdmin,
-    days: int = Query(30, ge=1, le=365, description="Количество дней для анализа"),
+    days: int = Query(7, ge=1, le=365, description="Количество дней для анализа"),
     session: Session = Depends(get_session),
 ):
     """Возвращает аналитику по выдачам и возвратам книг"""
@@ -320,9 +320,19 @@ def update_loan(
         db_loan.user_id = loan_update.user_id
 
     if loan_update.due_date is not None:
+        if not is_staff:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only staff can change due date",
+            )
         db_loan.due_date = loan_update.due_date
 
     if loan_update.returned_at is not None:
+        if not is_staff:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only staff can mark loan as returned",
+            )
         if db_loan.returned_at is not None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

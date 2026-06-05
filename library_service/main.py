@@ -1,29 +1,40 @@
 """Основной модуль"""
-from library_service.services.embeddings import ensure_embeddings
-from starlette.middleware.base import BaseHTTPMiddleware
 
-import asyncio, sys, traceback
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from fastapi import status, Request, Response, HTTPException
+from fastapi import status
 from fastapi.staticfiles import StaticFiles
 from ollama import Client, ResponseError
 from sqlmodel import Session
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from library_service.auth import run_seeds
+from library_service.middlewares import (
+    catch_exception_middleware,
+    log_request_middleware,
+    not_found_handler,
+)
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi import _rate_limit_exceeded_handler
 from library_service.routers import api_router
-from library_service.services.captcha import limiter, cleanup_task, require_captcha
-from library_service.middlewares import catch_exception_middleware, log_request_middleware, not_found_handler
+from library_service.services.captcha import cleanup_task
+from library_service.services.embeddings import ensure_embeddings
 from library_service.settings import (
+    ASSISTANT_LLM,
+    EMBEDDINGS_MODEL,
     LOGGING_CONFIG,
+    OLLAMA_URL,
+    REGENERATE_EMBEDDINGS_FORCE,
+    SKIP_REGENERATE_EMBEDDINGS,
     engine,
     get_app,
     get_logger,
-    OLLAMA_URL,
-    ASSISTANT_LLM, EMBEDDINGS_MODEL, REGENERATE_EMBEDDINGS_FORCE, SKIP_REGENERATE_EMBEDDINGS,
+    limiter,
 )
 
 
@@ -73,6 +84,9 @@ async def lifespan(_):
 
 
 app = get_app(lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(BaseHTTPMiddleware, dispatch=log_request_middleware)  # type: ignore[arg-type]
 app.add_middleware(BaseHTTPMiddleware, dispatch=catch_exception_middleware)  # type: ignore[arg-type]
 app.add_exception_handler(status.HTTP_404_NOT_FOUND, not_found_handler)  # type: ignore[arg-type]
@@ -92,7 +106,8 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "library_service.main:app",
-        host="0.0.0.0", port=8000,
+        host="0.0.0.0",
+        port=8000,
         proxy_headers=True,
         forwarded_allow_ips="*",
         log_config=LOGGING_CONFIG,

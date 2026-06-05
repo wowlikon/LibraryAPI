@@ -395,7 +395,7 @@ $(document).ready(() => {
         </div>
         <div class="role-items max-h-48 overflow-y-auto"></div>
       </div>
-    `);
+    `.trim());
 
     const $roleItems = $dropdown.find(".role-items");
 
@@ -417,20 +417,27 @@ $(document).ready(() => {
     });
 
     const $button = $(button);
-    const buttonOffset = $button.offset();
-    const buttonHeight = $button.outerHeight();
 
     $dropdown.css({
-      position: "fixed",
-      top: buttonOffset.top + buttonHeight + 5,
-      left: Math.max(10, buttonOffset.left - 150),
+      top: "100%",
+      right: "0",
+      marginTop: "0.25rem",
     });
 
-    $("body").append($dropdown);
+    $button.parent().append($dropdown);
     activeDropdown = $dropdown;
 
+    // Check if dropdown goes off-screen to the left
+    if ($dropdown.offset().left < 10) {
+      $dropdown.css({
+        right: "auto",
+        left: "0",
+      });
+    }
+
     setTimeout(() => {
-      $dropdown.find(".role-search-input").focus();
+      const input = $dropdown.find(".role-search-input")[0];
+      if (input) input.focus();
     }, 50);
 
     $dropdown.find(".role-search-input").on("input", function () {

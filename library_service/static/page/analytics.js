@@ -8,7 +8,7 @@ $(document).ready(() => {
 
   let loansChart = null;
   let returnsChart = null;
-  let currentPeriod = 30;
+  let currentPeriod = 7;
 
   init();
 

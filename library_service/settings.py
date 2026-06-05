@@ -1,6 +1,7 @@
 """Модуль настроек проекта"""
 
-import os, logging
+import logging
+import os
 from pathlib import Path
 
 import psutil
@@ -8,8 +9,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from sqlmodel import Session, create_engine
 from toml import load
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 load_dotenv()
+
+limiter = Limiter(key_func=get_remote_address)
 
 BOOKS_PREVIEW_DIR = Path(__file__).parent / "static" / "books"
 BOOKS_PREVIEW_DIR.mkdir(parents=True, exist_ok=True)
@@ -101,13 +106,21 @@ DATABASE = os.getenv("POSTGRES_DB")
 
 OLLAMA_URL = os.getenv("OLLAMA_URL")
 EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL", "bge-m3")
-REGENERATE_EMBEDDINGS_FORCE = os.getenv("REGENERATE_EMBEDDINGS", "").lower() in ("1", "true", "yes")
-SKIP_REGENERATE_EMBEDDINGS = os.getenv("SKIP_EMBEDDINGS", "").lower() in ("1", "true", "yes")
+REGENERATE_EMBEDDINGS_FORCE = os.getenv("REGENERATE_EMBEDDINGS", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+SKIP_REGENERATE_EMBEDDINGS = os.getenv("SKIP_EMBEDDINGS", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 
 ASSISTANT_LLM = ""
 logger = get_logger()
 total_memory_bytes = psutil.virtual_memory().total
-total_memory_gb = total_memory_bytes / (1024 ** 3)
+total_memory_gb = total_memory_bytes / (1024**3)
 if total_memory_gb > 5:
     ASSISTANT_LLM = os.getenv("ASSISTANT_LLM", "")
     if not ASSISTANT_LLM:
