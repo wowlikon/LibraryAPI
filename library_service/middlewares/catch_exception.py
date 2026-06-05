@@ -1,7 +1,6 @@
 import sys
 
-from fastapi import Request, Response, status
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
 from library_service.settings import get_logger
@@ -19,9 +18,9 @@ async def catch_exception_middleware(request: Request, call_next):
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
-                "message": str(exc),
-                "type": exc_type.__name__ if exc_type else "Unknown",
-                "path": str(request.url),
                 "method": request.method,
+                "path": str(request.url),
+                "type": exc_type.__name__ if exc_type else "Unknown",
+                # "message": str(exc),  # DEBUG ONLY!
             },
         )

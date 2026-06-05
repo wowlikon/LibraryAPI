@@ -66,7 +66,4 @@ async def log_request_middleware(request: Request, call_next):
             },
             exc_info=True,
         )
-        return Response(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content="Internal Server Error",
-        )
+        raise e

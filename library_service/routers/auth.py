@@ -43,7 +43,6 @@ from library_service.auth import (
     verify_password,
     create_partial_token,
     RequirePartialAuth,
-    verify_and_use_code,
     cipher,
 )
 
