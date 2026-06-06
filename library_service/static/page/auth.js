@@ -403,7 +403,7 @@ $(() => {
         const $parent = $capElement.parent();
         $capElement.remove();
         $parent.append(
-          `<cap-widget id="cap" data-cap-api-endpoint="/api/cap/" style="--cap-widget-width: 100%;"></cap-widget>`,
+          `<cap-widget id="cap" data-cap-api-endpoint="/api/cap/"></cap-widget>`,
         );
         return;
       }

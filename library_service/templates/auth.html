@@ -186,21 +186,6 @@
                 <div class="mb-4">
                 		<cap-widget id="cap"
                         data-cap-api-endpoint="/api/cap/"
-                        style="
-                            --cap-widget-width: 100%;
-                            --cap-background: #fdfdfd;
-                            --cap-border-color: #d1d5db;
-                            --cap-border-radius: 8px;
-                            --cap-widget-height: auto;
-                            --cap-color: #212121;
-                            --cap-checkbox-size: 32px;
-                            --cap-checkbox-border: 1.5px dashed #d1d5db;
-                            --cap-checkbox-border-radius: 6px;
-                            --cap-checkbox-background: #fafafa;
-                            --cap-checkbox-margin: 2px;
-                            --cap-spinner-color: #4b5563;
-                            --cap-spinner-background-color: #eee;
-                            --cap-spinner-thickness: 5px;"
                     ></cap-widget>
                 </div>
 
@@ -348,6 +333,24 @@
     transform: translateY(-12px);
     pointer-events: none;
     height: 0; opacity: 0;
+}
+cap-widget {
+    display: block;
+    width: 100%;
+    --cap-widget-width: 100%;
+    --cap-widget-height: 54px;
+    --cap-background: #fdfdfd;
+    --cap-border-color: #d1d5db;
+    --cap-border-radius: 8px;
+    --cap-color: #212121;
+    --cap-checkbox-size: 32px;
+    --cap-checkbox-border: 1.5px dashed #d1d5db;
+    --cap-checkbox-border-radius: 6px;
+    --cap-checkbox-background: #fafafa;
+    --cap-checkbox-margin: 2px;
+    --cap-spinner-color: #4b5563;
+    --cap-spinner-background-color: #eee;
+    --cap-spinner-thickness: 5px;
 }
 </style>
 {% endblock %} {% block scripts %}
