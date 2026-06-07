@@ -65,10 +65,28 @@ async def lifespan(_):
     logger.info("[+] Loading ollama models...")
     try:
         ollama_client = Client(host=OLLAMA_URL)
-        ollama_client.pull(EMBEDDINGS_MODEL)
+        
+        # Получаем список локальных моделей для ускорения запуска в офлайне
+        local_models = []
+        try:
+            local_models = [m.get("model", m.get("name", "")) for m in ollama_client.list().get("models", [])]
+        except Exception as list_err:
+            logger.warning(f"[-] Failed to list local models: {list_err}")
+
+        def ensure_model(model_name: str):
+            if not model_name:
+                return
+            exists = any(m == model_name or m.startswith(model_name + ":") for m in local_models)
+            if exists:
+                logger.info(f"[+] Model '{model_name}' is already local. Skipping pull.")
+            else:
+                logger.info(f"[+] Model '{model_name}' not found locally. Pulling...")
+                ollama_client.pull(model_name)
+
+        ensure_model(EMBEDDINGS_MODEL)
 
         if ASSISTANT_LLM:
-            ollama_client.pull(ASSISTANT_LLM)
+            ensure_model(ASSISTANT_LLM)
         else:
             logger.info("[=] AI-assistant is not available")
 

@@ -61,13 +61,36 @@ const Utils = {
 
   getGravatarUrl: async (email) => {
     if (!email) return "";
-    const msgBuffer = new TextEncoder().encode(email.trim().toLowerCase());
-    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    return `https://www.gravatar.com/avatar/${hashHex}?d=identicon&s=200`;
+    if (navigator.onLine) {
+      try {
+        const msgBuffer = new TextEncoder().encode(email.trim().toLowerCase());
+        const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        return `https://www.gravatar.com/avatar/${hashHex}?d=identicon&s=200`;
+      } catch (e) {
+        console.error("Failed to generate Gravatar URL, falling back to SVG:", e);
+      }
+    }
+
+    // Офлайн-заглушка: динамический SVG-аватар с первой буквой почты/имени
+    const initial = email.charAt(0).toUpperCase();
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+      hash = email.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colors = [
+      "#3b82f6", "#10b981", "#ef4444", "#f59e0b", "#8b5cf6",
+      "#ec4899", "#14b8a6", "#6366f1", "#06b6d4", "#a855f7"
+    ];
+    const color = colors[Math.abs(hash) % colors.length];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="50" fill="${encodeURIComponent(color)}"/>
+      <text x="50%" y="55%" font-family="sans-serif" font-size="45" font-weight="bold" fill="%23ffffff" dominant-baseline="middle" text-anchor="middle">${initial}</text>
+    </svg>`;
+    return `data:image/svg+xml;utf8,${svg}`;
   },
 };
 
