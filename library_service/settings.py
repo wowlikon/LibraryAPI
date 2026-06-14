@@ -1,5 +1,8 @@
 """Модуль настроек проекта"""
 
+
+import base64
+import urllib.parse
 import logging
 import os
 from pathlib import Path
@@ -105,6 +108,17 @@ PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DATABASE = os.getenv("POSTGRES_DB")
 
 OLLAMA_URL = os.getenv("OLLAMA_URL")
+OLLAMA_HEADERS = {}
+if OLLAMA_URL:
+    try:
+        _parsed = urllib.parse.urlsplit(OLLAMA_URL)
+        if _parsed.username and _parsed.password:
+            _auth_str = f"{_parsed.username}:{_parsed.password}"
+            _auth_b64 = base64.b64encode(_auth_str.encode("utf-8")).decode("utf-8")
+            OLLAMA_HEADERS["Authorization"] = f"Basic {_auth_b64}"
+    except Exception:
+        pass
+
 EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL", "bge-m3")
 REGENERATE_EMBEDDINGS_FORCE = os.getenv("REGENERATE_EMBEDDINGS", "").lower() in (
     "1",

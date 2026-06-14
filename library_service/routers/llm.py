@@ -4,13 +4,13 @@ import asyncio, json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 from ollama import AsyncClient
 
-from library_service.settings import get_logger, OLLAMA_URL, ASSISTANT_LLM
+from library_service.settings import get_logger, OLLAMA_URL, OLLAMA_HEADERS, ASSISTANT_LLM
 from library_service.auth import RequireStaffWS
 
 
 logger = get_logger()
 router = APIRouter(prefix="/llm")
-client = AsyncClient(host=OLLAMA_URL)
+client = AsyncClient(host=OLLAMA_URL, headers=OLLAMA_HEADERS)
 
 
 SYSTEM_PROMPT = """

@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ollama import Client
 
-from library_service.settings import EMBEDDINGS_MODEL, OLLAMA_URL, get_logger
+from library_service.settings import EMBEDDINGS_MODEL, OLLAMA_URL, OLLAMA_HEADERS, get_logger
 
 _client: Optional[Client] = None
 logger = get_logger()
@@ -14,7 +14,7 @@ def get_ollama_client() -> Client:
     """Возвращает singleton клиент Ollama"""
     global _client
     if _client is None:
-        _client = Client(host=OLLAMA_URL)
+        _client = Client(host=OLLAMA_URL, headers=OLLAMA_HEADERS)
     return _client
 
 

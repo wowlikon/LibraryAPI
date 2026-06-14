@@ -29,6 +29,7 @@ from library_service.settings import (
     EMBEDDINGS_MODEL,
     LOGGING_CONFIG,
     OLLAMA_URL,
+    OLLAMA_HEADERS,
     REGENERATE_EMBEDDINGS_FORCE,
     SKIP_REGENERATE_EMBEDDINGS,
     engine,
@@ -64,7 +65,7 @@ async def lifespan(_):
 
     logger.info("[+] Loading ollama models...")
     try:
-        ollama_client = Client(host=OLLAMA_URL)
+        ollama_client = Client(host=OLLAMA_URL, headers=OLLAMA_HEADERS)
         
         # Получаем список локальных моделей для ускорения запуска в офлайне
         local_models = []
